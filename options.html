@@ -1,433 +1,233 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
+<meta charset='utf-8'>
 <title>AutoPatchWork</title>
-<link href="css/option_page.css" rel="stylesheet" type="text/css">
-<script type="text/javascript" src="scripts/x.js"></script>
-<script type="text/javascript" src="scripts/tween2.js"></script>
-<body>
-<ul class="tabs" id="menu_tabs">
-	<li class="basics"><a href="#basics" class="active"><span>Basics</span></a>
-	<li class="filters"><a href="#filters"><span>Filters</span></a>
-	<li class="styles"><a href="#styles"><span>Styles</span></a>
-	<li class="news"><a href="#news"><span>News</span></a>
-	<li class="about"><a href="#about"><span>About</span></a>
-</ul>
-<div id="container">
-<div id="inner_container">
-<section id="basics" class="content">
-	<div class="buttons"><button id="update_siteinfo" class="MSG_update_siteinfo">Update SITEINFO</button><span id="update_siteinfo_output"></span></div>
-	<div class="buttons"><button id="open_siteinfo_manager" class="MSG_open_siteinfo_manager">Open SITEINFO manager</button></div>
-	<div><input type="checkbox" id="auto_start"><label for="auto_start" class="MSG_auto_start">auto start</label></div>
-	<div><input type="checkbox" id="target_blank"><label for="target_blank" class="MSG_open_newtab">open new tabs from inserted links</label></div>
-	<div><input type="checkbox" id="disable_iframe"><label for="disable_iframe" class="MSG_noiframe">not work FRAME</label></div>
-	<div>
-		<span class="mins">0</span>
-		<input type="range" id="remain_height" max="2000" min="0" step="10">
-		<span class="maxs">2000</span>
-	</div>
-	<div class="outputs">
-		<label for="remain_height" class="MSG_remain_height">base remain height</label> <span class="outputs" id="remain_height_value"></span>
-	</div>
-	<div><input type="checkbox" id="debug_mode"><label for="debug_mode" class="MSG_debugmode">debug mode</label></div>
-	<div>
-		<h4 class="MSG_bottom_bar">status bar on page bottom</h4>
-		<p><input type="radio" name="bar_status" id="bar_on" value="on"><label for="bar_on" class="MSG_bar_on">ON</label>
-		<p><input type="radio" name="bar_status" id="bar_off" value="off"><label for="bar_off" class="MSG_bar_off">OFF</label>
-	</div>
-</section>
-<section id="filters" class="content">
-	<div class="MSG_exclude_filter">Exclude Filter by URL</div>
-	<ul id="filter_list">
-	</ul>
-	<select id="filter_type">
-		<option class="MSG_filter_prefix" value="prefix">prefix</option>
-		<option class="MSG_filter_domain" value="domain">domain</option>
-		<option class="MSG_filter_regexp" value="regexp">regexp</option>
-	</select>
-	<input type="text" id="filter_text" value="">
-	<button id="add_filter" class="MSG_add">Add</button>
-</section>
-<section id="styles" class="content">
-	<div class="MSG_separator_style">Page Separator Style</div>
-	<textarea id="css_text"></textarea>
-	<div><button id="apply_css" class="MSG_save">Save</button></div>
-	<div><button id="reset_css" class="MSG_reset">Reset</button></div>
-</section>
-<section id="news" class="content">
-<ul>
-<li>
-<h4> 2011/05/31 0:24 </h4>
-When not specified <p> target = _blank, if you use the browser back, shirttail changed to restore the page.
-</li>
-<li>
-<h4> 2011/05/15 19:21 </h4>
-Instant Search enabled <p> Google.
-<p> (added 2011/05/15 23:37) Corrected page numbers in the additional shift, displacement of the insert position fix. Enabled instant search suggestions, <a href="https://twitter.com/mono0x"> capped a bug report @ mono0x </a> Thanks to!
-</li>
-<li>
-<h4> 2011/04/03 15:51 </h4>
-For <p> Safari users: the environment (when the two-finger trackpad scrolling) I'm going to fix the problem when concatenating the scroll position shifts. Issues around option will fix that later.
-</li>
-<li>
-<h4> 2011/02/09 23:20 </h4>
-Added option to display the status bar at the bottom of the page <p>. If the scrolling feels heavy, and may be better to OFF.
-</li>
-<li>
-<h4> 2011/02/04 01:35 </h4>
-Fixed a bug that stopped the process when there was an incorrect regular expression <p> SITEINFO.
-</li>
-<li>
-<h4> 2010/10/24 12:43 </h4>
-The bug does not apply <p> Filters. Thx <a href="http://twitter.com/syoichi/status/28557748256" target="_blank"> @ syoichi </a>!
-</li>
-<li>
-<h4> 2010/10/24 1:53 </h4>
-<ul>
-according to body language settings <li> Chrome, I do some Japanese.
-management functions implemented <li> SITEINFO.
-addresses the issue does not appear to have beautiful images <li> Tumblr.
-Conclusion was supported <li> NAVER.
-</Ul>
-</li>
-<li>
-<h4> 2010/06/16 16:03 </h4>
-Measures <p> Yahoo (anti-redirecting site sandwich) Fix the bombing was part of the site. </P>
-</li>
-<li>
-<h4> 2010/06/15 17:24 </h4>
-Modify the specified threshold of WW Open in New Tab <p>. Also, when opening a new tab for record-keeping history (history.pushState) that we measure with a link back to the page when you click back in history. However, the shift is a challenge scroll position. </P>
-</li>
-<li>
-<h4> 2010/06/15 14:27 </h4>
-according to the version <p> Safari, now line the bottom of the page to display. This makes it possible to control the ON / OFF in the pages using frames. In addition, so it was easy to see when you turn OFF the footer. </P>
-We failed to record an attempt to apply SITEINFO <p>. Again, we will use as the data is not being used to disable the SITEINFO. </P>
-</li>
-<li>
-<h4> 2010/02/18 2:57 </h4>
-How to define a prefix match <p> Filter, domain matching has to choose between three of the regular expression. </P>
-Cash is now two days <p> SITEINFO. Instead, with a button to update the siteinfo (whether to back up files to the target location, and whether to 迷Imashita wedata, who was a backup). </P>
-I used to record the actual SITEINFO <p>. Later, you can use your common SITEINFO list, you will be able to disable or not use SITEINFO. </P>
-</li>
-<li>
-<h4> 2010/01/12 20:34 </h4>
-<p> base remain height (variable to decide on the next page After you read the scroll far) can now be set. </P>
-</li>
-<li>
-<h4> 2010/01/12 19:52 </h4>
-<p> Added debug mode. </P>
-</li>
-<li>
-<h4> 2009/11/02 14:45 </h4>
-Added some settings <p>. (Page break) can now be customized with CSS style. </P>
-</li>
-<li>
-<h4> 2009/10/23 12:08 </h4>
-Fixed a bug that fall <p> Chrome 4.0.223.9. </P>
-</li>
-</ul>
-</section>
-<section id="about" class="content">
-	<dl>
-		<dt>Name:<dt>
-		<dd><a href="http://code.google.com/p/autopatchwork/" target="_blank">AutoPatchWork</a></dd>
-		<dt>Author:<dt>
-		<dd><a href="http://ss-o.net/" target="_blank">os0x</a></dd>
-		<dt>Thanks:<dt>
-		<dd><a href="http://autopagerize.net/" target="_blank">AutoPagerize</a></dd>
-		<dt>License:<dt>
-		<dd><a href="http://creativecommons.org/licenses/MIT/" target="_blank">The MIT license</a></dd>
-	</dl>
-</section>
-</div>
-</div>
-<script>
-Object.keys || (Object.keys = function(k){
-	var r = [];
-	for (var i in k) r.push(i);
-	return r;
-});
-(function option_init(opt){
-var g = this;
-if(this.chrome){
-  BackGround = chrome.extension.getBackgroundPage();
-  AutoPatchWork = BackGround.AutoPatchWork;
-} else if (this.safari && !opt){
-  safari.self.tab.dispatchMessage('option_init');
-  safari.self.addEventListener('message',function(evt){
-	if(evt.name === 'option_init'){
-		option_init(evt.message);
-	} else if(evt.name === 'updated_siteinfo') {
-		BackGround.callback();
-	}
-  },false);
-  return;
-} else if (this.opera && !opt){
-	opera.extension.onmessage = function(evt){
-		if(evt.data.name === 'option_init'){
-			option_init(evt.data.data);
-		} else if(evt.data.name === 'updated_siteinfo') {
-			BackGround.callback();
-		}
-	};
-	opera.extension.postMessage({name:'option_init'});
-	return;
-} else if (opt && g.safari){
-	AutoPatchWork = opt;
-	['save_css','reset_css','add_disable_site','delete_disable_site'].forEach(function(action){
-		AutoPatchWork[action] = function(){
-			safari.self.tab.dispatchMessage('invoke_action',{action:action, args:Array.prototype.slice.call(arguments)});
-		};
-	});
-	AutoPatchWork.update = function(){
-		safari.self.tab.dispatchMessage('invoke_action',{action:'update', config:AutoPatchWork.config});
-	};
-	AutoPatchWork.save_disable_site = function(){
-		safari.self.tab.dispatchMessage('invoke_action',{action:'save_disable_site', disable_sites:AutoPatchWork.disable_sites});
-	};
-	BackGround = {UpdateSiteinfo:function(callback){
-		BackGround.callback = callback;
-		safari.self.tab.dispatchMessage('invoke_action',{action:'UpdateSiteinfo'});
-	}};
-} else if (opt && g.opera){
-	AutoPatchWork = opt;
-	['save_css','reset_css','add_disable_site','delete_disable_site'].forEach(function(action){
-		AutoPatchWork[action] = function(){
-			opera.extension.postMessage({name:'invoke_action',data:{action:action, args:Array.prototype.slice.call(arguments)}});
-		};
-	});
-	AutoPatchWork.update = function(){
-		opera.extension.postMessage({name:'invoke_action',data:{action:'update', config:AutoPatchWork.config}});
-	};
-	AutoPatchWork.save_disable_site = function(){
-		opera.extension.postMessage({name:'invoke_action',data:{action:'save_disable_site', disable_sites:AutoPatchWork.disable_sites}});
-	};
-	BackGround = {UpdateSiteinfo:function(callback){
-		BackGround.callback = callback;
-		opera.extension.postMessage({name:'invoke_action',data:{action:'UpdateSiteinfo'}});
-	}};
-}
-
-var WIDTH = 800;
-var HEIGHT = Math.max(window.innerHeight - 100, 500);
-
-var i18n = this.chrome ? chrome.i18n:
-           this.safari ? {
-                           getAcceptLanguages:function(){},
-                           getMessage:function(){}
-                         }:
-                         {
-                           getAcceptLanguages:function(){},
-                           getMessage:function(){}
-                         };
-
-function L10N(){
-	i18n.getAcceptLanguages(function(langs){
-		if (langs.indexOf('ja') < 0 ) {
-			document.querySelector('#menu_tabs > li.news').style.display = 'none';
-		}
-	});
-	var elems = document.querySelectorAll('*[class^="MSG_"]');
-	Array.prototype.forEach.call(elems, function(node){
-		var key = node.className.match(/MSG_(\w+)/)[1];
-		var message = i18n.getMessage(key);
-		if (message) node.textContent = message;
-	});
-}
-L10N();
-
-
-var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
-open_siteinfo_manager.addEventListener('click',function(e){
-	if(window.chrome) {
-		window.chrome.tabs.getCurrent(function(tab){
-			chrome.tabs.update(tab.id,{url:"siteinfo_manager.html"});
-		});
-	} else if(window.safari){
-		safari.self.tab.dispatchMessage('options', {manage:true});
-	} else if(window.opera){
-		opera.extension.postMessage({name:'options', data:{manage:true}});
-	}
-},false);
-
-var update_siteinfo = document.getElementById('update_siteinfo');
-var update_siteinfo_output = document.getElementById('update_siteinfo_output');
-update_siteinfo.addEventListener('click',function(e){
-	update_siteinfo.disabled = true;
-	update_siteinfo_output.textContent = 'loading';
-	BackGround.UpdateSiteinfo(function(){
-		update_siteinfo_output.textContent = 'success';
-		update_siteinfo.disabled = false;
-	},function(){
-		update_siteinfo_output.textContent = 'sorry, something wrong.';
-	})
-},false);
-
-$X('//input[@type="radio"]').forEach(function(box){
-	var id = box.id;
-	var name = box.name;
-	var val = AutoPatchWork.config[name] || 'on';
-	if (val == box.value) {
-		box.checked = true;
-	} else {
-	}
-	box.addEventListener('click',function(){
-		AutoPatchWork.config[name] = box.value;
-		AutoPatchWork.update();
-	},false);
-});
-$X('/html/body/div/div/section/div/input[@type="checkbox"]').forEach(function(box){
-	var id = box.id;
-	var val = AutoPatchWork.config[id];
-	if (val === true || val === false) {
-		box.checked = val;
-	} else {
-		//return;
-	}
-	box.addEventListener('click',function(){
-		if (box.checked) {
-			AutoPatchWork.config[id] = true;
-		} else {
-			AutoPatchWork.config[id] = false;
-		}
-		AutoPatchWork.update();
-	},false);
-});
-$X('/html/body/div/div/section/div/input[@type="range"]').forEach(function(box){
-	var id = box.id;
-	var output = document.querySelector('#' + id + '_value');
-	var val = AutoPatchWork.config[id];
-	box.value = val;
-	output.textContent = box.value;
-	box.addEventListener('change',function(){
-		AutoPatchWork.config[id] = +this.value;
-		output.textContent = box.value;
-		AutoPatchWork.update();
-	},false);
-});
-
-var css_text = document.getElementById('css_text');
-css_text.value = AutoPatchWork.css;
-var apply_css = document.getElementById('apply_css');
-apply_css.addEventListener('click',function(){
-	AutoPatchWork.save_css(css_text.value);
-},false);
-
-var reset_css = document.getElementById('reset_css');
-reset_css.addEventListener('click',function(){
-	AutoPatchWork.reset_css();
-	setTimeout(function(){
-		css_text.value = AutoPatchWork.css = localStorage.AutoPatchWorkCSS;
-	},0);
-},false);
-
-var filter_list = document.getElementById('filter_list');
-var filter_text = document.getElementById('filter_text');
-var filter_type = document.getElementById('filter_type');
-var add_filter = document.getElementById('add_filter');
-AutoPatchWork.disable_sites.forEach(create_filter);
-function create_filter(site) {
-	var li = document.createElement('li');
-	var types = filter_type.cloneNode(true);
-	types.id = '';
-	li.appendChild(types);
-	types.value = site.type;
-	types.addEventListener('change',function(){
-		site.type = types.value;
-		AutoPatchWork.save_disable_site();
-	},false);
-	var input = document.createElement('input');
-	input.type = 'text';
-	input.value = site.matcher;
-	input.addEventListener('input',function(){
-		site.matcher = input.value;
-		AutoPatchWork.save_disable_site();
-	},false);
-	li.appendChild(input);
-	var del = document.createElement('button');
-	del.textContent = i18n.getMessage('del') || 'Del';
-	del.addEventListener('click',function(){
-		input.disabled = !input.disabled;
-		if (input.disabled) {
-			AutoPatchWork.delete_disable_site(site);
-			del.textContent = i18n.getMessage('undo') || 'Undo';
-		} else {
-			AutoPatchWork.add_disable_site(site);
-			del.textContent = i18n.getMessage('del') || 'Del';
-		}
-	},false);
-	li.appendChild(del);
-	filter_list.appendChild(li);
-}
-add_filter.addEventListener('click',function(){
-	var site = filter_text.value;
-	if (!site) return;
-	var type = filter_type.value;
-	if (type === 'regexp'){
-		try {
-			new RegExp(site);
-		} catch (e) {
-			return;
-		}
-	}
-	site = {matcher:site,type:type};
-	create_filter(site);
-	AutoPatchWork.add_disable_site(site);
-	filter_text.value ='';
-},false);
-
-
-var sections = $X('/html/body/div/div/section[contains(@class, "content")]');
-var inner_container = document.getElementById('inner_container');
-var container = document.getElementById('container');
-inner_container.style.width = sections.length * (WIDTH+20) + 'px';
-//inner_container.style.height = HEIGHT + 'px';
-//container.style.height = HEIGHT + 'px';
-container.style.marginTop = '-2px';
-sections.forEach(function(section, _i){
-	section.style.visibility = 'hidden';
-	section.style.height = '100px';
-});
-var btns = $X('id("menu_tabs")/li/a');
-var default_title = document.title;
-btns.forEach(function(btn, i, btns){
-	btn.addEventListener('click',function(evt){
-		evt.preventDefault();
-		btns.forEach(function(btn){btn.className = '';})
-		btn.className = 'active';
-		sections[i].style.visibility = 'visible';
-		sections[i].style.height = 'auto';
-		new Tween(inner_container.style, {marginLeft:{to:i * -WIDTH,tmpl:'$#px'},time:0.2,onComplete:function(){
-				document.title = default_title + btn.hash;
-				!window.opera && (location.hash = btn.hash);
-				window.scrollBy(0, -1000);
-				sections.forEach(function(section, _i){
-					if (i !== _i) {
-						section.style.visibility = 'hidden';
-						section.style.height = '100px';
-					}
-				});
-			}});
-	}, false);
-});
-if (location.hash) {
-	sections.some(function(section, i){
-		if ('#' + section.id === location.hash) {
-			btns.forEach(function(btn){btn.className = '';})
-			btns[i].className = 'active';
-			inner_container.style.marginLeft = -WIDTH * i + 'px';
-			section.style.visibility = 'visible';
-			section.style.height = 'auto';
-			document.title = default_title + location.hash;
-		}
-	});
-} else {
-	sections[0].style.height = 'auto';
-	sections[0].style.visibility = 'visible';
-	document.title = default_title + '#' + sections[0].id;
-}
-})();
-</script>
+<link href='css/options.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript' src='scripts/xpath.js'></script>
+<script type='text/javascript' src='scripts/tween2.js'></script>
+<script type='text/javascript' src='scripts/options.js'></script>
+<body class='tabbox'>
+    <ul class='tabs' id='menu_tabs'>
+        <li class='basics'>
+            <a href='#basics' class='active'><span>Basics</span></a>
+        </li>
+        <li class='filters'>
+            <a href='#filters'><span>Filters</span></a>
+        </li>
+        <li class='styles'>
+            <a href='#styles'><span>Styles</span></a>
+        </li>
+        <li class='news'>
+            <a href='#news'><span>News</span></a>
+        </li>
+        <li class='about'>
+            <a href='#about'><span>About</span></a>
+        </li>
+    </ul>
+    <div id='base'>
+        <div id='inner_container'>
+            <section id='basics' class='content'>
+                <div class='buttons'>
+                    <button id='update_siteinfo' class='MSG_update_siteinfo'>
+                        Update SITEINFO
+                    </button>
+                    <span id='update_siteinfo_output'></span>
+                </div>
+                <div class='buttons'>
+                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>
+                        Open SITEINFO manager
+                    </button>
+                </div>
+                <div>
+                    <input type='checkbox' id='auto_start'>
+                    <label for='auto_start' class='MSG_auto_start'>Autostart extension</label>
+                </div>
+                <div>
+                    <input type='checkbox' id='target_blank'>
+                    <label for='target_blank' class='MSG_open_newtab'>Open new tabs from page links</label>
+                </div>
+                <div>
+                    <input type='checkbox' id='disable_iframe'>
+                    <label for='disable_iframe' class='MSG_noiframe'>Disable IFRAME loading mode</label>
+                </div>
+                <div>
+                    <input type='checkbox' id='replace_state'>
+                    <label for='replace_state' class='MSG_replace_state'>Replace location URL when appending page contents</label>
+                </div>
+                <div>
+                    <span class='mins'>0</span>
+                    <input type='range' id='remain_height' max='2000' min='0' step='10'>
+                    <span class='maxs'>2000</span>
+                </div>
+                <div class='outputs'>
+                    <label for='remain_height' class='MSG_remain_height'>Scroll height until load</label>
+                    <span class='outputs' id='remain_height_value'></span>
+                </div>
+                <div>
+                    <input type='checkbox' id='debug_mode'>
+                    <label for='debug_mode' class='MSG_debugmode'>Debug output</label>
+                </div>
+                <div>
+                    <h4 class='MSG_bottom_bar'>status bar on page bottom</h4>
+                    <p>
+                        <input type='radio' name='bar_status' id='bar_on' value='on'>
+                        <label for='bar_on' class='MSG_bar_on'>ON</label>
+                    </p>
+                    <p>
+                        <input type='radio' name='bar_status' id='bar_off' value='off'>
+                        <label for='bar_off' class='MSG_bar_off'>OFF</label>
+                    </p>
+                </div>
+            </section>
+            <section id='filters' class='content'>
+                <div class='MSG_exclude_filter'>
+                    Exclude Filter by URL
+                </div>
+                <ul id='filter_list'></ul>
+                <select id='filter_type'>
+                    <option class='MSG_filter_prefix' value='prefix'>prefix</option>
+                    <option class='MSG_filter_domain' value='domain'>domain</option>
+                    <option class='MSG_filter_regexp' value='regexp'>regexp</option>
+                </select>
+                <input type='text' id='filter_text' value=''>
+                <button id='add_filter' class='MSG_add'>
+                    Add
+                </button>
+            </section>
+            <section id='styles' class='content'>
+                <div class='MSG_separator_style'>
+                    Page Separator Style
+                </div>
+                <textarea id='css_text'></textarea>
+                <div>
+                    <button id='apply_css' class='MSG_save'>
+                        Save
+                    </button>
+                </div>
+                <div>
+                    <button id='reset_css' class='MSG_reset'>
+                        Reset
+                    </button>
+                </div>
+            </section>
+            <section id='news' class='content'>
+                <ul>
+                    <li>
+                        <h4>2011/05/31 0:24</h4>When not specified
+                        <p>target = _blank, if you use the browser back, shirttail changed to restore
+                            the page.
+                    </li>
+                    <li>
+                        <h4>2011/05/15 19:21</h4>Instant Search enabled
+                        <p>Google.
+                        <p>(added 2011/05/15 23:37) Corrected page numbers in the additional shift,
+                            displacement of the insert position fix. Enabled instant search suggestions, <a
+                            href='https://twitter.com/mono0x'>capped a bug report @ mono0x</a>Thanks to!
+                    </li>
+                    <li>
+                        <h4>2011/04/03 15:51</h4>For
+                        <p>Safari users: the environment (when the two-finger trackpad scrolling)
+                            I'm going to fix the problem when concatenating the scroll position shifts.
+                            Issues around option will fix that later.
+                    </li>
+                    <li>
+                        <h4>2011/02/09 23:20</h4>Added option to display the status bar at the bottom of the page
+                        <p>If the scrolling feels heavy, and may be better to OFF.
+                    </li>
+                    <li>
+                        <h4>2011/02/04 01:35</h4>Fixed a bug that stopped the process when there was
+                        an incorrect regular expression
+                        <p>SITEINFO.
+                    </li>
+                    <li>
+                        <h4>2010/10/24 12:43</h4>The bug does not apply
+                        <p>Filters. Thx <a href='http://twitter.com/syoichi/status/28557748256' target='_blank'> @ syoichi </a>!
+                    </li>
+                    <li>
+                        <h4>2010/10/24 1:53</h4>
+                        <ul>
+                            <li>Caccording to body language settings</li>
+                            <li>Chrome, I do some Japanese. management functions implemented</li>
+                            <li>SITEINFO. addresses the issue does not appear to have beautiful images</li>
+                            <li>Tumblr. Conclusion was supported</li>
+                            <li>NAVER.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h4>2010/06/16 16:03</h4>Measures
+                        <p>Yahoo (anti-redirecting site sandwich) Fix the bombing was part of the
+                            site.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2010/06/15 17:24</h4>Modify the specified threshold of WW Open in New
+                        Tab
+                        <p>Also, when opening a new tab for record-keeping history (history.pushState)
+                            that we measure with a link back to the page when you click back in history.
+                            However, the shift is a challenge scroll position.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2010/06/15 14:27</h4>according to the version
+                        <p>
+                            Safari, now line the bottom of the page to display. This makes it possible
+                            to control the ON / OFF in the pages using frames. In addition, so it was
+                            easy to see when you turn OFF the footer.
+                        </p> Failed to record an attempt to apply SITEINFO
+                        <p>Again, we will use as the data is not being used to disable the SITEINFO.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2010/02/18 2:57</h4>How to define a prefix match
+                        <p>
+                            Filter, domain matching has to choose between three of the regular expression.
+                        </p>Cashe is now two days
+                        <p>SITEINFO. Instead, with a button to update the siteinfo (whether to back
+                            up files to the target location, and whether to 迷Imashita wedata, who was
+                            a backup).
+                        </p>I used to record the actual SITEINFO
+                        <p>Later, you can use your common SITEINFO list, you will be able to disable
+                            or not use SITEINFO.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2010/01/12 20:34</h4>
+                        <p>base remain height (variable to decide on the next page After you read
+                            the scroll far) can now be set.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2010/01/12 19:52</h4>
+                        <p>Added debug mode.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2009/11/02 14:45</h4>Added some settings
+                        <p>Page break) can now be customized with CSS style.
+                        </p>
+                    </li>
+                    <li>
+                        <h4>2009/10/23 12:08</h4>Fixed a bug that fall
+                        <p>Chrome 4.0.223.9.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+            <section id='about' class='content'>
+                <dl>
+                    <dt>Name:</dt>
+                    <dd>AutoPatchWork</dd>
+                    <dt>Author: </dt>
+                    <dd><a href='' target='_blank'>Dither</a></dd>
+                    <dt>Thanks:</dt>
+                    <dd><a href='http://ss-o.net/' target='_blank'>os0x</a></dd>
+                    <dd><a href='http://autopagerize.net/' target='_blank'>AutoPagerize</a></dd>
+                    <dt>License:</dt>
+                    <dd><a href='http://creativecommons.org/licenses/MIT/' target='_blank'>The MIT license</a></dd>
+                </dl>
+            </section>
+        </div>
+    </div> <!--base-->
 </body>
 </html>

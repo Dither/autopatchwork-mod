@@ -14,6 +14,9 @@
   "open_newtab":{
     "message":"継ぎ足ししたコンテンツ内のリンクを新規タブで開く(target=_blank指定をする)"
   },
+  "replace_state":{
+    "message":"継ぎ足しした時、URL を継ぎ足した URL で置き換える"
+  },
   "noiframe":{
     "message":"フレーム内では起動させない"
   },

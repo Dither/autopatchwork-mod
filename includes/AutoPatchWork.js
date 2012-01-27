@@ -1,3 +1,15 @@
+// ==UserScript==
+// @include http*
+// @exclude opera:*
+// @exclude chrome:*
+// @exclude about:*
+// @exclude widget:*
+// @exclude *://localhost*
+// @exclude *://192.168.*
+// @exclude *://0.0.0.0*
+// @exclude *dragonfly.opera.com*
+// ==/UserScript==
+
 (function APW(g, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
 	if(window.name === 'AutoPatchWork-request-frame') return;
 	if (g.opera && !APW.loaded) {
@@ -94,6 +106,7 @@
 			options.BASE_REMAIN_HEIGHT = info.config.remain_height;
 			options.DEFAULT_STATE = info.config.auto_start;
 			options.FORCE_TARGET_WINDOW = info.config.target_blank;
+			options.REPLACE_STATE = info.config.replace_state;
 			options.BAR_STATUS = !(info.config.bar_status === 'off');
 			options.css = info.css;
 			debug = info.config.debug_mode;
@@ -194,6 +207,7 @@
 		var htmlDoc, url;
 
 		var loaded_urls = {};
+		var location_pushed = false;
 		var session_object = {};
 		var page_num = 0;
 		loaded_urls[location.href] = true;
@@ -204,6 +218,9 @@
 		window.addEventListener('AutoPatchWork.request', request, false);
 		window.addEventListener('AutoPatchWork.load', load, false);
 		window.addEventListener('AutoPatchWork.append', append, false);
+		if (options.REPLACE_STATE){
+			window.addEventListener('AutoPatchWork.append', replace_state, false);
+		}
 		window.addEventListener('AutoPatchWork.error', error_event, false);
 		window.addEventListener('AutoPatchWork.reset', reset, false);
 		window.addEventListener('AutoPatchWork.state', state, false);
@@ -221,15 +238,15 @@
 			bar.className = 'on';
 			bar.onmouseover = function() {
 				var onoff = document.createElement('button');
-				onoff.textContent = 'on/off';
+				onoff.textContent = 'TGL';
 				onoff.onclick = _toggle;
 				var option = document.createElement('button');
-				option.textContent = 'options';
+				option.textContent = 'OPT';
 				option.onclick = function() {
 					sendRequest({options:true});
 				};
 				var maneger = document.createElement('button');
-				maneger.textContent = 'siteinfo';
+				maneger.textContent = 'SI';
 				maneger.onclick = function() {
 					sendRequest({manage:true});
 				};
@@ -297,6 +314,7 @@
 			window.removeEventListener('AutoPatchWork.request', request, false);
 			window.removeEventListener('AutoPatchWork.load', load, false);
 			window.removeEventListener('AutoPatchWork.append', append, false);
+			options.REPLACE_STATE && window.removeEventListener('AutoPatchWork.append', replace_state, false);
 			window.removeEventListener('AutoPatchWork.error', error_event, false);
 			window.removeEventListener('AutoPatchWork.reset', reset, false);
 			window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
@@ -525,6 +543,13 @@
 			}
 			dispatch_event('AutoPatchWork.append');
 		}
+		function replace_state(evt){
+				if (!location_pushed) {
+					location_pushed = true;
+					history.pushState('', '', location.href);
+				}
+			history.replaceState('', '', loaded_url);
+		 }
 		function append(evt){
 			if (!status.loaded || !htmlDoc){
 				bar && (bar.className = 'loading');
@@ -551,11 +576,11 @@
 				root = node = document.createElement('div');
 			}
 			node.className = 'autopagerize_page_separator_blocks';
-			var hr = node.appendChild(document.createElement('hr'));
-			hr.className = 'autopagerize_page_separator';
-			var p = node.appendChild(document.createElement('p'));
-			p.className = 'autopagerize_page_info';
-			var a = p.appendChild(document.createElement('a'));
+			var h4 = node.appendChild(document.createElement('h4'));
+			h4.className = 'autopagerize_page_separator';
+			var span = h4.appendChild(document.createElement('span'));
+			span.className = 'autopagerize_page_info';
+			var a = span.appendChild(document.createElement('a'));
 			a.className = 'autopagerize_link';
 			a.href = loaded_url;
 			a.setAttribute('number',++status.page_number);
