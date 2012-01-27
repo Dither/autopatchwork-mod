@@ -1,50 +1,50 @@
 .autopagerize_link{
-text-decoration: none !important;
+    text-decoration: none !important;
 }
 
 .autopagerize_link:before{
-content:"page " attr(number);
+    content:"page " attr(number);
 }
 
 .autopagerize_page_separator_blocks {
-text-align:center !important;
-padding-top:5px !important;
-padding-bottom:7px !important;
-clear:both;
+    text-align:center !important;
+    padding-top:5px !important;
+    padding-bottom:7px !important;
+    clear:both;
 }
 
-.autopagerize_page_separator  {
-border-bottom-color:#dae1e8 !important;
-border-bottom-style:solid !important;
-border-bottom-width:1px !important;
-box-decoration-break:slice !important;
-color:#45688e !important;
-display:block !important;
-height:6px !important;
-text-overflow:none !important;
-width:100%;
-padding-top:4px !important;
-padding-left:0px !important;
-padding-right:0px !important;
-padding-bottom:4px !important;
-margin-left:0px !important;
-margin-right:0px !important;
-margin-top:0px !important;
-margin-bottom:4px !important;
+.autopagerize_page_separator {
+    border-bottom-color:#dae1e8 !important;
+    border-bottom-style:solid !important;
+    border-bottom-width:1px !important;
+    box-decoration-break:slice !important;
+    color:#45688e !important;
+    display:block !important;
+    height:6px !important;
+    text-overflow:none !important;
+    width:100%;
+    padding-top:4px !important;
+    padding-left:0px !important;
+    padding-right:0px !important;
+    padding-bottom:4px !important;
+    margin-left:0px !important;
+    margin-right:0px !important;
+    margin-top:0px !important;
+    margin-bottom:4px !important;
 }
 
 .autopagerize_page_info {
-font-size: 14px !important;
-background:#fff none repeat scroll 0% 0% !important;
-background-clip:border-box !important;
-background-origin:padding-box !important;
-background-size:auto !important;
-padding-left:7px !important;
-padding-right:7px !important;
-padding-top:0px !important;
-padding-bottom:0px !important;
-margin-left:0px !important;
-margin-right:0px !important;
-margin-top:0px !important;
-margin-bottom:0px !important;
+    font-size: 14px !important;
+    background:#fff none repeat scroll 0% 0% !important;
+    background-clip:border-box !important;
+    background-origin:padding-box !important;
+    background-size:auto !important;
+    padding-left:7px !important;
+    padding-right:7px !important;
+    padding-top:0px !important;
+    padding-bottom:0px !important;
+    margin-left:0px !important;
+    margin-right:0px !important;
+    margin-top:0px !important;
+    margin-bottom:0px !important;
 }

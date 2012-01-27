@@ -24,6 +24,7 @@ window.AutoPatchWork = {
 	state:true,
 	css:'',
 	barcss:'',
+	custompatterns:[],
 	config:{
 		auto_start:true,
 		target_blank:true,
@@ -32,6 +33,14 @@ window.AutoPatchWork = {
 		debug_mode:false,
 		bar_status:'on'
 	},
+	save_custom_patterns:function(patterns){
+	    storagebase.AutoPatchWorkPatterns = patterns;
+	    AutoPatchWork.custompatterns = JSON.parse(patterns);
+	},
+    reset_custom_patterns:function(){
+        AutoPatchWork.custompatterns = [];
+        storagebase.AutoPatchWorkPatterns = '';
+    },
 	save_css:function(css){
 		AutoPatchWork.css = storagebase.AutoPatchWorkCSS = css;
 	},
@@ -41,29 +50,29 @@ window.AutoPatchWork = {
 	update:function(){
 		storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWork.config);
 	},
-	disable_sites:[],
-	site_check:function(url){
+	disabled_sites:[],
+	blacklist_check:function(url){
 		if (url.indexOf('http') !== 0) return true;
-		return AutoPatchWork.disable_sites.some(function(site){
+		return AutoPatchWork.disabled_sites.some(function(site){
 			if (site.type === 'regexp') return new RegExp(site.matcher).test(url);
 			else if (site.type === 'prefix') return url.indexOf(site.matcher) === 0;
 			else if (site.type === 'domain') return new RegExp('^https?://' + site.matcher + '/').test(url);
 		});
 	},
-	add_disable_site:function(site){
-		AutoPatchWork.disable_sites.push(site);
-		storagebase.disable_sites = JSON.stringify(AutoPatchWork.disable_sites);
+	add_disabled_site:function(site){
+		AutoPatchWork.disabled_sites.push(site);
+		storagebase.disabled_sites = JSON.stringify(AutoPatchWork.disabled_sites);
 	},
-	save_disable_site:function(){
-		storagebase.disable_sites = JSON.stringify(AutoPatchWork.disable_sites);
+	save_disabled_site:function(){
+		storagebase.disabled_sites = JSON.stringify(AutoPatchWork.disabled_sites);
 	},
-	delete_disable_site:function(site){
+	delete_disabled_site:function(site){
 		var site_s = JSON.stringify(site);
-		for (var i = 0;i < AutoPatchWork.disable_sites.length; i++){
-			var str = JSON.stringify(AutoPatchWork.disable_sites[i]);
+		for (var i = 0;i < AutoPatchWork.disabled_sites.length; i++){
+			var str = JSON.stringify(AutoPatchWork.disabled_sites[i]);
 			if (str === site_s){
-				AutoPatchWork.disable_sites.splice(i, 1);
-				storagebase.disable_sites = JSON.stringify(AutoPatchWork.disable_sites);
+				AutoPatchWork.disabled_sites.splice(i, 1);
+				storagebase.disabled_sites = JSON.stringify(AutoPatchWork.disabled_sites);
 				break;
 			}
 		}
@@ -75,16 +84,16 @@ if(g.safari){
 			AutoPatchWork.config[evt.key] = evt.newValue;
 		} else if(evt.key === 'excludes'){
 			var urls = evt.newValue.trim().split(' ');
-			AutoPatchWork.disable_sites = urls.map(function(url){
+			AutoPatchWork.disabled_sites = urls.map(function(url){
 				return {type:'prefix',matcher:url};
 			});
-			AutoPatchWork.save_disable_site();
+			AutoPatchWork.save_disabled_site();
 		}
 	},false);
 }
 
-if (storagebase.disable_sites) AutoPatchWork.disable_sites = JSON.parse(storagebase.disable_sites);
-else storagebase.disable_sites = JSON.stringify(AutoPatchWork.disable_sites);
+if (storagebase.disabled_sites) AutoPatchWork.disabled_sites = JSON.parse(storagebase.disabled_sites);
+else storagebase.disabled_sites = JSON.stringify(AutoPatchWork.disabled_sites);
 
 if (storagebase.AutoPatchWorkConfig) AutoPatchWork.config = JSON.parse(storagebase.AutoPatchWorkConfig);
 else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWork.config);
@@ -101,6 +110,9 @@ else  storagebase.custom_info = JSON.stringify(custom_info);
 if (storagebase.AutoPatchWorkCSS) AutoPatchWork.css = storagebase.AutoPatchWorkCSS;
 else init_css();
 
+if (storagebase.AutoPatchWorkPatterns) AutoPatchWork.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+else AutoPatchWork.reset_custom_patterns();
+
 init_barcss();
 
 var version = '', Manifest;
@@ -114,8 +126,9 @@ get_manifest(function(_manifest){
 if (Strg.has('siteinfo_wedata')){
 	var data = Strg.get('siteinfo_wedata');
 	siteinfo = data.siteinfo;
+    siteinfo = AutoPatchWork.custompatterns.concat(siteinfo);
 	timestamp = new Date(data.timestamp);
-	applyCustom();
+	applyCustomFields();
 } else {
 	UpdateSiteinfo();
 }
@@ -149,9 +162,9 @@ g.safari && safari.application.addEventListener("message",function(evt){
 		if (evt.message.action === 'update'){
 			AutoPatchWork.config = evt.message.config;
 			AutoPatchWork.update();
-		} else if (evt.message.action === 'save_disable_site') {
-			AutoPatchWork.disable_sites = evt.message.disable_sites;
-			AutoPatchWork.save_disable_site();
+		} else if (evt.message.action === 'save_disabled_site') {
+			AutoPatchWork.disabled_sites = evt.message.disabled_sites;
+			AutoPatchWork.save_disabled_site();
 		} else if (evt.message.action === 'UpdateSiteinfo') {
 			UpdateSiteinfo(function(){
 				evt.target.page.dispatchMessage('updated_siteinfo');
@@ -168,9 +181,7 @@ g.safari && safari.application.addEventListener("message",function(evt){
 			AutoPatchWork:AutoPatchWork
 		});
 	} else {
-		handleMessage(evt.message, {}, function(data){
-			evt.target.page.dispatchMessage(name, data);
-		});
+		handleMessage(evt.message, {}, function(data){ evt.target.page.dispatchMessage(name, data); });
 	}
 },false);
 g.opera && (g.opera.extension.onmessage = function(evt){
@@ -182,9 +193,9 @@ g.opera && (g.opera.extension.onmessage = function(evt){
 		if (message.action === 'update'){
 			AutoPatchWork.config = message.config;
 			AutoPatchWork.update();
-		} else if (message.action === 'save_disable_site') {
-			AutoPatchWork.disable_sites = message.disable_sites;
-			AutoPatchWork.save_disable_site();
+		} else if (message.action === 'save_disabled_site') {
+			AutoPatchWork.disabled_sites = message.disabled_sites;
+			AutoPatchWork.save_disabled_site();
 		} else if (message.action === 'UpdateSiteinfo') {
 			UpdateSiteinfo(function(){ evt.source.postMessage({name:'updated_siteinfo'}); });
 		} else {
@@ -202,9 +213,7 @@ g.opera && (g.opera.extension.onmessage = function(evt){
 			}
 		});
 	} else {
-		handleMessage(message, {}, function(data){
-			evt.source.postMessage({name:name, data:data});
-		});
+		handleMessage(message, {}, function(data){ evt.source.postMessage({name:name, data:data}); });
 	}
 });
 
@@ -218,9 +227,7 @@ function handleMessage(request, sender, sendResponse){
 	if (request.failed_siteinfo){
 		request.failed_siteinfo.forEach(function(s){
 			var id = s['wedata.net.id'];
-			if (!id){
-				return;
-			}
+			if (!id) return;
 			site_fail_stats[id] = ++site_fail_stats[id] || 1;
 		});
 		storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
@@ -234,18 +241,14 @@ function handleMessage(request, sender, sendResponse){
 		openOrFocusTab('options.html');
 		return;
 	}
-	if (!AutoPatchWork.state) return;
-	if (request.isFrame && AutoPatchWork.config.disable_iframe) {
-		return;
-	}
+	if (!AutoPatchWork.state || (request.isFrame && AutoPatchWork.config.disable_iframe)) return;
+	
 	var infos = [], url = request.url;
-	if (!url || AutoPatchWork.site_check(url)) return;
-	if (url.index) return;
-	for (var i = 0,len = siteinfo.length, s;i < len;i++){
+	
+	if (!url || AutoPatchWork.blacklist_check(url) || url.index) return;
+	for (var i = 0,len = siteinfo.length, s; i < len; i++){
 		s = siteinfo[i];
-		if (!s.disabled  && new RegExp(siteinfo[i].url).test(url)){
-			infos.push(siteinfo[i]);
-		}
+		if (!s.disabled && new RegExp(siteinfo[i].url).test(url)) infos.push(siteinfo[i]);
 	}
 	sendResponse({siteinfo:infos,config:AutoPatchWork.config,css:AutoPatchWork.barcss+AutoPatchWork.css});
 }
@@ -283,9 +286,9 @@ function openOrFocusTab(uri){
 	}
 }
 function getWedataId(inf){
-	return parseInt(inf.resource_url.replace('http://wedata.net/items/',''),10);
+	return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/','') : '0',10);
 }
-function applyCustom(info){
+function applyCustomFields(info){
 	siteinfo.forEach(function(i){
 		var id = i['wedata.net.id'];
 		var ci = custom_info[id];
@@ -306,9 +309,7 @@ function Siteinfo(info){
 		});
 		try {
 			new RegExp(r.url);
-		} catch(e) {
-			return;
-		}
+		} catch (bug) { return; }
 		r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
 		siteinfo.push(r);
 	});
@@ -327,9 +328,10 @@ function Siteinfo(info){
 		,pageElement: '//table[tbody/tr/td/a[contains(@href, "/imgres")]]'
 		//,exampleUrl:  'http://images.google.com/images?gbv=2&hl=ja&q=%E3%83%9A%E3%83%BC%E3%82%B8'
 	});
+	
 	timestamp = new Date;
 	Strg.set('siteinfo_wedata', {siteinfo:siteinfo, timestamp:timestamp.toLocaleString()}, {day:1});
-	applyCustom();
+	applyCustomFields();
 }
 function get_manifest(callback){
 	var url = './manifest.json';
@@ -354,8 +356,8 @@ function init_barcss(){
 	xhr.send(null);
 	AutoPatchWork.barcss = xhr.responseText;
 }
-function UpdateSiteinfo(callback,error_back){
-	var url =  'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
+function UpdateSiteinfo(callback, error_back){
+	var url =  'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json'; //
 	var xhr = new XMLHttpRequest();
 	siteinfo = [];
 	xhr.onload = function(){
@@ -366,18 +368,18 @@ function UpdateSiteinfo(callback,error_back){
 			if (typeof callback === 'function'){
 				callback();
 			}
-		} catch (e) {
+		} catch (bug) {
 			if (typeof error_back === 'function'){
-				error_back(e);
+				error_back(bug);
 				return;
 			} else {
-				throw e;
+				throw bug;
 			}
 		}
 	};
-	xhr.onerror = function(e){
+	xhr.onerror = function(err){
 		if (typeof error_back === 'function'){
-			error_back(e);
+			error_back(err);
 		}
 	};
 	xhr.open('GET',url,true);

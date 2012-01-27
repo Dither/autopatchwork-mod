@@ -3,7 +3,7 @@ Object.keys || (Object.keys = function (k) {
     for (var i in k) r.push(i);
     return r;
 });
-var COUNT = 200;
+var COUNT = 100;
 var PageIndex = 0;
 var MICROFORMATs = [{
     url: '^https?://.',
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
     BackGround = BackGround || chrome.extension.getBackgroundPage();
     var getWedataId = BackGround.getWedataId ||
     function getWedataId(inf) {
-        return parseInt(inf.resource_url.replace('http://wedata.net/items/', ''), 10);
+        return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
     };
 
     window.addEventListener('AutoPatchWork.request', function (e) {
@@ -95,24 +95,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var siteinfo_view = document.getElementById('siteinfo_view');
     var siteinfo_head = document.getElementById('siteinfo_head');
     var types = {
-        //"on/off":{number:true, key:'disabled'},
-        "name": {
+        //'on/off':{number:true, key:'disabled'},
+        'name': {
             string: true,
             key: 'name'
         },
-        "created at": {
+        'created_at': {
             string: true,
             key: 'created_at'
         },
-        "updated at": {
+        'updated_at': {
             string: true,
             key: 'updated_at'
         },
-        "created by": {
+        'created_by': {
             string: true,
             key: 'created_by'
         },
-        "resource url": {
+        'resource_url': {
             string: true,
             key: 'resource_url',
             filter: function (v) {
@@ -120,16 +120,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return ('_0000000000' + v).slice(-10);
             }
         },
-        "database resource url": {
+        'database_resource_url': {
             string: true,
             key: 'database_resource_url',
             filter: wedata_filter
         },
-        "number of successful": {
+        'number_of_successful': {
             number: true,
             key: 'number_of_successful'
         },
-        "number of failed": {
+        'number_of_failed': {
             number: true,
             key: 'number_of_failed'
         }
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     var sorted = null;
     siteinfo_head.onclick = function (e) {
-        var key = e.target.textContent;
+        var key = e.target.id;
         if (types[key]) {
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
             sort_by(infos, types[key]);

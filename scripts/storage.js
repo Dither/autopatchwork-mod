@@ -1,6 +1,7 @@
 (function () {
 var storagebase = opera ? widget.preferences : localStorage;
 if (this.Strg) return;
+// Storage module that supports expiring
 var Storage = this.Strg = {
     get_data:function(key){
         var val = storagebase.getItem(key);
@@ -16,7 +17,7 @@ var Storage = this.Strg = {
         } else if (data.hasOwnProperty('value')) {
             return data.value;
         } else 
-        	return data;
+            return data;
         return null;
     },
     has:function(key){
@@ -51,10 +52,9 @@ Storage.duration = duration;
 // http://gist.github.com/46403
 function duration (dat) {
     var ret = 0, map = {
-        sec:1, min:60, hour:3600, day:86400, week:604800,
-        month:2592000, year:31536000
+        sec:1, min:60, hour:3600, day:86400, week:604800, month:2592000, year:31536000
     };
-    Object.keys(dat).forEach(function(k){if(map[k] > 0)ret += dat[k] * map[k];});
+    Object.keys(dat).forEach(function(k){ if(map[k] > 0) ret += dat[k] * map[k]; });
     return ret * 1000;
 }
 })();
