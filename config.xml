@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" id="extensions:Dither-AutoPatchWork" version="1.9.2dev">
+<widget xmlns="http://www.w3.org/ns/widgets" id="https://github.com/Dither/AutoPatchWorkOpera" version="1.9.2dev">
   <name>AutoPatchWork</name>
   <description>Automatically loads the next page and inserts into current page.</description>
-  <author href="">Dither (based on os0x version)</author>
+  <author href="http://my.opera.com/DitherSky/blog/">Dither (based on os0x version)</author>
   <icon src="icons/icon-64.png"/>
   <access origin="http://ss-o.net" subdomains="true"/>
   <update-description href="update.xml"/>

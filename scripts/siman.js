@@ -17,15 +17,15 @@ var MICROFORMATs = [{
 }];
 
 document.addEventListener('DOMContentLoaded', function () {
-(function siteinfo_init(BackGround) {
+(function siteinfo_init(bgProcess) {
     var g = this;
-    if (g.safari && !BackGround) {
+    if (g.safari && !bgProcess) {
         safari.self.tab.dispatchMessage('siteinfo_init');
         safari.self.addEventListener('message', function (evt) {
             siteinfo_init(evt.message);
         }, false);
         return;
-    } else if (g.opera && !BackGround) {
+    } else if (g.opera && !bgProcess) {
         //console.log(g.opera);
         opera.extension.onmessage = function (evt) {
             siteinfo_init(evt.data.data);
@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         return;
     }
-    BackGround = BackGround || chrome.extension.getBackgroundPage();
-    var getWedataId = BackGround.getWedataId ||
+    bgProcess = bgProcess || chrome.extension.getBackgroundPage();
+    var getWedataId = bgProcess.getWedataId ||
     function getWedataId(inf) {
         return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
     };
@@ -66,12 +66,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.dispatchEvent(ev);
     }
 
-    var debug = BackGround.AutoPatchWork.config.debug_mode;
-
-    var bg_siteinfo = BackGround.siteinfo;
-    var custom_info = BackGround.custom_info;
-    var site_stats = BackGround.site_stats;
-    var site_fail_stats = BackGround.site_fail_stats;
+    var debug = bgProcess.AutoPatchWork.config.debug_mode;
+    var bg_siteinfo = bgProcess.siteinfo;
+    var custom_info = bgProcess.custom_info;
+    var site_stats = bgProcess.site_stats;
+    var site_fail_stats = bgProcess.site_fail_stats;
     var successful = 'number_of_successful';
     var failed = 'number_of_failed'
     var sitemap = {};
@@ -80,6 +79,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     //if (!this.chrome || !chrome.tabs) return;
     var siteinfo_data, timestamp, filtered_info = [];
+    
+    function log(arguments) {
+        if (!debug) return;
+        if (window.opera && window.opera.postError) {
+            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
+        } else if (window.console) {
+            console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
+        }
+    }
 
     var except_info = {
         "database_resource_url": true,
@@ -159,10 +167,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     siteinfo_view.onclick = function (e) {
-        if (e.target === siteinfo_view) {
+        if (e.target && e.target === siteinfo_view) {
             siteinfo_view.style.top = -window.innerHeight + 'px';
             siteinfo_view.style.bottom = window.innerHeight + 'px';
-            siteinfo_view.removeChild(siteinfo_view.firstChild);
+            siteinfo_view.firstChild && siteinfo_view.removeChild(siteinfo_view.firstChild);
         }
     };
 
@@ -203,12 +211,12 @@ document.addEventListener('DOMContentLoaded', function () {
             })) return true;
             return false;
         });
-        debug && console.log('search:' + (new Date - s) + 'ms');
+        debug && log('search completed in ' + (new Date - s) + 'ms');
         var v = new Date * 1;
         SiteinfoView(siteinfo.slice(0, COUNT));
         filtered_info = siteinfo;
         SiteinfoNavi(siteinfo);
-        debug && console.log('view:' + (new Date - v) + 'ms');
+        debug && log('view completed in ' + (new Date - v) + 'ms');
     }, false);
 
 

@@ -107,7 +107,7 @@
         }
         var fails = [];
         var r = info.siteinfo.some(function(s) {
-            return AutoPatchWork(s) || (fails.push(s),false);
+                return AutoPatchWork(s) || (fails.push(s), false);
         });
         (r === false) && sendRequest({failed_siteinfo:fails});
     }
@@ -142,13 +142,13 @@
         var pageElement = status.pageElement = siteinfo.pageElement;
         var location_href = location.href;
 
+        log('site '+siteinfo.url+' detected');
+
         var next = get_next(document);
         if (!next) return log('next link '+nextLink+' not found');
         
         var page_elements = get_next_elements(document);
         if (!page_elements.length) return log('page content like '+pageElement+' not found');
-        
-        log('site '+siteinfo.url+' detected');
 
         if (history.replaceState) {
             var _createHTML = createHTML;
@@ -373,10 +373,10 @@
             document.dispatchEvent(ev);
         }
         function dispatch_mutation_event(opt) {
-            var ev = document.createEvent('MutationEvent');
+            var mue = document.createEvent('MutationEvent');
             with (opt) {
-                ev.initMutationEvent(opt.type, canBubble, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
-                targetNode.dispatchEvent(ev);
+                mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
+                targetNode.dispatchEvent(mue);
             }
         }
         function check_scroll() {
@@ -525,6 +525,7 @@
             var insert_point = status.insert_point;
             var append_point = status.append_point;
             status.loaded = false;
+
             var root, node;
             if (/^tbody$/i.test(append_point.localName)) {
                 var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]',
@@ -552,21 +553,24 @@
             a.setAttribute('number',++status.page_number);
             if (htmlDoc.querySelector('title'))
                 a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
+
             append_point.insertBefore(root, insert_point);
+
             var docs = get_next_elements(htmlDoc);
             var first = docs[0];
             docs.forEach(function(doc,i,docs){
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
+                insert_node.setAttribute('apw-data-url', loaded_url);
                 var mutation = {
-                    targetNode:insert_node,
-                    type:'AutoPatchWork.DOMNodeInserted',
-                    canBubble:true,
-                    cancelable:false,
-                    relatedNode:append_point,
-                    prevValue:null,
-                    newValue:loaded_url,
-                    attrName:null,
-                    attrChange:null
+                    targetNode: insert_node,
+                    eventName: 'AutoPatchWork.DOMNodeInserted',
+                    bubbles: true,
+                    cancelable: false,
+                    relatedNode: append_point,
+                    prevValue: null,
+                    newValue: loaded_url,
+                    attrName: 'URL',
+                    attrChange: 2 // MutationEvent.ADDITION
                 };
                 dispatch_mutation_event(mutation);
                 docs[i] = insert_node;
@@ -629,7 +633,8 @@
         }
         function get_next_elements(doc){
             var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            for (var i = 0,l = r.snapshotLength, res = (l && new Array(l)) || [];i<l;i++) res[i] = r.snapshotItem(i);
+            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i<l; i++)
+                res[i] = r.snapshotItem(i);
             return element_filter(res);
         }
         function x_get_next(doc){

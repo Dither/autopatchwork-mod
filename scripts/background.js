@@ -3,7 +3,6 @@ Object.keys || (Object.keys = function(k){
 	for (var i in k) r.push(i);
 	return r;
 });
-var storagebase = window.opera ? widget.preferences : localStorage;
 var g = this;
 var siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
 var MICROFORMATs = [
