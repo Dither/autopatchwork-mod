@@ -20,10 +20,10 @@
         }, false);
         return;
     }
-    var sendRequest = this.chrome ? function(data,callback) {
+    var sendRequest = window.navigator.userAgent.indexOf('Chrome') !== -1 ? function(data,callback) {
         if (callback) chrome.extension.sendRequest(data, callback);
         else chrome.extension.sendRequest(data);
-    } : this.safari? (function() {
+    } : window.navigator.userAgent.indexOf('Safari') !== -1 ? (function() {
         var eventData = {};
         safari.self.addEventListener('message', function(evt) {
             (evt.name in eventData) && eventData[evt.name](evt.message);
@@ -33,7 +33,7 @@
             callback && (eventData[name] = callback);
             safari.self.tab.dispatchMessage(name,data);
         }
-    })() : this.opera ? (function(data, callback) {
+    })() : window.navigator.userAgent.indexOf('Opera') !== -1 ? (function(data, callback) {
         Object.keys || (Object.keys = function(k) {
             var r = [];
             for (i in k) r.push(i);
@@ -107,7 +107,7 @@
         }
         var fails = [];
         var r = info.siteinfo.some(function(s) {
-                return AutoPatchWork(s) || (fails.push(s), false);
+            return AutoPatchWork(s) || (fails.push(s), false);
         });
         (r === false) && sendRequest({failed_siteinfo:fails});
     }
@@ -473,6 +473,7 @@
             var url = state.nextURL = next.href || next.getAttribute('href') || next.action || next.value;
             var iframe = document.createElement('iframe');
             iframe.style.display = 'none';
+            iframe.setAttribute('style','display: none !important'); //failsafe
             iframe.id = iframe.name = 'AutoPatchWork-request-frame';
             iframe.onload = function(){
                 var doc = iframe.contentDocument;
@@ -542,6 +543,7 @@
             } else {
                 root = node = document.createElement('div');
             }
+            
             node.className = 'autopagerize_page_separator_blocks';
             var h4 = node.appendChild(document.createElement('h4'));
             h4.className = 'autopagerize_page_separator';
@@ -560,7 +562,7 @@
             var first = docs[0];
             docs.forEach(function(doc,i,docs){
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
-                insert_node.setAttribute('apw-data-url', loaded_url);
+                if (insert_node && insert_node.setAttribute) insert_node.setAttribute('apw-data-url', loaded_url);
                 var mutation = {
                     targetNode: insert_node,
                     eventName: 'AutoPatchWork.DOMNodeInserted',
