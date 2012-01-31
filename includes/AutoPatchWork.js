@@ -23,7 +23,7 @@
     var sendRequest = window.navigator.userAgent.indexOf('Chrome') !== -1 ? function(data,callback) {
         if (callback) chrome.extension.sendRequest(data, callback);
         else chrome.extension.sendRequest(data);
-    } : window.navigator.userAgent.indexOf('Safari') !== -1 ? (function() {
+    } : window.navigator.userAgent.indexOf('Apple') !== -1 ? (function() {
         var eventData = {};
         safari.self.addEventListener('message', function(evt) {
             (evt.name in eventData) && eventData[evt.name](evt.message);
@@ -33,7 +33,7 @@
             callback && (eventData[name] = callback);
             safari.self.tab.dispatchMessage(name,data);
         }
-    })() : window.navigator.userAgent.indexOf('Opera') !== -1 ? (function(data, callback) {
+    })() : this.opera ? (function(data, callback) {
         Object.keys || (Object.keys = function(k) {
             var r = [];
             for (i in k) r.push(i);
