@@ -219,7 +219,7 @@
         }
         if (options.BAR_STATUS) {
             bar  = document.createElement('div');
-            bar.id = 'AutoPatchWork-Bar';
+            bar.id = 'AutoPatchWork-bar';
             bar.className = 'on';
             bar.onmouseover = function() {
                 var onoff = document.createElement('button');

@@ -1,4 +1,4 @@
-#AutoPatchWork-Bar{
+#AutoPatchWork-bar{
     background:rgba(0,255,0,0) !important;
     border-bottom: 1px solid rgba(0, 255, 0, 1);
     border-top :12px solid rgba(0, 255, 0, 0.01);
@@ -11,20 +11,20 @@
     z-index:10000 !important;
 }
 
-#AutoPatchWork-Bar.off{
+#AutoPatchWork-bar.off{
     border-bottom: 2px solid rgba(128, 128, 128, 0.1) !important;
     border-top : 2px solid rgba(128, 128, 128, 0.1) !important;
     margin-top:9px;
 }
 
-#AutoPatchWork-Bar:hover{
+#AutoPatchWork-bar:hover{
     background-color:rgba(222,222,222,.75) !important;
     border-top-width:0px !important;
     color:rgba(0,0,0,1) !important;
     height:80px !important;
 }
 
-#AutoPatchWork-Bar.loading{
+#AutoPatchWork-bar.loading{
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count:infinite;
     -webkit-animation-name: loading;
@@ -35,39 +35,44 @@
     border-top : 4px solid rgba(0, 255, 255, .5) !important;
 }
 
-#AutoPatchWork-Bar.terminated{
+#AutoPatchWork-bar.terminated{
     border-bottom: 1px solid rgba(255, 128, 64, .5) !important;
     border-top : 4px solid rgba(255, 128, 64, .5) !important;
 }
 
-#AutoPatchWork-Bar.error{
+#AutoPatchWork-bar.error{
     border-bottom: 1px solid rgba(255, 0, 0, .5) !important;
     border-top : 4px solid rgba(255, 0, 0, .5) !important;
 }
 
-#AutoPatchWork-Bar.loading:hover:after{
+/*
+#AutoPatchWork-bar.loading:hover:before{
     content:"..." !important;
+    text-align:center;
 }
 
-#AutoPatchWork-Bar.terminated:hover:after{
+#AutoPatchWork-bar.terminated:hover:before{
     content:"???" !important;
+    text-align:center;
 }
 
-#AutoPatchWork-Bar.error:hover:after{
+#AutoPatchWork-bar.error:hover:before{
     content:"!!!" !important;
+    text-align:center;
 }
+*/
 
-#AutoPatchWork-Bar.remove{
+#AutoPatchWork-bar.remove{
     display:none !important;
 }
 
-#AutoPatchWork-Bar button{
+#AutoPatchWork-bar button{
     display:none;
     position: relative;
     top: 10px;
 }
 
-#AutoPatchWork-Bar:hover button{
+#AutoPatchWork-bar:hover button{
     background: #222;
     background: -webkit-gradient(linear, left top, left bottom,from(#222),to(#666));
     border:1px solid #aaa;

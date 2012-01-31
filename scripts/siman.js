@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target && e.target === siteinfo_view) {
             siteinfo_view.style.top = -window.innerHeight + 'px';
             siteinfo_view.style.bottom = window.innerHeight + 'px';
-            siteinfo_view.firstChild && siteinfo_view.removeChild(siteinfo_view.firstChild);
+            while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
         }
     };
 
@@ -468,8 +468,10 @@ document.addEventListener('DOMContentLoaded', function () {
         xhr.send(null);
     }
     window.onresize = function () {
+        // do we need onresize event at all?
         siteinfo_view.style.top = -window.innerHeight + 'px';
         siteinfo_view.style.bottom = window.innerHeight + 'px';
+        while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
     };
 
     if (sessionStorage.siteinfo_wedata) {
