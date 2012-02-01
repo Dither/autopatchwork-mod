@@ -224,3 +224,9 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
     background: -o-linear-gradient(top left, #ccc, #fff);
     color:#222;
 }
+
+#loader {
+    width:16px;
+    height:11px;
+    z-index: 1000;
+}

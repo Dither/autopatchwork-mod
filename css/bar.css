@@ -1,7 +1,7 @@
 #AutoPatchWork-bar{
     background:rgba(0,255,0,0) !important;
     border-bottom: 1px solid rgba(0, 255, 0, 1);
-    border-top :12px solid rgba(0, 255, 0, 0.01);
+    border-top:12px solid rgba(0, 255, 0, 0.01);
     bottom:0px !important;
     color:rgba(0,0,0,0) !important;
     position:fixed !important;
@@ -13,7 +13,7 @@
 
 #AutoPatchWork-bar.off{
     border-bottom: 2px solid rgba(128, 128, 128, 0.1) !important;
-    border-top : 2px solid rgba(128, 128, 128, 0.1) !important;
+    border-top:2px solid rgba(128, 128, 128, 0.1) !important;
     margin-top:9px;
 }
 
@@ -32,7 +32,22 @@
     animation-iteration-count:infinite;
     animation-name: loading;
     border-bottom: 1px solid rgba(0, 128, 255, .5) !important;
-    border-top : 4px solid rgba(0, 255, 255, .5) !important;
+    border-top : 1px solid rgba(0, 255, 255, .5) !important;
+}
+
+#AutoPatchWork-loader{
+    display: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: fixed !important;
+    width: 16px !important;
+    height: 11px !important;
+    right: 22px !important;
+    bottom: 3px !important;
+}
+
+#AutoPatchWork-bar.loading img{
+    display: block;
 }
 
 #AutoPatchWork-bar.terminated{
@@ -43,6 +58,10 @@
 #AutoPatchWork-bar.error{
     border-bottom: 1px solid rgba(255, 0, 0, .5) !important;
     border-top : 4px solid rgba(255, 0, 0, .5) !important;
+}
+
+#AutoPatchWork-bar.error img, #AutoPatchWork-bar.terminated img{
+    display: none;
 }
 
 /*

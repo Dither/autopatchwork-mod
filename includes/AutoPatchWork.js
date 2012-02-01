@@ -10,9 +10,13 @@
 // @exclude *dragonfly.opera.com*
 // ==/UserScript==
 
+window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+
 (function APW(g, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    if(window.name === 'AutoPatchWork-request-frame') return;
-    if (g.opera && !APW.loaded) {
+    if(window.name === 'AutoPatchWork-request-frame')
+        return;
+
+    if(g.opera && !APW.loaded) {
         var args = arguments;
         document.addEventListener('DOMContentLoaded', function(e) {
             APW.loaded = true;
@@ -20,61 +24,90 @@
         }, false);
         return;
     }
-    var sendRequest = window.navigator.userAgent.indexOf('Chrome') !== -1 ? function(data,callback) {
-        if (callback) chrome.extension.sendRequest(data, callback);
-        else chrome.extension.sendRequest(data);
-    } : window.navigator.userAgent.indexOf('Apple') !== -1 ? (function() {
-        var eventData = {};
-        safari.self.addEventListener('message', function(evt) {
-            (evt.name in eventData) && eventData[evt.name](evt.message);
-        },false);
-        return function(data, callback, name) {
-            name = (name || '') + (Date.now() + Math.random().toString(36));
-            callback && (eventData[name] = callback);
-            safari.self.tab.dispatchMessage(name,data);
+
+    var sendRequest, browser,
+        BROWSER_CHROME = 'chrome',
+        BROWSER_SAFARI = 'safari',
+        BROWSER_OPERA = 'opera';
+
+    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+    else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+    else */browser = BROWSER_OPERA;
+
+    switch(browser) {
+        case BROWSER_CHROME:
+            sendRequest = function(data, callback) {
+                if(callback) chrome.extension.sendRequest(data, callback);
+                else chrome.extension.sendRequest(data);
+            };
+            break;
+        case BROWSER_SAFARI:
+            sendRequest = (function() {
+                var eventData = {};
+                safari.self.addEventListener('message', function(evt) {(evt.name in eventData) && eventData[evt.name](evt.message);
+                }, false);
+                return function(data, callback, name) {
+                    name = (name || '') + (Date.now() + Math.random().toString(36));
+                    callback && (eventData[name] = callback);
+                    safari.self.tab.dispatchMessage(name, data);
+                }
+            })();
+            break;
+        case BROWSER_OPERA:
+            sendRequest = (function(data, callback) {
+                Object.keys || (Object.keys = function(k) {
+                    var r = [];
+                    for(i in k)
+                    r.push(i);
+                    return r;
+                });
+                var eventData = {};
+                opera.extension.onmessage = function(evt) {(evt.data.name in eventData) && eventData[evt.data.name](evt.data.data); };
+                return function(data, callback, name) {
+                    name = (name || '') + (Date.now() + Math.random().toString(36));
+                    callback && (eventData[name] = callback);
+                    opera.extension.postMessage({
+                        name: name,
+                        data: data
+                    });
+                };
+            })();
+            break;
+        default: {
+            sendRequest = null;
+            alert('[AutoPatchWork] Browser not detected!');
+            return;
         }
-    })() : this.opera ? (function(data, callback) {
-        Object.keys || (Object.keys = function(k) {
-            var r = [];
-            for (i in k) r.push(i);
-            return r;
-        });
-        var eventData = {};
-        opera.extension.onmessage = function(evt) {
-            (evt.data.name in eventData) && eventData[evt.data.name](evt.data.data);
-        };
-        return function(data, callback, name) {
-            name = (name || '') + (Date.now() + Math.random().toString(36));
-            callback && (eventData[name] = callback);
-            opera.extension.postMessage({name:name,data:data});
-        };
-    })() : null;
+    }
+    
     var options = {
-        BASE_REMAIN_HEIGHT:400,
-        FORCE_TARGET_WINDOW:true,
-        DEFAULT_STATE:true,
-        TARGET_WINDOW_NAME:'_blank',
-        BAR_STATUS:true,
-        css:''
+        BASE_REMAIN_HEIGHT: 400,
+        FORCE_TARGET_WINDOW: true,
+        DEFAULT_STATE: true,
+        TARGET_WINDOW_NAME: '_blank',
+        BAR_STATUS: true,
+        css: ''
     };
     var status = {
-        state:true,
-        loaded:false,
-        page_number:1,
-        nextLink:null,
-        pageElement:null,
-        last_element:null,
-        insert_point:null,
-        append_point:null,
-        bottom:null,
-        remain_height:null
+        state: true,
+        loaded: false,
+        page_number: 1,
+        nextLink: null,
+        pageElement: null,
+        last_element: null,
+        insert_point: null,
+        append_point: null,
+        bottom: null,
+        remain_height: null
     };
-    var Root = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
-    var debug = false;
-    var isXHTML = document.documentElement.nodeName !== 'HTML'
+    var bar, img,
+        rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
+        debug = false,
+        isXHTML = document.documentElement.nodeName !== 'HTML'
         && document.createElement('p').nodeName !== document.createElement('P').nodeName;
+
+    // Begin listening for SITEINFO messages and send reset event if got one while already active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
-    var bar;
     
     sendRequest({url: location.href, isFrame: window.top!=window.self}, init, 'AutoPatchWork.init');
     
@@ -112,12 +145,12 @@
         (r === false) && sendRequest({failed_siteinfo:fails});
     }
     function siteinfo(evt) {
-        if (evt.siteinfo && !window.AutoPatchWorked) {
+        if(evt.siteinfo && !window.AutoPatchWorked) {
             AutoPatchWork(evt.siteinfo);
-        } else if (evt.siteinfo) {
+        } else if(evt.siteinfo) {
             var ev = document.createEvent('Event');
             ev.initEvent('AutoPatchWork.reset', true, true);
-            for (var k in evt.siteinfo) {
+            for(var k in evt.siteinfo) {
                 ev[k] = evt.siteinfo[k];
             }
             document.dispatchEvent(ev);
@@ -211,14 +244,16 @@
         window.addEventListener('AutoPatchWork.state', state, false);
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
-        if (request === request_iframe) {
-            window.addEventListener('AutoPatchWork.pageloaded', function(){
+        window.addEventListener('AutoPatchWork.pageloaded', (function(iframed){
+            var b = document.getElementById('AutoPatchWork-bar');
+            if (b) b.className = 'on';
+            if (iframed) {
                 var i = document.getElementById('AutoPatchWork-request-frame');
-                i && i.parentNode && i.parentNode.removeChild(i);
-            }, false);
-        }
+                if(i && i.parentNode) i.parentNode.removeChild(i);
+            }
+        })(request === request_iframe), false);
         if (options.BAR_STATUS) {
-            bar  = document.createElement('div');
+            bar = document.createElement('div');
             bar.id = 'AutoPatchWork-bar';
             bar.className = 'on';
             bar.onmouseover = function() {
@@ -249,10 +284,15 @@
                     state_on();
                 }
             }
+            img =  document.createElement('img');
+            img.id = 'AutoPatchWork-loader';
+            img.src = window.imgAPWLoader;
+            bar.appendChild(img);
+            
             document.body.appendChild(bar);
             bar.addEventListener('click', function(e) {
                 if(e.target === bar) {
-                    _toggle();
+                    this._toggle();
                 }
             }, false);
             status.bar = bar;
@@ -261,7 +301,7 @@
         style.textContent = options.css;
         style.id = 'AutoPatchWork-style';
         document.head.appendChild(style);
-        var pageHeight = Root.offsetHeight;
+        var pageHeight = rootNode.offsetHeight;
         if (window.innerHeight >= pageHeight) {
             check_scroll();
         }
@@ -382,10 +422,10 @@
         function check_scroll() {
             if (loading || !status.state) return;
            
-            var remain = Root.scrollHeight - window.innerHeight - window.pageYOffset;
+            var remain = rootNode.scrollHeight - window.innerHeight - window.pageYOffset;
             if (remain < status.remain_height) {
+                if (bar) bar.className = 'loading';
                 dispatch_event('AutoPatchWork.request');
-                bar && (bar.className = 'loading');
             }
         }
         function target_rewrite(evt) {
@@ -577,7 +617,7 @@
                 dispatch_mutation_event(mutation);
                 docs[i] = insert_node;
             });
-            if (status.bottom) status.bottom.style.height = Root.scrollHeight + 'px';
+            if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
             next = get_next(htmlDoc);
             if (!next) {
                 dispatch_event('AutoPatchWork.terminated',{message:'nextLink not found.'});
@@ -594,7 +634,6 @@
                 }, 1000);
             }
             dispatch_event('AutoPatchWork.pageloaded');
-            bar && (bar.className = 'on');
             htmlDoc = null;
         }
         function createXHTML(str){
@@ -670,9 +709,9 @@
                 bottom = rect.top + rect.height + window.pageYOffset;
             }
             if (!bottom) {
-                bottom = Math.round(Root.scrollHeight * 0.8);
+                bottom = Math.round(rootNode.scrollHeight * 0.8);
             }
-            return Root.scrollHeight - bottom + options.BASE_REMAIN_HEIGHT;
+            return rootNode.scrollHeight - bottom + options.BASE_REMAIN_HEIGHT;
         }
         function addDefaultPrefix(xpath, prefix) {
             var tokenPattern = /([A-Za-z_\u00c0-\ufffd][\w\-.\u00b7-\ufffd]*|\*)\s*(::?|\()?|(".*?"|'.*?'|\d+(?:\.\d*)?|\.(?:\.|\d+)?|[\)\]])|(\/\/?|!=|[<>]=?|[\(\[|,=+-])|([@$])/g;
