@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset='utf-8'>
-<title>AutoPatchWork</title>
-<link href='css/options.css' rel='stylesheet' type='text/css'>
-<script type='text/javascript' src='scripts/storage.js'></script>
-<script type='text/javascript' src='scripts/xpath.js'></script>
-<script type='text/javascript' src='scripts/tween2.js'></script>
-<script type='text/javascript' src='scripts/options.js'></script>
+    <meta charset='utf-8'>
+    <title>AutoPatchWork</title>
+    <link href='css/options.css' rel='stylesheet' type='text/css'>
+    <script type='text/javascript' src='scripts/storage.js'></script>
+    <script type='text/javascript' src='scripts/xpath.js'></script>
+    <script type='text/javascript' src='scripts/tween2.js'></script>
+    <script type='text/javascript' src='scripts/options.js'></script>
+</head>
 <body class='tabbox'>
     <ul class='tabs' id='menu-tabs'>
         <li id='menu-basics' class='selected'>
@@ -33,11 +34,15 @@
         <div id='inner-container'>
             <section id='general' class='content'>
                 <div class='buttons'>
-                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update SITEINFO</button>
+                    <button id='update_siteinfo' class='MSG_update_siteinfo'>
+                        Update SITEINFO
+                    </button>
                     <span id='update_siteinfo_output'></span>
                 </div>
                 <div class='buttons'>
-                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>SITEINFO manager</button>
+                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>
+                        SITEINFO manager
+                    </button>
                 </div>
                 <div>
                     <input type='checkbox' id='auto_start'>
@@ -53,11 +58,11 @@
                 </div>
                 <div>
                     <input type='checkbox' id='replace_state'>
-                    <label for='replace_state' class='MSG_replace_state'>Replace location URL when appending pages</label>
+                    <label for='replace_state' class='MSG_replace_state'>Replace location URL when appending</label>
                 </div>
                 <div>
                     <input type='checkbox' id='bar_status'>
-                    <label for='bar_status' class='MSG_bottom_bar'>Enable bottom status bar (possible slowdowns)</label>
+                    <label for='bar_status' class='MSG_bottom_bar'>Enable inpage status bar (possible slowdowns)</label>
                 </div>
                 <div>
                     <span class='mins'>0</span>
@@ -73,19 +78,21 @@
                     <label for='debug_mode' class='MSG_debugmode'>Debug output</label>
                 </div>
                 <!--<div>
-                    <h4 class='MSG_bottom_bar'>Bottom status bar</h4>
-                    <p>
-                        <input type='radio' name='bar_status' id='bar_on' value='on'>
-                        <label for='bar_on' class='MSG_bar_on'>ON</label>
-                    </p>
-                    <p>
-                        <input type='radio' name='bar_status' id='bar_off' value='off'>
-                        <label for='bar_off' class='MSG_bar_off'>OFF</label>
-                    </p>
+                <h4 class='MSG_bottom_bar'>Statusbar</h4>
+                <p>
+                <input type='radio' name='bar_status' id='bar_on' value='on'>
+                <label for='bar_on' class='MSG_bar_on'>ON</label>
+                </p>
+                <p>
+                <input type='radio' name='bar_status' id='bar_off' value='off'>
+                <label for='bar_off' class='MSG_bar_off'>OFF</label>
+                </p>
                 </div>-->
             </section>
             <section id='filters' class='content' style='visibility: hidden; height: 100px'>
-                <div class='MSG_exclude_filter'>Exclude Filter by URL</div>
+                <div class='MSG_exclude_filter'>
+                    Exclude Filter by URL
+                </div>
                 <ul id='filter_list'></ul>
                 <select id='filter_type'>
                     <option class='MSG_filter_prefix' value='prefix'>prefix</option>
@@ -93,127 +100,123 @@
                     <option class='MSG_filter_regexp' value='regexp'>regexp</option>
                 </select>
                 <input type='text' id='filter_text' value=''>
-                <button id='add_filter' class='MSG_add'>Add</button>
+                <button id='add_filter' class='MSG_add'>
+                    Add
+                </button>
             </section>
             <section id='styles' class='content' style='visibility: hidden; height: 100px'>
-                <div class='MSG_separator_style'>Page Separator Style</div>
+                <div class='MSG_separator_style'>
+                    Page Separator Style
+                </div>
                 <textarea id='css_text'></textarea>
                 <div class="buttons">
-                    <button id='apply_css' class='MSG_save'>Save</button>
+                    <button id='apply_css' class='MSG_save'>
+                        Save
+                    </button>
                 </div>
                 <div class="buttons">
-                    <button id='reset_css' class='MSG_reset'>Reset</button>
+                    <button id='reset_css' class='MSG_reset'>
+                        Reset
+                    </button>
                 </div>
             </section>
             <section id='custompatterns' class='content' style='visibility: hidden; height: 100px'>
-                <div class='MSG_separator_style'>Custom SITEINFO patterns</div>
+                <div class='MSG_separator_style'>
+                    Custom SITEINFO patterns
+                </div>
                 <textarea id='custom_patterns'></textarea>
                 <div class="buttons">
-                    <button id='apply_custom_patterns' class='MSG_save'>Save</button>
+                    <button id='apply_custom_patterns' class='MSG_save'>
+                        Save
+                    </button>
                 </div>
                 <div class="buttons">
-                    <button id='reset_custom_patterns' class='MSG_reset'>Reset</button>
+                    <button id='reset_custom_patterns' class='MSG_reset'>
+                        Reset
+                    </button>
                 </div>
             </section>
             <section id='news' class='content' style='visibility: hidden; height: 100px'>
                 <ul>
                     <li>
-                        <h4>2011/05/31 0:24</h4>When not specified target = _blank.
-                        Added page restoring after using browser return button.
-                    </li>
-                    <li>
-                        <h4>2011/05/15 19:21</h4>Instant Search enabled on Google.
-                        <p>(added 2011/05/15 23:37) Corrected page numbers in the additional shift,
-                            displacement of the insert position fix. Enabled instant search suggestions, bug reported by <a
-                            href='https://twitter.com/mono0x'>@mono0x</a> Thanks!</p>
-                    </li>
-                    <li>
-                        <h4>2011/04/03 15:51</h4>For
-                        <p>Safari users: the environment (when the two-finger trackpad scrolling)
-                            I'm going to fix the problem when concatenating the scroll position shifts.
-                            Issues around option will fix that later.</p>
-                    </li>
-                    <li>
-                        <h4>2011/02/09 23:20</h4>Added option to display the status bar at the bottom of the page
-                        <p>If scrolling feels heavy, it may be better to disable it.</p>
-                    </li>
-                    <li>
-                        <h4>2011/02/04 01:35</h4>Fixed a bug that stopped the process when there was an incorrect regular expression in SITEINFO.
-                    </li>
-                    <li>
-                        <h4>2010/10/24 12:43</h4>Fixed some apply bugs.
-                        <p>Filters. Thx <a href='http://twitter.com/syoichi/status/28557748256' target='_blank'>@syoichi</a>!</p>
-                    </li>
-                    <li>
-                        <h4>2010/10/24 1:53</h4>
+                        <h4>2012/02/02</h4>Current functionality:
                         <ul>
-                            <li>Caccording to body language settings</li>
-                            <li>Chrome, I do some Japanese. management functions implemented</li>
-                            <li>SITEINFO. addresses the issue does not appear to have beautiful images</li>
-                            <li>Tumblr. Conclusion was supported</li>
-                            <li>NAVER.</li>
+                            <li>
+                                Autostart option.
+                            </li>
+                            <li>
+                                Links target rewriting option.
+                            </li>
+                            <li>
+                                SITEINFO updater and manager.
+                            </li>
+                            <li>
+                                IFRAME mode toggle.
+                            </li>
+                            <li>
+                                Fast history navigation.
+                            </li>
+                            <li>
+                                Support of custom CSS for the page separator.
+                            </li>
+                            <li>
+                                Support of custom SITEINFO patterns in JSON format.
+                            </li>
+                            <li>
+                                Option to replace location URL on pagerizing.
+                            </li>
+                            <li>
+                                Scroll height option.
+                            </li>
+                            <li>
+                                Debug output support.
+                            </li>
+                            <li>
+                                Site filters by regexps, prefixes and domains.
+                            </li>
+                            <li>
+                                SITEINFO manager: instant search, editing and disabling of sites, internal auto-pagerizing.
+                            </li>
+                            <li>
+                                Status bar: loading animation, toggle APW, call SI-manager or APW's preferences page.
+                            </li>
                         </ul>
-                    </li>
-                    <li>
-                        <h4>2010/06/16 16:03</h4>Measures
-                        <p>Yahoo (anti-redirecting site sandwich) Fix the bombing was part of the site.</p>
-                    </li>
-                    <li>
-                        <h4>2010/06/15 17:24</h4>Modify the specified threshold of WW Open in New Tab
-                        <p>Also, when opening a new tab for record-keeping history (history.pushState)
-                            that we measure with a link back to the page when you click back in history.
-                            However, the shift is a challenge scroll position.
-                        </p>
-                    </li>
-                    <li>
-                        <h4>2010/06/15 14:27</h4>according to the version
-                        <p>Safari, now line the bottom of the page to display. This makes it possible
-                            to control the ON / OFF in the pages using frames. In addition, so it was
-                            easy to see when you turn OFF the footer.
-                        </p>Failed to record an attempt to apply SITEINFO
-                        <p>Again, we will use as the data is not being used to disable the SITEINFO.</p>
-                    </li>
-                    <li>
-                        <h4>2010/02/18 2:57</h4>How to define a prefix match
-                        <p>
-                            Filter, domain matching has to choose between three of the regular expression.
-                        </p>Cache is now two days.
-                        <p>SITEINFO. Instead, with a button to update the siteinfo (whether to back
-                            up files to the target location, or wedata as backup).
-                        </p>I used to record the actual SITEINFO
-                        <p>Later, you can use your common SITEINFO list, you will be able to disable or not use SITEINFO.</p>
-                    </li>
-                    <li>
-                        <h4>2010/01/12 20:34</h4>
-                        Base remain height (variable to decide on after how much scroll begin loading next page ) can now be set.
-                    </li>
-                    <li>
-                        <h4>2010/01/12 19:52</h4>
-                        <p>Added debug mode.</p>
-                    </li>
-                    <li>
-                        <h4>2009/11/02 14:45</h4>Added some settings
-                        Page break can now be customized with CSS style.
-                    </li>
-                    <li>
-                        <h4>2009/10/23 12:08</h4>Fixed a bug with Chrome 4.0.223.9.
                     </li>
                 </ul>
             </section>
             <section id='about' class='content' style='visibility: hidden; height: 100px'>
                 <dl>
-                    <dt>Name:</dt>
-                    <dd>AutoPatchWork</dd>
-                    <dt>Author: </dt>
-                    <dd><a href='' target='_blank'>Dither</a></dd>
-                    <dt>Thanks:</dt>
-                    <dd><a href='http://ss-o.net/' target='_blank'>os0x</a></dd>
-                    <dd><a href='http://autopagerize.net/' target='_blank'>AutoPagerize</a></dd>
-                    <dt>License:</dt>
-                    <dd><a href='http://creativecommons.org/licenses/MIT/' target='_blank'>The MIT license</a></dd>
+                    <dt>
+                        Name:
+                    </dt>
+                    <dd>
+                        AutoPatchWork
+                    </dd>
+                    <dt>
+                        Author:
+                    </dt>
+                    <dd>
+                        <a href='' target='_blank'>Dither</a>
+                    </dd>
+                    <dt>
+                        Thanks:
+                    </dt>
+                    <dd>
+                        <a href='http://ss-o.net/' target='_blank'>os0x</a>
+                    </dd>
+                    <dd>
+                        <a href='http://autopagerize.net/' target='_blank'>AutoPagerize</a>
+                    </dd>
+                    <dt>
+                        License:
+                    </dt>
+                    <dd>
+                        <a href='http://creativecommons.org/licenses/MIT/' target='_blank'>The MIT license</a>
+                    </dd>
                 </dl>
             </section>
         </div>
-    </div> <!--base-->
+    </div>
+    <!--base-->
 </body>
 </html>

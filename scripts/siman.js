@@ -12,19 +12,20 @@ var MICROFORMATs = [{
     insertBefore: '//*[contains(concat(" ",@class," "), " autopagerize_insert_before ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " autopagerize_page_element ")]'
 },
-    { // do someone trust this one?
+    {
     url: '^https?://.',
     nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
-    pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " xfolkentry ")]'
+    pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
 }];
-
-function APWException(message) {
-   this.message = message;
-   this.name = "[AutoPatchWork]";
-}
 
 (function siteinfo_init(bgProcess) {
     var self = this;
+
+    function APWException(message) {
+        this.message = message;
+        this.name = "[AutoPatchWork]";
+    }
+
     if (self.safari && !bgProcess) {
         safari.self.tab.dispatchMessage('siteinfo_init');
         safari.self.addEventListener('message', function (evt) {
@@ -34,13 +35,18 @@ function APWException(message) {
     } else if (self.opera && !bgProcess) {
         //console.log(self.opera);
         opera.extension.onmessage = function (evt) {
-            siteinfo_init(evt.data.data);
+            if (!evt) return;
+            if (evt.data) {
+                siteinfo_init(evt.data.data);
+            } else {
+                throw new APWException('Can\'t fing background process!');
+            }
         };
         opera.extension.postMessage({ name: 'siteinfo_init' });
         return;
     } else {
         bgProcess = bgProcess || chrome.extension.getBackgroundPage();
-        if (!bgProcess) throw new APWException('Can\'t find bgProcess');
+        if (!bgProcess) throw new APWException('Can\'t fing background process!');
     }
 
     var getWedataId = bgProcess.getWedataId || // WTF???
@@ -61,7 +67,6 @@ function APWException(message) {
     }
 
     window.addEventListener('AutoPatchWork.request', function(e) {
-        //if(!e) e = window.event;
         e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
         dispatch_event('AutoPatchWork.append');
     }, true);
@@ -72,14 +77,14 @@ function APWException(message) {
         document.getElementById('loader').style.display = 'none';       
         
         window.addEventListener('AutoPatchWork.append', function (e) {
+            e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
             if (infos && infos.length > COUNT * (PageIndex + 1)) {
                 PageIndex++;
-                SiteInfoView(infos.slice(COUNT * PageIndex, COUNT * (PageIndex + 1)), COUNT * PageIndex, true);
+                SiteInfoView(infos.slice(COUNT * PageIndex, COUNT * (PageIndex + 1)), COUNT * PageIndex);
+            } else {
+                 dispatch_event('AutoPatchWork.pageloaded');
             }     
-            //if(!e) e = window.event;
-            e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
-            //return false;
         }, true);
 
         var debug = bgProcess.AutoPatchWork.config.debug_mode;
@@ -88,7 +93,7 @@ function APWException(message) {
         var site_stats = bgProcess.site_stats;
         var site_fail_stats = bgProcess.site_fail_stats;
         var successful = 'number_of_successful';
-        var failed = 'number_of_failed'
+        var failed = 'number_of_failed';
         var sitemap = {};
 
         bg_siteinfo.forEach(function (v) {
@@ -151,7 +156,7 @@ function APWException(message) {
                 number: true,
                 key: 'number_of_failed'
             }
-        }
+        };
 
         function wedata_filter(v) {
             return v.replace(/http:\/\/wedata\.net\/(items\/|databases\/)?/, '');
@@ -176,7 +181,7 @@ function APWException(message) {
                 SiteInfoNavi(infos);
                 sorted = e.target;
             }
-        }
+        };
         
         siteinfo_view.onclick = function (e) {
             if (e.target && e.target === siteinfo_view) {
@@ -190,7 +195,7 @@ function APWException(message) {
         siteinfo_search_input.addEventListener('input', function (evt) {
             if (!siteinfo_data.length) return;
             // show ajax loader here
-            togglePopup('loader', true);
+            toggle_popup('loader', true);
             var fullword = siteinfo_search_input.value,
                 fullwords = [];
             var s = new Date * 1;
@@ -222,7 +227,7 @@ function APWException(message) {
                 }
                 var dat = ret.join('\n');
                 if (keys.every(function (r) {
-                    return r.test(dat)
+                    return r.test(dat);
                 })) return true;
                 return false;
             });
@@ -233,7 +238,7 @@ function APWException(message) {
             SiteInfoNavi(siteinfo);
             debug && log('view completed in ' + (new Date - v) + 'ms');
             // hide ajax loader here
-            togglePopup('loader', false);
+            toggle_popup('loader', false);
         }, false);
 
         function url2anchor(url) {
@@ -314,8 +319,8 @@ function APWException(message) {
             });
         }
 
-        function SiteInfoView(siteinfo, append, gen_event) {
-            togglePopup('loader', true);
+        function SiteInfoView(siteinfo, append) {
+            toggle_popup('loader', true);
             var df = document.createDocumentFragment();
             siteinfo.forEach(function (info, i) {
                 var id = getWedataId(info);
@@ -446,8 +451,8 @@ function APWException(message) {
                 sorted = null;
             }
             siteinfo_body.appendChild(df);
-            togglePopup('loader', false);
-            if (gen_event) dispatch_event('AutoPatchWork.pageloaded');
+            toggle_popup('loader', false);
+            dispatch_event('AutoPatchWork.pageloaded');
         }
 
         function SiteInfoNavi(siteinfo) {
@@ -488,7 +493,7 @@ function APWException(message) {
             xhr.send(null);
         }
 
-        function togglePopup(id , state) {
+        function toggle_popup(id , state) {
             var popup = document.getElementById(id);
             popup.style.display = state ? 'inline-block' : 'none';
         }
@@ -506,7 +511,7 @@ function APWException(message) {
             sort_by(siteinfo_data, {
                 number: true,
                 key: failed
-            })
+            });
             SiteInfoView(siteinfo_data.slice(0, COUNT));
             SiteInfoNavi(siteinfo_data);
             window.onresize();
@@ -518,7 +523,7 @@ function APWException(message) {
                 sort_by(siteinfo_data, {
                     number: true,
                     key: failed
-                })
+                });
                 SiteInfoView(siteinfo_data.slice(0, COUNT));
                 SiteInfoNavi(siteinfo);
                 window.onresize();

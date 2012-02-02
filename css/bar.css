@@ -11,7 +11,7 @@
     z-index:10000 !important;
 }
 
-#AutoPatchWork-bar.off{
+#AutoPatchWork-bar.autopagerize_off{
     border-bottom: 2px solid rgba(128, 128, 128, 0.1) !important;
     border-top:2px solid rgba(128, 128, 128, 0.1) !important;
     margin-top:9px;
@@ -24,13 +24,13 @@
     height:80px !important;
 }
 
-#AutoPatchWork-bar.loading{
+#AutoPatchWork-bar.autopagerize_loading{
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count:infinite;
-    -webkit-animation-name: loading;
+    -webkit-animation-name:.autopagerize_loading;
     animation-duration: 1s;
     animation-iteration-count:infinite;
-    animation-name: loading;
+    animation-name:.autopagerize_loading;
     border-bottom: 1px solid rgba(0, 128, 255, .5) !important;
     border-top : 1px solid rgba(0, 255, 255, .5) !important;
 }
@@ -46,42 +46,44 @@
     bottom: 3px !important;
 }
 
-#AutoPatchWork-bar.loading img{
+#AutoPatchWork-bar.autopagerize_loading img{
     display: block;
 }
 
-#AutoPatchWork-bar.terminated{
+#AutoPatchWork-bar.autopagerize_terminated{
     border-bottom: 1px solid rgba(255, 128, 64, .5) !important;
     border-top : 4px solid rgba(255, 128, 64, .5) !important;
 }
 
-#AutoPatchWork-bar.error{
+#AutoPatchWork-bar.autopagerize_error{
     border-bottom: 1px solid rgba(255, 0, 0, .5) !important;
     border-top : 4px solid rgba(255, 0, 0, .5) !important;
 }
 
-#AutoPatchWork-bar:hover img, #AutoPatchWork-bar.error img, #AutoPatchWork-bar.terminated img{
+#AutoPatchWork-bar:hover img,
+#AutoPatchWork-bar.autopagerize_error img,
+#AutoPatchWork-bar.autopagerize_terminated img{
     display: none;
 }
 
 /*
-#AutoPatchWork-bar.loading:hover:before{
+#AutoPatchWork-bar.autopagerize_loading:hover:before{
     content:"..." !important;
     text-align:center;
 }
 
-#AutoPatchWork-bar.terminated:hover:before{
+#AutoPatchWork-bar.autopagerize_terminated:hover:before{
     content:"???" !important;
     text-align:center;
 }
 
-#AutoPatchWork-bar.error:hover:before{
+#AutoPatchWork-bar.autopagerize_error:hover:before{
     content:"!!!" !important;
     text-align:center;
 }
 */
 
-#AutoPatchWork-bar.remove{
+#AutoPatchWork-bar.autopagerize_remove{
     display:none !important;
 }
 
@@ -103,7 +105,7 @@
     width:40px;
 }
 
-@-webkit-keyframes loading {
+@-webkit-keyframes.autopagerize_loading {
     border-bottom-color:rgba(0, 128, 255, 0.75);
     border-bottom-width:12px;
     border-top-width:1px;
@@ -118,7 +120,7 @@
     };
 }
 
-@keyframes loading {
+@keyframes.autopagerize_loading {
     border-bottom-color:rgba(0, 128, 255, 0.75);
     border-bottom-width:12px;
     border-top-width:1px;

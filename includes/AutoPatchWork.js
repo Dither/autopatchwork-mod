@@ -10,8 +10,6 @@
 // @exclude *dragonfly.opera.com*
 // ==/UserScript==
 
-window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
-
 /* 
  * Normal AutoPatchWork event flow:
  *  AutoPatchWork.siteinfo - got SITEINFO for the current site.
@@ -32,10 +30,20 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
  *  AutoPatchWork.toggle - toggle statusbar state.
 */
 
-(function APW(g, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    if (window.name === 'AutoPatchWork-request-frame') return;
+(function APW(self, window, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
+    if (window.name === 'AutoPatchWork-request-iframe') {
+        return;
+    }
 
-    if (g.opera && !APW.loaded) {
+    function APWException(message) {
+        this.message = message;
+        this.name = "[AutoPatchWork]";
+    }
+
+    // Cute AJAX loader gif.
+    window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+
+    if (self.opera && !APW.loaded) {
         var args = arguments;
         document.addEventListener('DOMContentLoaded', function (e) {
             APW.loaded = true;
@@ -70,14 +78,14 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
                     name = (name || '') + (Date.now() + Math.random().toString(36));
                     callback && (eventData[name] = callback);
                     safari.self.tab.dispatchMessage(name, data);
-                }
+                };
             })();
             break;
         case BROWSER_OPERA:
             sendRequest = (function (data, callback) {
                 Object.keys || (Object.keys = function (k) {
                     var r = [];
-                    for (i in k) r.push(i);
+                    for (var i in k) r.push(i);
                     return r;
                 });
                 var eventData = {};
@@ -95,11 +103,9 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             })();
             break;
         default:
-            {
-                sendRequest = null;
-                alert('[AutoPatchWork] Browser not detected!');
-                return;
-            }
+            sendRequest = null;
+            throw new APWException('Browser not detected!');
+            return;
     } // switch(browser)
 
     var options = {
@@ -303,13 +309,13 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
         /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
             pageloaded();
-            var i = document.getElementById('AutoPatchWork-request-frame');
+            var i = document.getElementById('AutoPatchWork-request-iframe');
             if (i && i.parentNode) i.parentNode.removeChild(i);
         }
         /* Sets status bar to ready state. */
         function pageloaded() {
             var b = document.getElementById('AutoPatchWork-bar');
-            if (b) b.className = 'on';
+            if (b) b.className = 'autopagerize_on';
         }
 
         if (in_iframe) {
@@ -321,7 +327,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
             bar.id = 'AutoPatchWork-bar';
-            bar.className = 'on';
+            bar.className = 'autopagerize_on';
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.textContent = 'TGL';
@@ -343,11 +349,11 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             };
             /* Toggles status bar ready state. */
             function _toggle() {
-                if (bar.className === 'on') {
-                    bar.className = 'off';
+                if (bar.className === 'autopagerize_on') {
+                    bar.className = 'autopagerize_off';
                     state_off();
-                } else if (bar.className === 'off') {
-                    bar.className = 'on';
+                } else if (bar.className === 'autopagerize_off') {
+                    bar.className = 'autopagerize_on';
                     state_on();
                 }
             }
@@ -465,7 +471,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
         function terminated(evt) {
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
-            bar && (bar.className = 'terminated');
+            bar && (bar.className = 'autopagerize_terminated');
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
@@ -487,21 +493,24 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             }
         }
         /*function message(message) {
-            if (debug) log(message, JSON.stringify(siteinfo,null,2));
+            log(message, JSON.stringify(siteinfo, null, 4));
             return false;
         }*/
         /** 
          * Error handler. 
-         * Stops scroll processing prints error and removes statusbar.
+         * Stops scroll processing prints error, sets error statusbar and throws exception on debug.
          * */
         function error(message) {
-            if (debug) log(message, JSON.stringify(siteinfo, null, 2));
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
             if (status.bottom && status.bottom.parentNode) {
                 status.bottom.parentNode.removeChild(status.bottom);
             }
-            bar && (bar.className = 'error');
+            bar && (bar.className = 'autopagerize_error');
+            log(message);
+            if (debug) {
+                throw new APWException(message);
+            }
             return false;
         }
         /** 
@@ -541,7 +550,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
 
             var remain = rootNode.scrollHeight - window.innerHeight - window.pageYOffset;
             if (remain < status.remain_height) {
-                if (bar) bar.className = 'loading';
+                if (bar) bar.className = 'autopagerize_loading';
                 dispatch_event('AutoPatchWork.request');
             }
         }
@@ -625,12 +634,12 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
         /* Sets statusbar to ready state. */
         function state_on() {
             status.state = true;
-            bar && (bar.className = 'on');
+            bar && (bar.className = 'autopagerize_on');
         }
         /* Sets statusbar to disabled state. */
         function state_off() {
             status.state = false;
-            bar && (bar.className = 'off');
+            bar && (bar.className = 'autopagerize_off');
         }
         /* Requests next page via XMLHttpRequest method. */
         function request() {
@@ -669,7 +678,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             var iframe = document.createElement('iframe');
             iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
-            iframe.id = iframe.name = 'AutoPatchWork-request-frame';
+            iframe.id = iframe.name = 'AutoPatchWork-request-iframe';
             iframe.onload = function () {
                 var doc = iframe.contentDocument;
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
@@ -760,6 +769,11 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
                 root = node = document.createElement('div');
             }
 
+            
+            var nodes = get_main_content(htmlDoc),
+                first = nodes[0];
+            if (!nodes) dispatch_event('AutoPatchWork.error', { message: 'Main content is not found in downloaded page' });
+
             // Adding page separator.
             node.className = 'autopagerize_page_separator_blocks';
             var h4 = node.appendChild(document.createElement('h4'));
@@ -773,11 +787,9 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
 
             append_point.insertBefore(root, insert_point);
-
+            
             // Firing node change event on the target node.
-            var docs = get_main_content(htmlDoc);
-            var first = docs[0];
-            docs.forEach(function (doc, i, docs) {
+            nodes.forEach(function (doc, i, nodes) {
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
                 if (insert_node && insert_node.setAttribute) insert_node.setAttribute('apw-data-url', loaded_url);
                 var mutation = {
@@ -792,7 +804,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
                     attrChange: 2 // MutationEvent.ADDITION
                 };
                 dispatch_mutation_event(mutation);
-                docs[i] = insert_node;
+                nodes[i] = insert_node;
             });
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
             next = get_next_link(htmlDoc);
@@ -805,7 +817,7 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
                 } else {
                     return dispatch_event('AutoPatchWork.error', { message: next_href + ' is already loaded.' });
                 }
-                bar && (bar.className = status.state ? 'on' : 'off');
+                bar && (bar.className = status.state ? 'autopagerize_on' : 'autopagerize_off');
                 //if (status.state) 
                     setTimeout(function () { check_scroll(); }, 1000);
             }
@@ -814,14 +826,15 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
         }
         /** 
          * Creates XHTML document object from a string.
-         * @param {String} str The string with XHTML-formatted text.
+         * @param {String} str String with XHTML-formatted text.
          * */
         function createXHTML(str) {
             return new DOMParser().parseFromString(str, 'application/xhtml+xml');
         }
         /** 
          * Creates HTML document object from a string.
-         * @param {String} str The string with HTML-formatted text.
+         * @param {String} str String with HTML-formatted text.
+         * @param {String} url String with URL of original page.
          * */
         function createHTML(source, url) {
             // http://gist.github.com/198443
@@ -963,4 +976,4 @@ window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Or
             return xpath.replace(tokenPattern, replacer);
         }
     }
-})(this, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);
+})(this, window, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);
