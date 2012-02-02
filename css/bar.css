@@ -60,7 +60,7 @@
     border-top : 4px solid rgba(255, 0, 0, .5) !important;
 }
 
-#AutoPatchWork-bar.error img, #AutoPatchWork-bar.terminated img{
+#AutoPatchWork-bar:hover img, #AutoPatchWork-bar.error img, #AutoPatchWork-bar.terminated img{
     display: none;
 }
 

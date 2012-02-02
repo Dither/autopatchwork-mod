@@ -10,22 +10,41 @@
 // @exclude *dragonfly.opera.com*
 // ==/UserScript==
 
-window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+
+/* 
+ * Normal AutoPatchWork event flow:
+ *  AutoPatchWork.siteinfo - got SITEINFO for the current site.
+ *  AutoPatchWork.initialized - initialized APW data.
+ *  scroll - got some scrolling on the page.
+ *  AutoPatchWork.request - sending request for the next page. 
+ *  AutoPatchWork.load - getting new page data and processing it.
+ *  AutoPatchWork.append - appending page to the current.
+ *  AutoPatchWork.DOMNodeInserted - firing Node changing event.
+ *  AutoPatchWork.pageloaded - page loaded successfully.
+ *  AutoPatchWork.error - page not loaded, error can be generated on every previous stage. 
+ *  AutoPatchWork.terminated - page not loaded, stopping extension.
+ *  AutoPatchWork.reset - resetting extension on changes within location.
+ * 
+ * Service events:
+ *  resize - on window resize
+ *  AutoPatchWork.state - set statusbar state.
+ *  AutoPatchWork.toggle - toggle statusbar state.
+*/
 
 (function APW(g, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    if(window.name === 'AutoPatchWork-request-frame')
-        return;
+    if (window.name === 'AutoPatchWork-request-frame') return;
 
-    if(g.opera && !APW.loaded) {
+    if (g.opera && !APW.loaded) {
         var args = arguments;
-        document.addEventListener('DOMContentLoaded', function(e) {
+        document.addEventListener('DOMContentLoaded', function (e) {
             APW.loaded = true;
             APW.apply(window, args);
         }, false);
         return;
     }
 
-    var sendRequest, browser,
+    var sendRequest, browser, 
         BROWSER_CHROME = 'chrome',
         BROWSER_SAFARI = 'safari',
         BROWSER_OPERA = 'opera';
@@ -34,19 +53,20 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
     else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
     else */browser = BROWSER_OPERA;
 
-    switch(browser) {
+    switch (browser) {
         case BROWSER_CHROME:
-            sendRequest = function(data, callback) {
-                if(callback) chrome.extension.sendRequest(data, callback);
+            sendRequest = function (data, callback) {
+                if (callback) chrome.extension.sendRequest(data, callback);
                 else chrome.extension.sendRequest(data);
             };
             break;
         case BROWSER_SAFARI:
-            sendRequest = (function() {
+            sendRequest = (function () {
                 var eventData = {};
-                safari.self.addEventListener('message', function(evt) {(evt.name in eventData) && eventData[evt.name](evt.message);
+                safari.self.addEventListener('message', function (evt) {
+                    (evt.name in eventData) && eventData[evt.name](evt.message);
                 }, false);
-                return function(data, callback, name) {
+                return function (data, callback, name) {
                     name = (name || '') + (Date.now() + Math.random().toString(36));
                     callback && (eventData[name] = callback);
                     safari.self.tab.dispatchMessage(name, data);
@@ -54,16 +74,17 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             })();
             break;
         case BROWSER_OPERA:
-            sendRequest = (function(data, callback) {
-                Object.keys || (Object.keys = function(k) {
+            sendRequest = (function (data, callback) {
+                Object.keys || (Object.keys = function (k) {
                     var r = [];
-                    for(i in k)
-                    r.push(i);
+                    for (i in k) r.push(i);
                     return r;
                 });
                 var eventData = {};
-                opera.extension.onmessage = function(evt) {(evt.data.name in eventData) && eventData[evt.data.name](evt.data.data); };
-                return function(data, callback, name) {
+                opera.extension.onmessage = function (evt) {
+                    (evt.data.name in eventData) && eventData[evt.data.name](evt.data.data);
+                };
+                return function (data, callback, name) {
                     name = (name || '') + (Date.now() + Math.random().toString(36));
                     callback && (eventData[name] = callback);
                     opera.extension.postMessage({
@@ -73,13 +94,14 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 };
             })();
             break;
-        default: {
-            sendRequest = null;
-            alert('[AutoPatchWork] Browser not detected!');
-            return;
-        }
-    }
-    
+        default:
+            {
+                sendRequest = null;
+                alert('[AutoPatchWork] Browser not detected!');
+                return;
+            }
+    } // switch(browser)
+
     var options = {
         BASE_REMAIN_HEIGHT: 400,
         FORCE_TARGET_WINDOW: true,
@@ -103,18 +125,23 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
     var bar, img,
         rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
         debug = false,
-        isXHTML = document.documentElement.nodeName !== 'HTML'
-        && document.createElement('p').nodeName !== document.createElement('P').nodeName;
+        isXHTML = document.documentElement.nodeName !== 'HTML' && document.createElement('p').nodeName !== document.createElement('P').nodeName;
 
-    // Begin listening for SITEINFO messages and send reset event if got one while already active
+    // Begin listening for SITEINFO messages and send reset event if got one while active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
-    
-    sendRequest({url: location.href, isFrame: window.top!=window.self}, init, 'AutoPatchWork.init');
-    
+
+    sendRequest({
+            url: location.href,
+            isFrame: window.top != window.self
+        },
+        init,
+        'AutoPatchWork.init'
+    );
+
     var matched_siteinfo, forceIframe;
-    window.addEventListener('hashchange', function(e) {
+    window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
-            var first_element = (AutoPatchWorked.get_next_elements(document)||[])[0];
+            var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             var status = AutoPatchWorked.status;
             if (status.first_element !== first_element) {
                 forceIframe = true;
@@ -124,9 +151,17 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 document.dispatchEvent(ev);
             }
         } else if (matched_siteinfo) {
-            matched_siteinfo.some(function(s) { return AutoPatchWork(s); });
+            matched_siteinfo.some(function (s) {
+                return AutoPatchWork(s);
+            });
         }
-    },false);
+    }, false);
+    
+    /** 
+     * APW initialisation, config reading and fail registration.
+     * Will be replaced by AutoPatchWork function later.
+     * @param {Object} info Contains APW paramenters.
+     * */
     function init(info) {
         matched_siteinfo = info.siteinfo;
         if (info.config) {
@@ -139,100 +174,120 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             debug = info.config.debug_mode;
         }
         var fails = [];
-        var r = info.siteinfo.some(function(s) {
+        var ready = info.siteinfo.some(function (s) {
             return AutoPatchWork(s) || (fails.push(s), false);
         });
-        (r === false) && sendRequest({failed_siteinfo:fails});
+        (ready === false) && sendRequest({ failed_siteinfo: fails });
     }
+    /** 
+     * Event handler for receiving SITEINFO.
+     * @param {Event} evt Event data.
+     * */
     function siteinfo(evt) {
-        if(evt.siteinfo && !window.AutoPatchWorked) {
+        if (evt.siteinfo && !window.AutoPatchWorked) {
             AutoPatchWork(evt.siteinfo);
-        } else if(evt.siteinfo) {
+        } else if (evt.siteinfo) {
             var ev = document.createEvent('Event');
             ev.initEvent('AutoPatchWork.reset', true, true);
-            for(var k in evt.siteinfo) {
+            for (var k in evt.siteinfo) {
                 ev[k] = evt.siteinfo[k];
             }
             document.dispatchEvent(ev);
         }
     }
+    /** 
+     * AutoPatchWork main.
+     * @param {Object} SITEINFO structure for the current site.
+     * */
     function AutoPatchWork(siteinfo) {
         if (window.AutoPatchWorked) return true;
         if (isXHTML) {
-            status.resolver = function() {
+            status.resolver = function () {
                 return document.documentElement.namespaceURI;
             };
-            get_next = x_get_next;
-            get_next_elements = x_get_next_elements;
+            get_next_link = x_get_next_link;
+            get_main_content = x_get_main_content;
             createHTML = createXHTML;
             siteinfo.nextLink = addDefaultPrefix(siteinfo.nextLink);
             siteinfo.pageElement = addDefaultPrefix(siteinfo.pageElement);
         }
 
-        var loading = false;
-        var scroll = false;
-        var nextLink = status.nextLink = siteinfo.nextLink;
-        var pageElement = status.pageElement = siteinfo.pageElement;
-        var location_href = location.href;
+        var location_href = location.href,
+            loading = false,
+            in_iframe = false,
+            scroll = false,
+            nextLink = status.nextLink = siteinfo.nextLink,
+            pageElement = status.pageElement = siteinfo.pageElement;
+            //nextMask = status.nextMask = siteinfo.nextMask,
+            //useAjax = status.useAjax = siteinfo.useAjax,
+            //clickLink = status.clickLink = siteinfo.clickLink,
+            //allowScripts = status.allowScripts = siteinfo.allowScripts,
+            //forceIframe = status.forceIframe = siteinfo.forceIframe;
 
-        log('site '+siteinfo.url+' detected');
+        log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
-        var next = get_next(document);
-        if (!next) return log('next link '+nextLink+' not found');
-        
-        var page_elements = get_next_elements(document);
-        if (!page_elements.length) return log('page content like '+pageElement+' not found');
+        var next = get_next_link(document);
+        if (!next) return log('next link ' + nextLink + ' not found.');
+
+        var page_elements = get_main_content(document);
+        if (!page_elements.length) return log('page content like ' + pageElement + ' not found.');
 
         if (history.replaceState) {
             var _createHTML = createHTML;
             createHTML = function createHTML_history() {
                 var current = location.href;
-                if (state.nextURL)
-                    history.replaceState('', '', state.nextURL);
+                if (state.nextURL) history.replaceState('', '', state.nextURL);
                 var doc = _createHTML.apply(this, arguments);
-                if (state.nextURL)
-                    history.replaceState('', '', current);
+                if (state.nextURL) history.replaceState('', '', current);
                 return doc;
             };
         }
-        if ( (next.host && next.host !==location.host) || (next.protocol && next.protocol !==location.protocol) ) {
+        if ((next.host && next.host !== location.host) || 
+            (next.protocol && next.protocol !== location.protocol) ||
+            forceIframe
+            ){
+                request = request_iframe;
+                in_iframe = true;
+        }
+        // Individual site fixes.
+        if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
+            in_iframe = true;
         }
-        // per-site fixes
-        if ('www.tumblr.com' === location.host) {
-            script_filter = none_filter;
-        }
-        if (forceIframe || /^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
-            request = request_iframe;
-        }
-        if (location.host==='matome.naver.jp') {
-            var _get_next = get_next;
-            get_next = function(doc) {
+        else if ('www.tumblr.com' === location.host) {
+            script_filter = dont_filter;
+        } 
+        else if ('matome.naver.jp' === location.host) {
+            var _get_next = get_next_link;
+            get_next_link = function (doc) {
                 var next = _get_next(doc);
                 if (!next || !next.hasAttribute('onclick')) return;
                 var nextpage = next.getAttribute('onclick').match(/goPage\(\s*(\d+)\s*\)/)[1];
-                var form=document.getElementsByName('missionViewForm')[0];
-                var param=[].slice.call(form).map(function(i){return i.name+'='+(i.name==='page'?nextpage:i.value);}).join('&');
-                next.href = location.pathname+'?'+param;
+                var form = document.getElementsByName('missionViewForm')[0];
+                var param = [].slice.call(form).map(function (i) {
+                    return i.name + '=' + (i.name === 'page' ? nextpage : i.value);
+                }).join('&');
+                next.href = location.pathname + '?' + param;
                 return next;
             };
-            next = get_next(document);
+            next = get_next_link(document);
         }
 
-        var first_element = status.first_element = page_elements[0];
-        var last_element = status.last_element = page_elements.pop();
-        var insert_point = status.insert_point = last_element.nextSibling;
-        var append_point = status.append_point = last_element.parentNode;
-        var htmlDoc, url;
+        var htmlDoc, url,
+            first_element = status.first_element = page_elements[0],
+            last_element = status.last_element = page_elements.pop(),
+            insert_point = status.insert_point = last_element.nextSibling,
+            append_point = status.append_point = last_element.parentNode;
+        
+        var loaded_urls = {},
+            location_pushed = false,
+            session_object = {},
+            page_num = 0;
 
-        var loaded_urls = {};
-        var location_pushed = false;
-        var session_object = {};
-        var page_num = 0;
         loaded_urls[location.href] = true;
         loaded_urls[next.href] = true;
         status.remain_height || (status.remain_height = calc_remain_height());
-        
+
         window.addEventListener('scroll', check_scroll, false);
         window.addEventListener('resize', check_scroll, false);
         window.addEventListener('AutoPatchWork.request', request, false);
@@ -244,67 +299,83 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
         window.addEventListener('AutoPatchWork.state', state, false);
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
-        window.addEventListener('AutoPatchWork.pageloaded', (function(iframed){
+        
+        /* Removes intermediate IFRAME from the current page. */
+        function pageloaded_iframe() {
+            pageloaded();
+            var i = document.getElementById('AutoPatchWork-request-frame');
+            if (i && i.parentNode) i.parentNode.removeChild(i);
+        }
+        /* Sets status bar to ready state. */
+        function pageloaded() {
             var b = document.getElementById('AutoPatchWork-bar');
             if (b) b.className = 'on';
-            if (iframed) {
-                var i = document.getElementById('AutoPatchWork-request-frame');
-                if(i && i.parentNode) i.parentNode.removeChild(i);
-            }
-        })(request === request_iframe), false);
+        }
+
+        if (in_iframe) {
+            window.addEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
+        } else {
+            window.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+        }
+
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
             bar.id = 'AutoPatchWork-bar';
             bar.className = 'on';
-            bar.onmouseover = function() {
+            bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.textContent = 'TGL';
                 onoff.onclick = _toggle;
                 var option = document.createElement('button');
                 option.textContent = 'OPT';
-                option.onclick = function() {
-                    sendRequest({options:true});
+                option.onclick = function () {
+                    sendRequest({ options: true });
                 };
                 var manager = document.createElement('button');
                 manager.textContent = 'SI';
-                manager.onclick = function() {
-                    sendRequest({manage:true});
+                manager.onclick = function () {
+                    sendRequest({ manage: true });
                 };
                 bar.appendChild(onoff);
                 bar.appendChild(option);
                 bar.appendChild(manager);
                 bar.onmouseover = null;
             };
+            /* Toggles status bar ready state. */
             function _toggle() {
                 if (bar.className === 'on') {
                     bar.className = 'off';
                     state_off();
-                } else if(bar.className === 'off') {
+                } else if (bar.className === 'off') {
                     bar.className = 'on';
                     state_on();
                 }
             }
-            img =  document.createElement('img');
+            img = document.createElement('img');
             img.id = 'AutoPatchWork-loader';
             img.src = window.imgAPWLoader;
             bar.appendChild(img);
-            
+
             document.body.appendChild(bar);
-            bar.addEventListener('click', function(e) {
-                if(e.target === bar) {
+            bar.addEventListener('click', function (e) {
+                if (e.target === bar) {
                     this._toggle();
                 }
             }, false);
             status.bar = bar;
         }
+
         var style = document.createElement('style');
         style.textContent = options.css;
         style.id = 'AutoPatchWork-style';
         document.head.appendChild(style);
+
         var pageHeight = rootNode.offsetHeight;
         if (window.innerHeight >= pageHeight) {
             check_scroll();
         }
+
+        // Replace all target attributes to user defined on all appended pages.
         if (options.FORCE_TARGET_WINDOW) {
             window.addEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
         } else {
@@ -312,21 +383,26 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             restoreText();
             window.addEventListener('beforeunload', savePosition, false);
         }
+        
+        // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
         dispatch_event('AutoPatchWork.initialized', status);
         if (!options.DEFAULT_STATE) state_off();
-        sendRequest({message:'AutoPatchWork.initialized', siteinfo:siteinfo});
+        sendRequest({ message: 'AutoPatchWork.initialized', siteinfo: siteinfo });
         window.AutoPatchWorked = {
             init: AutoPatchWork,
             siteinfo: siteinfo,
-            get_next: get_next,
-            get_next_elements: get_next_elements,
-            status:status
+            get_next_link: get_next_link,
+            get_main_content: get_main_content,
+            status: status
         };
 
         return true;
-
+        /** 
+         * Reinitialize APW handler: removes listeners and restarts class
+         * @param {Event} evt Event data.
+         * */
         function reset(evt) {
-            Object.keys(evt.siteinfo).forEach(function(k) {
+            Object.keys(evt.siteinfo).forEach(function (k) {
                 status[k] = evt.siteinfo[k];
             });
             status.page_number = 1;
@@ -340,6 +416,11 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             window.removeEventListener('AutoPatchWork.state', state, false);
+            if (in_iframe) {
+                window.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
+            } else {
+                window.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+            }
             window.removeEventListener('beforeunload', savePosition, false);
             if (status.bottom && status.bottom.parentNode) {
                 status.bottom.parentNode.removeChild(status.bottom);
@@ -348,29 +429,44 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 bar.parentNode.removeChild(bar);
             }
             delete window.AutoPatchWorked;
-            AutoPatchWork({nextLink:status.nextLink, pageElement:status.pageElement});
+            AutoPatchWork({ nextLink: status.nextLink, pageElement: status.pageElement });
         }
+        /** 
+         * Error event handler.
+         * @param {Event} evt Event data. *
+         */
         function error_event(evt) {
             error(evt.message);
         }
+        /** 
+         * Changes statusbar state according to the event.
+         * @param {Event} evt Event data. 
+         * */
         function state(evt) {
             switch (evt.status) {
-                case 'on':
-                    state_on();
-                    break;
-                case 'off':
-                    state_off();
-                    break;
+            case 'on':
+                state_on();
+                break;
+            case 'off':
+                state_off();
+                break;
             }
         }
+        /** 
+         * Toggles statusbar state. */
         function toggle() {
             status.state ? state_off() : state_on();
         }
+        /** 
+         * Termination event handler. 
+         * Stops scroll processing and removes statusbar.
+         * @param {Event} evt Event data. 
+         * */
         function terminated(evt) {
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
             bar && (bar.className = 'terminated');
-            setTimeout(function() {
+            setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
             }, 1000);
@@ -378,6 +474,10 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 status.bottom.parentNode.removeChild(status.bottom);
             }
         }
+        /** 
+         * Logging function.
+         * @param {Array|String} arguments Data to put to debug output.
+         * */
         function log(arguments) {
             if (!debug) return;
             if (window.opera && window.opera.postError) {
@@ -390,8 +490,12 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             if (debug) log(message, JSON.stringify(siteinfo,null,2));
             return false;
         }*/
+        /** 
+         * Error handler. 
+         * Stops scroll processing prints error and removes statusbar.
+         * */
         function error(message) {
-            if (debug) log(message, JSON.stringify(siteinfo,null,2));
+            if (debug) log(message, JSON.stringify(siteinfo, null, 2));
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
             if (status.bottom && status.bottom.parentNode) {
@@ -400,11 +504,16 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             bar && (bar.className = 'error');
             return false;
         }
-        function dispatch_event(type,opt) {
+        /** 
+         * Dispatches standard event on the document.
+         * @param {String} type Event name string.
+         * @param {Array} opt Array of event's parameters.
+         * */
+        function dispatch_event(type, opt) {
             var ev = document.createEvent('Event');
             ev.initEvent(type, true, false);
             if (opt) {
-                Object.keys(opt).forEach(function(k) {
+                Object.keys(opt).forEach(function (k) {
                     if (!ev[k]) {
                         ev[k] = opt[k];
                     }
@@ -412,37 +521,54 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             }
             document.dispatchEvent(ev);
         }
+        /** 
+         * Dispatches modification event on the target node.
+         * @param {Array} opt Array of event's parameters.
+         * */
         function dispatch_mutation_event(opt) {
             var mue = document.createEvent('MutationEvent');
-            with (opt) {
+            with(opt) {
                 mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
                 targetNode.dispatchEvent(mue);
             }
         }
+        /** 
+         * Checks if document is scrolled enough to begin loading next page 
+         * and dispatches event for a new page request.
+         * */
         function check_scroll() {
             if (loading || !status.state) return;
-           
+
             var remain = rootNode.scrollHeight - window.innerHeight - window.pageYOffset;
             if (remain < status.remain_height) {
                 if (bar) bar.className = 'loading';
                 dispatch_event('AutoPatchWork.request');
             }
         }
+        /** 
+         * Rewrite event handler. Replaces link's target attribute.
+         * @param {Event} evt Event data.
+         * */
         function target_rewrite(evt) {
             if (evt && evt.target) {
                 var as = evt.target.getElementsByTagName('a');
-                for (var i = 0, l = as.length;i < l;i++) {
-                    var a = as[i], _a = a.getAttribute('href');
+                for (var i = 0, l = as.length; i < l; i++) {
+                    var a = as[i],
+                        _a = a.getAttribute('href');
                     if (_a && !/^javascript:/.test(_a) && !/^#/.test(_a) && !a.target) {
                         a.setAttribute('target', options.TARGET_WINDOW_NAME);
                     }
                 }
             }
         }
+        /** 
+         * Restore event handler. Restores onclick methods.
+         * @param {Event} evt Event data.
+         * */
         function restore_setup(evt) {
             if (evt && evt.target) {
                 var target = evt.target;
-                target.addEventListener('click', function(evt) {
+                target.addEventListener('click', function (evt) {
                     var _target = evt.target;
                     do {
                         if (_target.href) {
@@ -456,27 +582,37 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 }, false);
             }
         }
-        function check_restore() {
-            return !!sessionStorage['AutoPatchWork.restore.' + location_href];
-        }
-        function saveText(url, page, text) {
-            session_object[page] = {page: page, text: text};
-            sessionStorage['AutoPatchWork.text.' + location_href] = JSON.stringify(session_object);
-        }
+        /* Saves current scroll position. */
         function savePosition() {
             sessionStorage['AutoPatchWork.scroll.' + location_href] = window.pageYOffset;
         }
+        /* Restores current scroll position. */
         function restorePosition() {
             window.scrollTo(window.pageXOffset, parseInt(sessionStorage['AutoPatchWork.scroll.' + location_href], 10));
         }
+        /* Checks if we can restore onclick methods. */
+        function check_restore() {
+            return !!sessionStorage['AutoPatchWork.restore.' + location_href];
+        }
+        /** 
+         * Saves text in a given context.
+         * @param {String} url Pages URL.
+         * @param {String} page Target page.
+         * @param {String} text Text to be saved.
+         * */
+        function saveText(url, page, text) {
+            session_object[page] = { page: page, text: text };
+            sessionStorage['AutoPatchWork.text.' + location_href] = JSON.stringify(session_object);
+        }
+        /* Restores text in a given context and clears buffers. */
         function restoreText() {
             if (check_restore()) {
                 var cache_str = sessionStorage['AutoPatchWork.text.' + location_href];
                 if (cache_str) {
                     var cache = JSON.parse(cache_str);
-                    Object.keys(cache).forEach(function(num){
+                    Object.keys(cache).forEach(function (num) {
                         var page = cache[num];
-                        dispatch_event('AutoPatchWork.load',{response:{responseText:page.text}, url:page.url});
+                        dispatch_event('AutoPatchWork.load', { response: {responseText: page.text}, url: page.url });
                     });
                     restorePosition();
                 }
@@ -486,53 +622,84 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             }
             delete sessionStorage['AutoPatchWork.restore.' + location_href];
         }
-        function state_on(){
+        /* Sets statusbar to ready state. */
+        function state_on() {
             status.state = true;
             bar && (bar.className = 'on');
         }
-        function state_off(){
+        /* Sets statusbar to disabled state. */
+        function state_off() {
             status.state = false;
             bar && (bar.className = 'off');
         }
-        function request(){
-            if(!loading) loading = true;
+        /* Requests next page via XMLHttpRequest method. */
+        function request() {
+            if (!loading) loading = true;
             var url = state.nextURL = next.href || next.getAttribute('href') || next.action || next.value;
+            var req = 'GET';
+            if (!url) {
+                dispatch_event('AutoPatchWork.error', { message: 'No destination supplied for the next page' });
+            }
+            
+            // TODO:
+            // If AJAX -> 'POST' -> load -> AutoPatchWork.load
+            // New request_ func:
+            // If button auto-click -> click and return -> delay or wait for DOMNodeInserted
+            //  => AutoPatchWork.pageloaded
+            
             var x = new XMLHttpRequest();
-            x.onload = function() {
-                dispatch_event('AutoPatchWork.load',{response:x, url:url});
+            x.onload = function () {
+                dispatch_event('AutoPatchWork.load', { response: x, url: url });
             };
-            x.onerror = function(){
-                dispatch_event('AutoPatchWork.error',{message:'request failed. status:' + x.status});
+            x.onerror = function () {
+                dispatch_event('AutoPatchWork.error', { message: 'XMLHttpRequest failed. Status: ' + x.status });
             };
-            x.open('GET', url, true);
+            //if (req === 'POST') {
+            //    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            //    x.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            //}
+            x.open(req, url, true);
             x.overrideMimeType('text/html; charset=' + document.characterSet);
             x.send(null);
         }
-        function request_iframe(){
-            if(!loading) loading = true;
+        /* Requests next page via IFRAME load method. */
+        function request_iframe() {
+            if (!loading) loading = true;
             var url = state.nextURL = next.href || next.getAttribute('href') || next.action || next.value;
             var iframe = document.createElement('iframe');
             iframe.style.display = 'none';
-            iframe.setAttribute('style','display: none !important'); //failsafe
+            iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'AutoPatchWork-request-frame';
-            iframe.onload = function(){
+            iframe.onload = function () {
                 var doc = iframe.contentDocument;
-                dispatch_event('AutoPatchWork.load',{htmlDoc:doc, url:url});
+                dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
                 iframe.parentNode && iframe.parentNode.removeChild(iframe);
             };
-            iframe.onerror = function(){
-                dispatch_event('AutoPatchWork.error',{message:'request failed. status:' + x.status});
+            iframe.onerror = function () {
+                dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed. Status:' + x.status });
             };
             iframe.src = url;
             document.body.appendChild(iframe);
         }
-        function script_filter(text){
+        /** 
+         * Removes scripts from a page text.
+         * @param {String} text The input string.
+         * */
+        function script_filter(text) {
             return text.replace(/<script(?:[ \t\r\n][^>]*)?>[\S\s]*?<\/script[ \t\r\n]*>/gi, ' ');
         }
-        function none_filter(text){
+        /** 
+         * Returns page text as it is.
+         * @param {String} text The input string.
+         * */
+        function dont_filter(text) {
             return text;
         }
-        function load(evt){
+        /** 
+         * Event hadler for parsing new page data.
+         * @param {Event} evt Event data.
+         * */
+        function load(evt) {
             loading = false;
             if (!evt.response && !evt.htmlDoc) return;
             loaded_url = evt.url;
@@ -553,14 +720,22 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             }
             dispatch_event('AutoPatchWork.append');
         }
-        function replace_state(evt){
+        /** 
+         * Event handler for browser location rewriting on each new page.
+         * @param {Event} evt Event data.
+         * */
+        function replace_state(evt) {
             if (!location_pushed) {
                 location_pushed = true;
                 history.pushState('', '', location.href);
             }
             history.replaceState('', '', loaded_url);
-         }
-        function append(evt){
+        }
+        /** 
+         * Event handler for appending new pages.
+         * @param {Event} evt Event data.
+         * */
+        function append(evt) {
             if (!status.loaded || !htmlDoc) return;
 
             var insert_point = status.insert_point;
@@ -568,22 +743,24 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             status.loaded = false;
 
             var root, node;
+            // Checking where to add new content. 
+            // In case of table we'll add inside it, otherwise after.
             if (/^tbody$/i.test(append_point.localName)) {
-                var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]',
-                    append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 var colums = 0;
-                for (var i = 0, l = colNodes.snapshotLength;i<l;i++) {
+                for (var i = 0, l = colNodes.snapshotLength; i < l; i++) {
                     var col = colNodes.snapshotItem(i).getAttribute('colspan');
-                    colums += parseInt(col,10) || 1;
+                    colums += parseInt(col, 10) || 1;
                 }
                 node = document.createElement('td');
                 root = document.createElement('tr');
-                node.setAttribute('colspan',colums);
+                node.setAttribute('colspan', colums);
                 root.appendChild(node);
             } else {
                 root = node = document.createElement('div');
             }
-            
+
+            // Adding page separator.
             node.className = 'autopagerize_page_separator_blocks';
             var h4 = node.appendChild(document.createElement('h4'));
             h4.className = 'autopagerize_page_separator';
@@ -592,15 +769,15 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             var a = span.appendChild(document.createElement('a'));
             a.className = 'autopagerize_link';
             a.href = loaded_url;
-            a.setAttribute('number',++status.page_number);
-            if (htmlDoc.querySelector('title'))
-                a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
+            a.setAttribute('number', ++status.page_number);
+            if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
 
             append_point.insertBefore(root, insert_point);
 
-            var docs = get_next_elements(htmlDoc);
+            // Firing node change event on the target node.
+            var docs = get_main_content(htmlDoc);
             var first = docs[0];
-            docs.forEach(function(doc,i,docs){
+            docs.forEach(function (doc, i, docs) {
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
                 if (insert_node && insert_node.setAttribute) insert_node.setAttribute('apw-data-url', loaded_url);
                 var mutation = {
@@ -618,49 +795,62 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
                 docs[i] = insert_node;
             });
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
-            next = get_next(htmlDoc);
+            next = get_next_link(htmlDoc);
             if (!next) {
-                dispatch_event('AutoPatchWork.terminated',{message:'nextLink not found.'});
+                dispatch_event('AutoPatchWork.terminated', { message: 'nextLink not found.' });
             } else {
                 next_href = next.getAttribute('href') || next.getAttribute('action') || next.getAttribute('value');
                 if (next_href && !loaded_urls[next_href]) {
                     loaded_urls[next_href] = true;
                 } else {
-                    return dispatch_event('AutoPatchWork.error',{message:next_href + ' is already loaded.'});
+                    return dispatch_event('AutoPatchWork.error', { message: next_href + ' is already loaded.' });
                 }
                 bar && (bar.className = status.state ? 'on' : 'off');
-                setTimeout(function(){
-                    check_scroll();
-                }, 1000);
+                //if (status.state) 
+                    setTimeout(function () { check_scroll(); }, 1000);
             }
             dispatch_event('AutoPatchWork.pageloaded');
             htmlDoc = null;
         }
-        function createXHTML(str){
+        /** 
+         * Creates XHTML document object from a string.
+         * @param {String} str The string with XHTML-formatted text.
+         * */
+        function createXHTML(str) {
             return new DOMParser().parseFromString(str, 'application/xhtml+xml');
         }
-        function createHTML(source, url){
+        /** 
+         * Creates HTML document object from a string.
+         * @param {String} str The string with HTML-formatted text.
+         * */
+        function createHTML(source, url) {
             // http://gist.github.com/198443
-            var doc = document.implementation.createHTMLDocument ?
-                document.implementation.createHTMLDocument('HTMLParser') :
-                document.implementation.createDocument(null, 'html', null);
+            var doc = document.implementation.createHTMLDocument ? 
+                        document.implementation.createHTMLDocument('HTMLParser') : 
+                        document.implementation.createDocument(null, 'html', null);
             if (doc.documentElement) {
                 doc.documentElement.innerHTML = source;
             } else {
                 var range = document.createRange();
                 range.selectNodeContents(document.documentElement);
                 var fragment = range.createContextualFragment(source);
-                var headChildNames = {title: true, meta: true, link: true, script: true, style: true, /*object: true,*/ base: true/*, isindex: true,*/};
-                var child,
-                head = doc.querySelector('head') || doc.createElement('head'),
-                body = doc.querySelector('body') || doc.createElement('body');
+                var headChildNames = {
+                    title: true,
+                    meta: true,
+                    link: true,
+                    script: true,
+                    style: true,
+                    /*object: true,*/
+                    base: true /*,
+                    isindex: true,*/
+                };
+                var child, head = doc.querySelector('head') || doc.createElement('head'),
+                    body = doc.querySelector('body') || doc.createElement('body');
                 while ((child = fragment.firstChild)) {
-                    if (
-                        (child.nodeType === Node.ELEMENT_NODE && !(child.nodeName.toLowerCase() in headChildNames)) || 
-                        (child.nodeType === Node.TEXT_NODE &&/\S/.test(child.nodeValue))
-                       ) {
-                        break;
-                    }
+                    if ((child.nodeType === Node.ELEMENT_NODE && 
+                        !(child.nodeName.toLowerCase() in headChildNames)) || 
+                        (child.nodeType === Node.TEXT_NODE && /\S/.test(child.nodeValue))
+                        ) break;
                     head.appendChild(child);
                 }
                 body.appendChild(fragment);
@@ -669,33 +859,56 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             }
             return doc;
         }
-        function get_next(doc){
-            return doc.evaluate(status.nextLink,doc,null,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue;
+        /** 
+         * Evaluates XPath to find node containing next page link.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {Node} Matched node.
+         * */
+        function get_next_link(doc) {
+            return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
-        function get_next_elements(doc){
+        /** 
+         * Evaluates XPath to find nodes containing main page content.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {NodeList} Matched nodes.
+         * */
+        function get_main_content(doc) {
             var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i<l; i++)
-                res[i] = r.snapshotItem(i);
+            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i < l; i++) res[i] = r.snapshotItem(i);
             return element_filter(res);
         }
-        function x_get_next(doc){
-            return doc.evaluate(status.nextLink,doc,status.resolver,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue;
+        /** 
+         * Evaluates XPath to find node containing next page link in XML.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {Node} Matched node.
+         * */
+        function x_get_next_link(doc) {
+            return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
-        function x_get_next_elements(doc){
+        /** 
+         * Evaluates XPath to find nodes containing main page content in XML.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {NodeList} Matched nodes.
+         * */
+        function x_get_main_content(doc) {
             var r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            for (var i = 0,l = r.snapshotLength, res = (l && new Array(l)) || [];i<l;i++) res[i] = r.snapshotItem(i);
+            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i < l; i++) res[i] = r.snapshotItem(i);
             return element_filter(res);
         }
-        function element_filter(nodes){
+        /** 
+         * Keeps elements only on the same level the first one in list.
+         * @param {NodeList} nodes The nodelist to filter.
+         * @return {NodeList} Filtered list.
+         * */
+        function element_filter(nodes) {
             var first = nodes[0];
-            return nodes.filter(function(node){
-                if (first === node || first.compareDocumentPosition(node) === Node.DOCUMENT_POSITION_FOLLOWING)
-                    return true;
-                else
-                    return false;
+            return nodes.filter(function (node) {
+                if (first === node || first.compareDocumentPosition(node) === Node.DOCUMENT_POSITION_FOLLOWING) return true;
+                else return false;
             });
         }
-        function calc_remain_height(){
+        /* Calculates remaining height when scrolling page. */
+        function calc_remain_height() {
             var bottom;
             var _point = insert_point;
             while (_point && !_point.getBoundingClientRect) {
@@ -713,16 +926,30 @@ window.imgAPWLoader="data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6
             }
             return rootNode.scrollHeight - bottom + options.BASE_REMAIN_HEIGHT;
         }
+        /** 
+         * Adds default prefix to XPath
+         * @param {String} xpath XPath to add prefix to.
+         * @param {String} prefix Prefix to add.
+         * */
         function addDefaultPrefix(xpath, prefix) {
             var tokenPattern = /([A-Za-z_\u00c0-\ufffd][\w\-.\u00b7-\ufffd]*|\*)\s*(::?|\()?|(".*?"|'.*?'|\d+(?:\.\d*)?|\.(?:\.|\d+)?|[\)\]])|(\/\/?|!=|[<>]=?|[\(\[|,=+-])|([@$])/g;
-            var TERM = 1, OPERATOR = 2, MODIFIER = 3;
+            var TERM = 1,
+                OPERATOR = 2,
+                MODIFIER = 3;
             var tokenType = OPERATOR;
             prefix += ':';
+            /** 
+             * Replaces XPath tokens.
+             * @param {String} token 
+             * @param {String} identifier 
+             * @param {String} suffix 
+             * @param {String} term 
+             * @param {String} operator 
+             * @param {String} modifier
+             * */
             function replacer(token, identifier, suffix, term, operator, modifier) {
                 if (suffix) {
-                    tokenType =
-                        (suffix == ':' || (suffix == '::' && (identifier == 'attribute' || identifier == 'namespace')))
-                        ? MODIFIER : OPERATOR;
+                    tokenType = (suffix == ':' || (suffix == '::' && (identifier == 'attribute' || identifier == 'namespace'))) ? MODIFIER : OPERATOR;
                 } else if (identifier) {
                     if (tokenType == OPERATOR && identifier != '*') {
                         token = prefix + token;

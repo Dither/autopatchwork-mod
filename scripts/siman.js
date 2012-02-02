@@ -61,10 +61,9 @@ function APWException(message) {
     }
 
     window.addEventListener('AutoPatchWork.request', function(e) {
-        if(!e) e = window.event;
+        //if(!e) e = window.event;
         e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
         dispatch_event('AutoPatchWork.append');
-        return false;
     }, true);
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -76,11 +75,11 @@ function APWException(message) {
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
             if (infos && infos.length > COUNT * (PageIndex + 1)) {
                 PageIndex++;
-                SiteInfoView(infos.slice(COUNT * PageIndex, COUNT * (PageIndex + 1)), COUNT * PageIndex);
+                SiteInfoView(infos.slice(COUNT * PageIndex, COUNT * (PageIndex + 1)), COUNT * PageIndex, true);
             }     
-            if(!e) e = window.event;
+            //if(!e) e = window.event;
             e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
-            return false;
+            //return false;
         }, true);
 
         var debug = bgProcess.AutoPatchWork.config.debug_mode;
@@ -315,7 +314,7 @@ function APWException(message) {
             });
         }
 
-        function SiteInfoView(siteinfo, append) {
+        function SiteInfoView(siteinfo, append, gen_event) {
             togglePopup('loader', true);
             var df = document.createDocumentFragment();
             siteinfo.forEach(function (info, i) {
@@ -429,7 +428,8 @@ function APWException(message) {
                             siteinfo_view.appendChild(dl);
                             siteinfo_view.style.top = '0px';
                             siteinfo_view.style.bottom = '0px';
-                            siteinfo_view.firstElementChild.style.top = (window.innerHeight - siteinfo_view.firstElementChild.offsetHeight) / 2 + 'px';
+                            siteinfo_view.firstElementChild.style.top = 
+                                (window.innerHeight - siteinfo_view.firstElementChild.offsetHeight) / 2 + 'px';
                         };
                         btn.textContent = data;
                     } else if (Text2Html[k]) {
@@ -447,7 +447,7 @@ function APWException(message) {
             }
             siteinfo_body.appendChild(df);
             togglePopup('loader', false);
-            dispatch_event('AutoPatchWork.pageloaded');
+            if (gen_event) dispatch_event('AutoPatchWork.pageloaded');
         }
 
         function SiteInfoNavi(siteinfo) {
@@ -472,7 +472,7 @@ function APWException(message) {
             siteinfo_table.style.marginTop = r.height + 10 + 'px';
         }
 
-        function UpdateSiteinfo(callback) {
+        function UpdateSiteInfo(callback) {
             var url = 'http://ss-o.net/json/wedataAutoPagerize.json';
             var xhr = new XMLHttpRequest();
             xhr.onload = function () {
@@ -511,7 +511,7 @@ function APWException(message) {
             SiteInfoNavi(siteinfo_data);
             window.onresize();
         } else {
-            UpdateSiteinfo(function (siteinfo) {
+            UpdateSiteInfo(function (siteinfo) {
                 siteinfo_data = siteinfo;
                 sessionStorage.siteinfo_wedata = JSON.stringify(siteinfo);
                 applyStatistics(siteinfo_data);
@@ -524,6 +524,7 @@ function APWException(message) {
                 window.onresize();
             });
         }
+        
         dispatch_event('AutoPatchWork.siteinfo', {
             siteinfo: {
                 url: '.',
@@ -531,15 +532,14 @@ function APWException(message) {
                 pageElement: '//*'
             }
         });
-    }, false);
 
-    function log(arguments) {
-        if (!debug) return;
-        if (window.opera && window.opera.postError) {
-            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
-        } else if (window.console) {
-            console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
+        function log(arguments) {
+            if (!debug) return;
+            if (window.opera && window.opera.postError) {
+                window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
+            } else if (window.console) {
+                console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
+            }
         }
-    }
-
+    }, false);
 })();
