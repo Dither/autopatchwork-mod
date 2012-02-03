@@ -3,7 +3,7 @@
 <head>
     <meta charset='utf-8'>
     <title>AutoPatchWork SITEINFO Manager</title>
-    <link href='css/bar.css' rel='stylesheet' type='text/css'>
+    <link href='css/main.css' rel='stylesheet' type='text/css'>
     <link href='css/siman.css' rel='stylesheet' type='text/css'>
     <script type='text/javascript' src='scripts/storage.js'></script>
     <script type='text/javascript' src='includes/autopatchwork.js'></script>
@@ -12,9 +12,9 @@
 </head>
 <body>
     <div class='top'>
-        <h1>AutoPatchWork SITEINFO Manager</h1>
+        <h1 class='MSG_manager'>AutoPatchWork SITEINFO Manager</h1>
         <p>
-            <label for='siteinfo_search_input'>Search:</label>
+            <label for='siteinfo_search_input' class='MSG_siteinfo_search_input'>Search:</label>
             <input type='search' id='siteinfo_search_input'>
             <img width='16' height='11' id='loader' alt='loader' class='loader' />
         </p>
@@ -23,7 +23,7 @@
     <table id='siteinfo_table'>
         <thead>
             <tr id='siteinfo_head'>
-                <th colspan='2'><button>disable</button></th>
+                <th colspan='2'><button id='disable'>disable</button></th>
                 <th>
                     <button id='name'>name</button>
                 </th>

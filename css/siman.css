@@ -55,6 +55,7 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
     margin-left: 1em;
     margin-right: 0px;
     margin-top: 100px !important;
+    vertical-align: middle;
 }
 
 #siteinfo_table td {
@@ -128,13 +129,13 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
     background:#ece;
 }
 
-.name, .created_by {
+.name, .created_by, .created_at {
     text-align:left !important;
 }
 
-.created_by {
-    padding-left:1em;
-    padding-right:1em;
+.created_by, .created_at, .database_resource_url {
+    padding-left:0.5em;
+    padding-right:0.5em;
 }
 
 .name button {
@@ -225,8 +226,22 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
     color:#222;
 }
 
-#loader {
-    width:16px;
-    height:11px;
+#loader { 
+    display: inline-block;
+    position: relative;
+    height: 11px;
+    width: 16px;
     z-index: 1000;
 }
+
+.MSG_manager:lang(ru) {content: 'Редактор SITEINFO в AutoPatchWork'}
+.MSG_siteinfo_search_input:lang(ru) {content: 'Поиск:'}
+#disable:lang(ru) {content: 'Откл.'}
+#name:lang(ru) {content: 'Название'}
+#created_at:lang(ru) {content: 'Создано'}
+#updated_at:lang(ru) {content: 'Обновлено'}
+#created_by:lang(ru) {content: 'Автор'}
+#resource_url:lang(ru) {content: 'Номер'}
+#database_resource_url:lang(ru) {content: 'База'}
+#number_of_successful:lang(ru) {content: 'Зап.'}
+#number_of_failed:lang(ru) {content: 'Ошиб.'}

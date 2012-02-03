@@ -1,11 +1,11 @@
 AutoPatchWork for Opera
 ==========
 
-This is the fork of AutoPatchWork ( http://code.google.com/p/autopatchwork/ ).
-This extension which automatically loads the next page and inserts into current
-page when you reach the end of the page. 
+It is the fork of AutoPatchWork ( http://code.google.com/p/autopatchwork/ ).
+This extension automatically loads next page and inserts it into current
+one when you scroll to the end of page. 
 
-AutoPatchWork extension derived from AutoPagerize ( http://autopagerize.net/ ).
+AutoPatchWork extension derived from AutoPagerize ( http://autopagerize.net ).
 
 License
 -------

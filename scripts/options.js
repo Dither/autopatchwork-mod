@@ -15,6 +15,10 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
 // main
 (function option_init(opt) {
     var self = this;
+    
+    var html = document.querySelector('html');
+    html.setAttribute('lang', window.navigator.language);
+    html.setAttribute('xml:lang', window.navigator.language);
 
     function APWException(message) {
         this.message = message;
@@ -139,8 +143,8 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
             if(message) node.textContent = message;
         });
     }
-
     L10N();
+    
     // General settings tab
     var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
     open_siteinfo_manager.addEventListener('click', function(e) {
@@ -167,12 +171,15 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
     update_siteinfo.addEventListener('click', function(e) {
         update_siteinfo.disabled = true;
         update_siteinfo_output.innerHTML = '<img src="' + imgLoad + '"> Updating...';
+        update_siteinfo_output.className = 'MSG_update_siteinfo_upd';
 
         bgProcess.UpdateSiteinfo(function() {
             update_siteinfo_output.innerHTML = '<img src="' + imageTick + '"> SITEINFO updated';
+            update_siteinfo_output.className = 'MSG_update_siteinfo_sucс';
             update_siteinfo.disabled = false;
         }, function() {
             update_siteinfo_output.innerHTML = '<img src="' + imageCross + '"> SITEINFO unchanged';
+            update_siteinfo_output.className = 'MSG_update_siteinfo_fail';
         });
     }, false);
 

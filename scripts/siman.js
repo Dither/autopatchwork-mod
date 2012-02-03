@@ -72,6 +72,9 @@ var MICROFORMATs = [{
     }, true);
 
     document.addEventListener('DOMContentLoaded', function () {
+        var html = document.querySelector('html');
+        html.setAttribute('lang', window.navigator.language);
+        html.setAttribute('xml:lang', window.navigator.language);
         
         document.getElementById('loader').src = window.imgAPWLoader;
         document.getElementById('loader').style.display = 'none';       
@@ -494,8 +497,10 @@ var MICROFORMATs = [{
         }
 
         function toggle_popup(id , state) {
-            var popup = document.getElementById(id);
-            popup.style.display = state ? 'inline-block' : 'none';
+            setTimeout(function () {
+                var popup = document.getElementById(id);
+                popup.style.display = state ? 'inline-block' : 'none';
+            }, state ? 0 : 1500);
         }
 
         window.onresize = function () {

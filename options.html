@@ -11,23 +11,23 @@
 </head>
 <body class='tabbox'>
     <ul class='tabs' id='menu-tabs'>
-        <li id='menu-basics' class='selected'>
-            <a href='#basics'><span>General</span></a>
+        <li id='menu-general' class='selected'>
+            <a href='#general'><span class='MSG_general'>General</span></a>
         </li>
         <li id='menu-filters'>
-            <a href='#filters'><span>Filters</span></a>
+            <a href='#filters'><span class='MSG_filters'>Filters</span></a>
         </li>
         <li id='menu-styles'>
-            <a href='#styles'><span>Styles</span></a>
+            <a href='#styles'><span class='MSG_styles'>Styles</span></a>
         </li>
         <li id='menu-patterns'>
-            <a href='#patterns'><span>Patterns</span></a>
+            <a href='#patterns'><span class='MSG_patterns'>Patterns</span></a>
         </li>
         <li id='menu-news'>
-            <a href='#history'><span>History</span></a>
+            <a href='#history'><span class='MSG_history'>History</span></a>
         </li>
         <li id='menu-about'>
-            <a href='#about'><span>About</span></a>
+            <a href='#about'><span class='MSG_about'>About</span></a>
         </li>
     </ul>
     <div id='base'>
@@ -109,28 +109,28 @@
                     Page separator and statusbar styles:
                 </div>
                 <textarea id='css_text'></textarea>
-                <div class="buttons">
+                <div class='buttons'>
                     <button id='apply_css' class='MSG_save'>
                         Save
                     </button>
                 </div>
-                <div class="buttons">
+                <div class='buttons'>
                     <button id='reset_css' class='MSG_reset'>
                         Reset
                     </button>
                 </div>
             </section>
             <section id='custompatterns' class='content' style='visibility: hidden; height: 100px'>
-                <div class='MSG_separator_style'>
+                <div class='MSG_siteinfo_patterns'>
                     Custom SITEINFO patterns:
                 </div>
                 <textarea id='custom_patterns'></textarea>
-                <div class="buttons">
+                <div class='buttons'>
                     <button id='apply_custom_patterns' class='MSG_save'>
                         Save
                     </button>
                 </div>
-                <div class="buttons">
+                <div class='buttons'>
                     <button id='reset_custom_patterns' class='MSG_reset'>
                         Reset
                     </button>
@@ -157,7 +157,7 @@
                                 Fast history navigation.
                             </li>
                             <li>
-                                Support of custom CSS for the page separator.
+                                Support of custom CSS for the page separator and statusbar.
                             </li>
                             <li>
                                 Support of custom SITEINFO patterns in JSON format.
@@ -186,19 +186,19 @@
             </section>
             <section id='about' class='content' style='visibility: hidden; height: 100px'>
                 <dl>
-                    <dt>
+                    <dt class='MSG_extension_name'>
                         Name:
                     </dt>
                     <dd>
                         AutoPatchWork
                     </dd>
-                    <dt>
+                    <dt class='MSG_author_name'>
                         Author:
                     </dt>
                     <dd>
                         <a href='' target='_blank'>Dither</a>
                     </dd>
-                    <dt>
+                    <dt class='MSG_thank_you'>
                         Thanks:
                     </dt>
                     <dd>
@@ -207,7 +207,7 @@
                     <dd>
                         <a href='http://autopagerize.net/' target='_blank'>AutoPagerize</a>
                     </dd>
-                    <dt>
+                    <dt class='MSG_license'>
                         License:
                     </dt>
                     <dd>
