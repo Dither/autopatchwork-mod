@@ -46,7 +46,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
         return;
     } else if(opt && self.safari) {
         AutoPatchWork = opt;
-        ['save_css', 'reset_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
+        ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
             AutoPatchWork[action] = function() {
                 safari.self.tab.dispatchMessage('invoke_action', {
                     action: action,
@@ -74,7 +74,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
         };
     } else if(opt && self.opera) {
         AutoPatchWork = opt;
-        ['save_css', 'reset_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
+        ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
             AutoPatchWork[action] = function() {
                 opera.extension.postMessage({
                     name: 'invoke_action',
@@ -220,11 +220,11 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
     css_text.value = AutoPatchWork.css;
     var apply_css = document.getElementById('apply_css');
     apply_css.addEventListener('click', function() {
-        AutoPatchWork.save_css(css_text.value);
+        AutoPatchWork.init_css(css_text.value);
     }, false);
     var reset_css = document.getElementById('reset_css');
     reset_css.addEventListener('click', function() {
-        AutoPatchWork.reset_css();
+        AutoPatchWork.init_css();
         setTimeout(function() {
             css_text.value = AutoPatchWork.css = storagebase.AutoPatchWorkCSS;
         }, 0);

@@ -31,7 +31,7 @@
 */
 
 (function APW(self, window, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    if (window.name === 'AutoPatchWork-request-iframe') {
+    if (window.name === 'autopatchwork-request-iframe') {
         return;
     }
 
@@ -309,13 +309,13 @@
         /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
             pageloaded();
-            var i = document.getElementById('AutoPatchWork-request-iframe');
+            var i = document.getElementById('autopatchwork-request-iframe');
             if (i && i.parentNode) i.parentNode.removeChild(i);
         }
         /* Sets status bar to ready state. */
         function pageloaded() {
-            var b = document.getElementById('AutoPatchWork-bar');
-            if (b) b.className = 'autopagerize_on';
+            var b = document.getElementById('autopatchwork_bar');
+            if (b) b.className = 'autopager_on';
         }
 
         if (in_iframe) {
@@ -326,8 +326,8 @@
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
-            bar.id = 'AutoPatchWork-bar';
-            bar.className = 'autopagerize_on';
+            bar.id = 'autopatchwork_bar';
+            bar.className = 'autopager_on';
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.textContent = 'TGL';
@@ -349,16 +349,16 @@
             };
             /* Toggles status bar ready state. */
             function _toggle() {
-                if (bar.className === 'autopagerize_on') {
-                    bar.className = 'autopagerize_off';
+                if (bar.className === 'autopager_on') {
+                    bar.className = 'autopager_off';
                     state_off();
-                } else if (bar.className === 'autopagerize_off') {
-                    bar.className = 'autopagerize_on';
+                } else if (bar.className === 'autopager_off') {
+                    bar.className = 'autopager_on';
                     state_on();
                 }
             }
             img = document.createElement('img');
-            img.id = 'AutoPatchWork-loader';
+            img.id = 'autopatchwork_loader';
             img.src = window.imgAPWLoader;
             bar.appendChild(img);
 
@@ -373,7 +373,8 @@
 
         var style = document.createElement('style');
         style.textContent = options.css;
-        style.id = 'AutoPatchWork-style';
+        style.id = 'autopatchwork_style';
+        style.type = 'text/css';
         document.head.appendChild(style);
 
         var pageHeight = rootNode.offsetHeight;
@@ -471,7 +472,7 @@
         function terminated(evt) {
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
-            bar && (bar.className = 'autopagerize_terminated');
+            bar && (bar.className = 'autopager_terminated');
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
@@ -498,7 +499,7 @@
         }*/
         /** 
          * Error handler. 
-         * Stops scroll processing prints error, sets error statusbar and throws exception on debug.
+         * Stops scroll processing prints error, sets error statusbar.
          * */
         function error(message) {
             status.state = false;
@@ -506,11 +507,8 @@
             if (status.bottom && status.bottom.parentNode) {
                 status.bottom.parentNode.removeChild(status.bottom);
             }
-            bar && (bar.className = 'autopagerize_error');
+            bar && (bar.className = 'autopager_error');
             log(message);
-            if (debug) {
-                throw new APWException(message);
-            }
             return false;
         }
         /** 
@@ -550,7 +548,7 @@
 
             var remain = rootNode.scrollHeight - window.innerHeight - window.pageYOffset;
             if (remain < status.remain_height) {
-                if (bar) bar.className = 'autopagerize_loading';
+                if (bar) bar.className = 'autopager_loading';
                 dispatch_event('AutoPatchWork.request');
             }
         }
@@ -634,12 +632,12 @@
         /* Sets statusbar to ready state. */
         function state_on() {
             status.state = true;
-            bar && (bar.className = 'autopagerize_on');
+            bar && (bar.className = 'autopager_on');
         }
         /* Sets statusbar to disabled state. */
         function state_off() {
             status.state = false;
-            bar && (bar.className = 'autopagerize_off');
+            bar && (bar.className = 'autopager_off');
         }
         /* Requests next page via XMLHttpRequest method. */
         function request() {
@@ -678,7 +676,7 @@
             var iframe = document.createElement('iframe');
             iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
-            iframe.id = iframe.name = 'AutoPatchWork-request-iframe';
+            iframe.id = iframe.name = 'autopatchwork-request-iframe';
             iframe.onload = function () {
                 var doc = iframe.contentDocument;
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
@@ -817,7 +815,7 @@
                 } else {
                     return dispatch_event('AutoPatchWork.error', { message: next_href + ' is already loaded.' });
                 }
-                bar && (bar.className = status.state ? 'autopagerize_on' : 'autopagerize_off');
+                bar && (bar.className = status.state ? 'autopager_on' : 'autopager_off');
                 //if (status.state) 
                     setTimeout(function () { check_scroll(); }, 1000);
             }
