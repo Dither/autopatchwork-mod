@@ -126,7 +126,7 @@ else
 if(storagebase.AutoPatchWorkCSS)
     AutoPatchWork.css = storagebase.AutoPatchWorkCSS;
 else
-    init_css();
+    AutoPatchWork.init_css();
 
 if(storagebase.AutoPatchWorkPatterns)
     AutoPatchWork.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);

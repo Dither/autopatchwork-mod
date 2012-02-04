@@ -224,7 +224,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
     
     // Custom CSS for separator tab
     var css_text = document.getElementById('css_text');
-    css_text.value = AutoPatchWork.css;
+    css_text.value = AutoPatchWork.css || '';
     var apply_css = document.getElementById('apply_css');
     apply_css.addEventListener('click', function() {
         AutoPatchWork.init_css(css_text.value);
@@ -239,7 +239,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
     
     // Custom SITEINFO patterns tab
     var custom_patterns = document.getElementById('custom_patterns');
-    custom_patterns.value = storagebase.AutoPatchWorkPatterns;
+    custom_patterns.value = storagebase.AutoPatchWorkPatterns || '';
     var apply_custom_patterns = document.getElementById('apply_custom_patterns');
     apply_custom_patterns.addEventListener('click', function() {
         try {

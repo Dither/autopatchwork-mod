@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" version="1.9.3" id="https://github.com/Dither/AutoPatchWorkOpera">
-  <name>AutoPatchWork</name>
-  <description>Automatically loads the next page and inserts into current page.</description>
+  <name>AutoPatchWorkOpera</name>
+  <description xml:lang="en">Automatically loads the next page and inserts into current page.</description>
   <description xml:lang="ru">Автоматически подгружает следующую страничку при просмотре.</description>
+  <description xml:lang="ja">ページのしたの方にスクロールした時に、現在表示しているページに次のページを挿入します。</description>
   <author href="http://my.opera.com/DitherSky/blog/">Dither (based on os0x version)</author>
   <icon src="icons/icon-64.png" />
   <access origin="http://ss-o.net" subdomains="true" />

@@ -361,7 +361,7 @@ input[type="range"]{
 .MSG_update_siteinfo_fail:lang(ru) {content: 'Ошибка обновления'}
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Управление SITEINFO'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
-.MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок'}
+.MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
 .MSG_noiframe:lang(ru) {content: 'Отключить загрузку через IFRAME'}
 .MSG_replace_state:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар (может подтормаживать)'}
@@ -382,3 +382,40 @@ input[type="range"]{
 .MSG_author_name:lang(ru) {content: 'Автор'}
 .MSG_thank_you:lang(ru) {content: 'Благодарности'}
 .MSG_license:lang(ru) {content: 'Лицензия'}
+
+/* Language: Japanese (ja)
+   Text: os0x*/
+/*.MSG_general:lang(ja) {content: 'Основые'}
+.MSG_filters:lang(ja) {content: 'Фильтры'}
+.MSG_styles:lang(ja) {content: 'Стили'}
+.MSG_patterns:lang(ja) {content: 'Шаблоны'}
+.MSG_history:lang(ja) {content: 'История'}
+.MSG_about:lang(ja) {content: 'О расширении'}*/
+.MSG_update_siteinfo:lang(ja) {content: 'SITEINFOの更新'}
+.MSG_update_siteinfo_upd:lang(ja) {content: '...'}
+.MSG_update_siteinfo_sucс:lang(ja) {content: '!!!'}
+.MSG_update_siteinfo_fail:lang(ja) {content: '???'}
+.MSG_open_siteinfo_manager:lang(ja) {content: 'SITEINFO管理ページを開く'}
+.MSG_auto_start:lang(ja) {content: 'ページを開いたときにデフォルトで有効にする'}
+.MSG_open_newtab:lang(ja) {content: '継ぎ足ししたコンテンツ内のリンクを新規タブで開(target=_blank指定をする)'}
+.MSG_noiframe:lang(ja) {content: 'フレーム内では起動させない'}
+.MSG_replace_state:lang(ja) {content: '継ぎ足しした時、URL を継ぎ足した URL で置き換える'}
+.MSG_bottom_bar:lang(ja) {content: 'ページ下部にステータスを表示'}
+.MSG_remain_height:lang(ja) {content: '読み込みを開始する位置:'}
+.MSG_debugmode:lang(ja) {content: 'デバッグモード'}
+.MSG_exclude_filter:lang(ja) {content: '特定URLを除外するためのルール:'}
+/*
+ * It's not working this way.
+.MSG_filter_prefix:lang(ja) {content: 'префикс'}
+.MSG_filter_domain:lang(ja) {content: 'домен'}
+.MSG_filter_regexp:lang(ja) {content: 'регулярка'}*/
+.MSG_separator_style:lang(ja) {content: '区切りのスタイル:'}
+.MSG_add:lang(ja) {content: '追加'}
+.MSG_save:lang(ja) {content: '保存'}
+.MSG_reset:lang(ja) {content: '削除'}
+/*
+ *.MSG_siteinfo_patterns:lang(ja) {content: 'Персональные SITEINFO-шаблоны:'}
+.MSG_extension_name:lang(ja) {content: 'Название'}
+.MSG_author_name:lang(ja) {content: 'Автор'}
+.MSG_thank_you:lang(ja) {content: 'Благодарности'}
+.MSG_license:lang(ja) {content: 'Лицензия'}*/
