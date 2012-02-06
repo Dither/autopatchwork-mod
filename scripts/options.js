@@ -11,10 +11,18 @@ var imageCross = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf
 //var imgSave =
 // 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAH+SURBVBgZBcE9i11VGAbQtc/sO0OCkqhghEREAwpWAWUg8aMVf4KFaJEqQtAipTZWViKiCGOh2Ap2gmJhlSIWFsFOxUK0EsUM3pl79n4f12qHb3z3Fh7D83gC95GOJsDe0ixLk5Qq/+xv/Lw9Xd+78/HLX3Y8fXTr2nWapy4eCFKxG7Fby97SnDlYtMbxthyfzHO//nl85fNvfvnk8MbX5xa8IHx1518Vkrj54Q+qQms2vVmWZjdiu5ZR2rT01166/NCZg/2PFjwSVMU6yjoC1oq+x6Y3VbHdlXWExPd379nf7Nmejv2Os6OC2O4KLK0RNn3RNCdr2Z5GJSpU4o+/TkhaJ30mEk5HwNuvX7Hpi76wzvjvtIwqVUSkyjqmpHS0mki8+9mPWmuWxqYvGkbFGCUAOH/+QevYI9GFSqmaHr5wkUYTAlGhqiRRiaqiNes6SOkwJwnQEqBRRRJEgkRLJGVdm6R0GLMQENE0EkmkSkQSVVMqopyuIaUTs0J455VLAAAAAODW0U/GiKT0pTWziEj44PZ1AAAAcPPqkTmH3QiJrlEVDXDt0qsAAAAAapa5BqUnyaw0Am7//gUAAAB49tEXzTmtM5KkV/y2G/X4M5fPao03n/sUAAAAwIX7y5yBv9vhjW/fT/IkuSp5gJKElKRISYoUiSRIyD1tufs/IXxui20QsKIAAAAASUVORK5CYII=';
 var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==';
+var browser,
+    BROWSER_CHROME = 1,
+    BROWSER_SAFARI = 2,
+    BROWSER_OPERA = 3;
+
+/*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+else */browser = BROWSER_OPERA;
 
 // main
 (function option_init(opt) {
-    var self = this;
+        var self = this;
     
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
@@ -24,104 +32,114 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
+    
 
-    if(this.chrome) {
-        bgProcess = chrome.extension.getBackgroundPage();
-        AutoPatchWork = bgProcess.AutoPatchWork;
-    } else if(this.safari && !opt) {
-        safari.self.tab.dispatchMessage('option_init');
-        safari.self.addEventListener('message', function(evt) {
-            if(evt.name === 'option_init') {
-                option_init(evt.message);
-            } else if(evt.name === 'updated_siteinfo') {
-                bgProcess.callback();
-            }
-        }, false);
-        return;
-    } else if(this.opera && !opt) {
-        opera.extension.onmessage = function(evt) {
-            if(evt.data.name === 'option_init') {
-                option_init(evt.data.data);
-            } else if(evt.data.name === 'updated_siteinfo') {
-                bgProcess.callback();
-            }
-        };
-        opera.extension.postMessage({ name: 'option_init' });
-        return;
-    } else if(opt && self.safari) {
-        AutoPatchWork = opt;
-        ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
-            AutoPatchWork[action] = function() {
-                safari.self.tab.dispatchMessage('invoke_action', {
-                    action: action,
-                    args: Array.prototype.slice.call(arguments)
-                });
-            };
-        });
-        AutoPatchWork.update = function() {
-            safari.self.tab.dispatchMessage('invoke_action', {
-                action: 'update',
-                config: AutoPatchWork.config
-            });
-        };
-        AutoPatchWork.save_disabled_site = function() {
-            safari.self.tab.dispatchMessage('invoke_action', {
-                action: 'save_disabled_site',
-                disabled_sites: AutoPatchWork.disabled_sites
-            });
-        };
-        bgProcess = {
-            UpdateSiteinfo: function(callback) {
-                bgProcess.callback = callback;
-                safari.self.tab.dispatchMessage('invoke_action', { action: 'UpdateSiteinfo' });
-            }
-        };
-    } else if(opt && self.opera) {
-        AutoPatchWork = opt;
-        ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
-            AutoPatchWork[action] = function() {
-                opera.extension.postMessage({
-                    name: 'invoke_action',
-                    data: {
-                        action: action,
-                        args: Array.prototype.slice.call(arguments)
+    switch (browser) {
+        case BROWSER_CHROME:
+            bgProcess = chrome.extension.getBackgroundPage();
+            AutoPatchWork = bgProcess.APWBg;
+            break;
+        case BROWSER_SAFARI:
+            if(!opt) {
+                safari.self.tab.dispatchMessage('option_init');
+                safari.self.addEventListener('message', function(evt) {
+                    if(evt.name === 'option_init') {
+                        option_init(evt.message);
+                    } else if(evt.name === 'updated_siteinfo') {
+                        bgProcess.callback();
                     }
+                }, false);
+                return;
+            } else {
+                AutoPatchWork = opt;
+                ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
+                    AutoPatchWork[action] = function() {
+                        safari.self.tab.dispatchMessage('invoke_action', {
+                            action: action,
+                            args: Array.prototype.slice.call(arguments)
+                        });
+                    };
                 });
-            };
-        });
-        AutoPatchWork.update = function() {
-            opera.extension.postMessage({
-                name: 'invoke_action',
-                data: {
-                    action: 'update',
-                    config: AutoPatchWork.config
-                }
-            });
-        };
-        AutoPatchWork.save_disabled_site = function() {
-            opera.extension.postMessage({
-                name: 'invoke_action',
-                data: {
-                    action: 'save_disabled_site',
-                    disabled_sites: AutoPatchWork.disabled_sites
-                }
-            });
-        };
-        bgProcess = {
-            UpdateSiteinfo: function(callback) {
-                bgProcess.callback = callback;
-                opera.extension.postMessage({
-                    name: 'invoke_action',
-                    data: { action: 'UpdateSiteinfo' }
-                });
+                AutoPatchWork.update = function() {
+                    safari.self.tab.dispatchMessage('invoke_action', {
+                        action: 'update',
+                        config: AutoPatchWork.config
+                    });
+                };
+                AutoPatchWork.save_disabled_site = function() {
+                    safari.self.tab.dispatchMessage('invoke_action', {
+                        action: 'save_disabled_site',
+                        disabled_sites: AutoPatchWork.disabled_sites
+                    });
+                };
+                bgProcess = {
+                    downloadDatabase: function(callback) {
+                        bgProcess.callback = callback;
+                        safari.self.tab.dispatchMessage('invoke_action', { action: 'download_database' });
+                    }
+                };
             }
-        };
+            break;
+        case BROWSER_OPERA:
+            if(!opt) {
+                opera.extension.onmessage = function(evt) {
+                    if(evt.data.name === 'option_init') {
+                        option_init(evt.data.data);
+                    } else if(evt.data.name === 'updated_siteinfo') {
+                        bgProcess.callback();
+                    }
+                };
+                opera.extension.postMessage({ name: 'option_init' });
+                return;
+            } else {
+                AutoPatchWork = opt;
+                ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
+                    AutoPatchWork[action] = function() {
+                        opera.extension.postMessage({
+                            name: 'invoke_action',
+                            data: {
+                                action: action,
+                                args: Array.prototype.slice.call(arguments)
+                            }
+                        });
+                    };
+                });
+                AutoPatchWork.update = function() {
+                    opera.extension.postMessage({
+                        name: 'invoke_action',
+                        data: {
+                            action: 'update',
+                            config: AutoPatchWork.config
+                        }
+                    });
+                };
+                AutoPatchWork.save_disabled_site = function() {
+                    opera.extension.postMessage({
+                        name: 'invoke_action',
+                        data: {
+                            action: 'save_disabled_site',
+                            disabled_sites: AutoPatchWork.disabled_sites
+                        }
+                    });
+                };
+                bgProcess = {
+                    downloadDatabase: function(callback) {
+                        bgProcess.callback = callback;
+                        opera.extension.postMessage({
+                            name: 'invoke_action',
+                            data: { action: 'download_database' }
+                        });
+                    }
+                };
+            }
+            break;
+        default:
     }
 
     var WIDTH = 800;
     var HEIGHT = Math.max(window.innerHeight - 100, 500);
 
-    var i18n = this.chrome ? chrome.i18n : this.safari ? {
+    var i18n = browser === BROWSER_CHROME  ? chrome.i18n : this.safari ? {
         getAcceptLanguages: function() {},
         getMessage: function() {}
     } : {
@@ -148,21 +166,22 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
     // General settings tab
     var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
     open_siteinfo_manager.addEventListener('click', function(e) {
-        if(window.chrome) {
-            window.chrome.tabs.getCurrent(function(tab) {
-                chrome.tabs.update(tab.id, {
-                    url: "siteinfo_manager.html"
+        switch (browser) {
+            case BROWSER_CHROME:
+                window.chrome.tabs.getCurrent(function(tab) {
+                    chrome.tabs.update(tab.id, { url: "siteinfo_manager.html" });
                 });
-            });
-        } else if(window.safari) {
-            safari.self.tab.dispatchMessage('options', {
-                manage: true
-            });
-        } else if(window.opera) {
-            opera.extension.postMessage({
-                name: 'options',
-                data: { manage: true }
-            });
+                break;
+            case BROWSER_SAFARI:
+                safari.self.tab.dispatchMessage('options', { manage: true });
+                break;
+            case BROWSER_OPERA:
+                opera.extension.postMessage({
+                    name: 'options',
+                    data: { manage: true }
+                });
+                break;
+            default:
         }
     }, false);
     
@@ -173,7 +192,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
         update_siteinfo_output.innerHTML = '<img src="' + imgLoad + '"> Updating...';
         update_siteinfo_output.className = 'MSG_update_siteinfo_upd';
 
-        bgProcess.UpdateSiteinfo(function() {
+        bgProcess.downloadDatabase(function() {
             update_siteinfo_output.innerHTML = '<img src="' + imageTick + '"> SITEINFO updated';
             update_siteinfo_output.className = 'MSG_update_siteinfo_sucс';
             update_siteinfo.disabled = false;
@@ -245,7 +264,7 @@ var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoK
         try {
             JSON.parse(custom_patterns.value);
         } catch (bug) {
-            alert('[AutoPatchWork] Invalid JSON format. Check original SITEINFO for the reference.');
+            alert('Invalid JSON format. Check original SITEINFO for the reference.');
             return;
         }
         AutoPatchWork.save_custom_patterns(custom_patterns.value);

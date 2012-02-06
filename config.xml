@@ -7,7 +7,7 @@
   <author href="http://my.opera.com/DitherSky/blog/">Dither (based on os0x version)</author>
   <icon src="icons/icon-64.png" />
   <access origin="http://ss-o.net" subdomains="true" />
-  <update-description href="https://raw.github.com/Dither/AutoPatchWorkOpera/master/update.xml" />
+  <!--<update-description href="https://raw.github.com/Dither/AutoPatchWorkOpera/master/update.xml" />-->
   <license href="http://www.opensource.org/licenses/mit-license.php">Licensed under the Open Source Initiative OSI - The MIT License (MIT);
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at

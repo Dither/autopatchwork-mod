@@ -1,70 +1,90 @@
-Object.keys || (Object.keys = function (k) {
-    var r = [];
-    for (var i in k) r.push(i);
-    return r;
-});
-var COUNT = 100;
+/** 
+ * Returns Array of first level keys of the passed Object.
+ * @return {Array} Array of keys in 'this' object.
+ * */
+if(Object.prototype.keys === undefined) {
+    Object.prototype.keys = function() {
+        var ret = [];
+        for(x in this) if(this.hasOwnProperty(x)) ret.push(x);
+        return ret;
+    };
+}
+
+var RECORDS_PER_PAGE = 100;
 var PageIndex = 0;
 var isReady = false;
-var MICROFORMATs = [{
-    url: '^https?://.',
-    nextLink: '//a[@rel="next"] | //link[@rel="next"]',
-    insertBefore: '//*[contains(concat(" ",@class," "), " autopagerize_insert_before ")]',
-    pageElement: '//*[contains(concat(" ",@class," "), " autopagerize_page_element ")]'
-},
-    {
-    url: '^https?://.',
-    nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
-    pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
-}];
 
-(function siteinfo_init(bgProcess) {
+(function siteinfo_manager(bgProcess) {
     var self = this;
 
     function APWException(message) {
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
-
-    if (self.safari && !bgProcess) {
-        safari.self.tab.dispatchMessage('siteinfo_init');
-        safari.self.addEventListener('message', function (evt) {
-            siteinfo_init(evt.message);
-        }, false);
-        return;
-    } else if (self.opera && !bgProcess) {
-        //console.log(self.opera);
-        opera.extension.onmessage = function (evt) {
-            if (!evt) return;
-            if (evt.data) {
-                siteinfo_init(evt.data.data);
-            } else {
-                throw new APWException('Can\'t fing background process!');
-            }
-        };
-        opera.extension.postMessage({ name: 'siteinfo_init' });
-        return;
-    } else {
-        bgProcess = bgProcess || chrome.extension.getBackgroundPage();
-        if (!bgProcess) throw new APWException('Can\'t fing background process!');
-    }
-
-    var getWedataId = bgProcess.getWedataId || // WTF???
-    function getWedataId(inf) {
-        return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
-    };
-
+    
     function dispatch_event(type, opt) {
         var ev = document.createEvent('Event');
         ev.initEvent(type, true, false);
         if (opt) {
-            Object.keys(opt).forEach(function (k) {
-                if (!ev[k])
-                    ev[k] = opt[k];
+            opt.keys().forEach(function (k) {
+                if (!ev[k]) ev[k] = opt[k];
             });
         }
         document.dispatchEvent(ev);
     }
+    
+    var browser, 
+        BROWSER_CHROME = 1,
+        BROWSER_SAFARI = 2,
+        BROWSER_OPERA = 3;
+        
+    var debug = JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode,
+        custom_info = JSON.parse(storagebase.custom_info),
+        site_stats = JSON.parse(storagebase.site_stats),
+        site_fail_stats = JSON.parse(storagebase.site_fail_stats);
+        
+    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+    else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+    else */browser = BROWSER_OPERA;
+    
+    function log() {
+        if (!debug) return;
+        if (browser === BROWSER_OPERA) {
+            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+        } else if (window.console) {
+            console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+        }
+    }
+    
+    // Init browser-specific messaging
+    switch (browser) {
+        case BROWSER_SAFARI:
+            if (bgProcess) break;
+            safari.self.tab.dispatchMessage('siteinfo_init');
+            safari.self.addEventListener('message', function(evt) { siteinfo_manager(evt.message); }, false);
+            return;
+        case BROWSER_OPERA:
+            if (bgProcess) break;
+            //console.log(self.opera);
+            opera.extension.onmessage = function(evt) {
+                if(evt && evt.data) {
+                    siteinfo_manager(evt.data.data);
+                }
+            };
+            opera.extension.postMessage({ name: 'siteinfo_init' });
+            return;
+        case BROWSER_CHROME:
+            bgProcess = bgProcess || chrome.extension.getBackgroundPage();
+    }
+
+    if (!bgProcess) {
+        throw new APWException('Can\'t fing background process!');
+    }
+    
+    var getWedataId = bgProcess.getWedataId || // WTF???
+                        function getWedataId(inf) {
+                            return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
+                        };
 
     window.addEventListener('AutoPatchWork.request', function(e) {
         e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
@@ -82,25 +102,21 @@ var MICROFORMATs = [{
         window.addEventListener('AutoPatchWork.append', function (e) {
             e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
-            if (infos && infos.length > COUNT * (PageIndex + 1)) {
+            if (infos && infos.length > RECORDS_PER_PAGE * (PageIndex + 1)) {
                 PageIndex++;
-                SiteInfoView(infos.slice(COUNT * PageIndex, COUNT * (PageIndex + 1)), COUNT * PageIndex);
+                SiteInfoView(infos.slice(RECORDS_PER_PAGE * PageIndex, RECORDS_PER_PAGE * (PageIndex + 1)), RECORDS_PER_PAGE * PageIndex);
             } else {
                  dispatch_event('AutoPatchWork.pageloaded');
             }     
         }, true);
 
-        var debug = bgProcess.AutoPatchWork.config.debug_mode;
-        var bg_siteinfo = bgProcess.siteinfo;
-        var custom_info = bgProcess.custom_info;
-        var site_stats = bgProcess.site_stats;
-        var site_fail_stats = bgProcess.site_fail_stats;
+        var local_siteinfo = bgProcess.siteinfo;
         var successful = 'number_of_successful';
         var failed = 'number_of_failed';
-        var sitemap = {};
+        var siteinfos_array = {};
 
-        bg_siteinfo.forEach(function (v) {
-            if(v['wedata.net.id']) sitemap[v['wedata.net.id']] = v;
+        local_siteinfo.forEach(function (v) {
+            if(v['wedata.net.id']) siteinfos_array[v['wedata.net.id']] = v;
         });
         //if (!this.chrome || !chrome.tabs) return;
         var siteinfo_data, timestamp, filtered_info = [];
@@ -110,8 +126,8 @@ var MICROFORMATs = [{
             "resource_url": true
         };
 
-        var tmpl_line = document.getElementById('tmpl_siteinfo_body').firstChild;
-        while (tmpl_line && (tmpl_line.nodeType !== 1)) tmpl_line = tmpl_line.nextSibling;
+        var template_element = document.getElementById('tmpl_siteinfo_body').firstChild;
+        while (template_element && (template_element.nodeType !== 1)) template_element = template_element.nextSibling;
         
         var siteinfo_search_input = document.getElementById('siteinfo_search_input');
         var siteinfo_table = document.getElementById('siteinfo_table');
@@ -124,22 +140,32 @@ var MICROFORMATs = [{
             //'on/off':{number:true, key:'disabled'},
             'name': {
                 string: true,
+                title: 'Name',
                 key: 'name'
+            },
+            'data': {
+                string: false,
+                title: 'SITEINFO',
+                key: 'data'
             },
             'created_at': {
                 string: true,
+                title: 'Created',
                 key: 'created_at'
             },
             'updated_at': {
                 string: true,
+                title: 'Updated',
                 key: 'updated_at'
             },
             'created_by': {
                 string: true,
+                title: 'Author',
                 key: 'created_by'
             },
             'resource_url': {
                 string: true,
+                title: 'Database entry',
                 key: 'resource_url',
                 filter: function (v) {
                     v = wedata_filter(v);
@@ -148,15 +174,18 @@ var MICROFORMATs = [{
             },
             'database_resource_url': {
                 string: true,
+                title: 'Database',
                 key: 'database_resource_url',
                 filter: wedata_filter
             },
             'number_of_successful': {
                 number: true,
+                title: 'Worked',
                 key: 'number_of_successful'
             },
             'number_of_failed': {
                 number: true,
+                title: 'Failed',
                 key: 'number_of_failed'
             }
         };
@@ -180,7 +209,7 @@ var MICROFORMATs = [{
                 if (sorted && e.target !== sorted) {
                     sorted.className = '';
                 }
-                SiteInfoView(infos.slice(0, COUNT));
+                SiteInfoView(infos.slice(0, RECORDS_PER_PAGE));
                 SiteInfoNavi(infos);
                 sorted = e.target;
             }
@@ -188,10 +217,10 @@ var MICROFORMATs = [{
         
         siteinfo_view.onclick = function (e) {
             if (e.target && e.target === siteinfo_view) {
+                document.locked = false;
                 siteinfo_view.style.top = -window.innerHeight + 'px';
                 siteinfo_view.style.bottom = window.innerHeight + 'px';
-                while (siteinfo_view.firstChild)
-                siteinfo_view.removeChild(siteinfo_view.firstChild);
+                while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
             }
         };
 
@@ -236,7 +265,7 @@ var MICROFORMATs = [{
             });
             debug && log('search completed in ' + (new Date - s) + 'ms');
             var v = new Date * 1;
-            SiteInfoView(siteinfo.slice(0, COUNT));
+            SiteInfoView(siteinfo.slice(0, RECORDS_PER_PAGE));
             filtered_info = siteinfo;
             SiteInfoNavi(siteinfo);
             debug && log('view completed in ' + (new Date - v) + 'ms');
@@ -269,7 +298,7 @@ var MICROFORMATs = [{
             return t;
         }
 
-        var Text2Html = {
+        var text_to_html = {
             "database_resource_url": url2anchor,
             "resource_url": url2anchor,
             "created_at": string2date,
@@ -323,98 +352,94 @@ var MICROFORMATs = [{
         }
 
         function SiteInfoView(siteinfo, append) {
+            document.locked = false;
             toggle_popup('loader', true);
             var df = document.createDocumentFragment();
             siteinfo.forEach(function (info, i) {
                 var id = getWedataId(info);
-                var used_data = sitemap[id];
+                var current_siteinfo = siteinfos_array[id];
                 //var editBox = [];
-                var line = tmpl_line.cloneNode(true);
+                var line = template_element.cloneNode(true);
+                var disabled_btn = line.querySelector('input.onoff');
                 if (custom_info && custom_info[id]) {
                     var ci = custom_info[id];
-                    if (Object.keys(ci).some(function (k) {
-                        if (k === 'disabled') return false;
-                        return ci[k] !== info.data[k];
-                    })) {
-                        line.setAttribute('data-modified', 'modified');
+                    if (ci.keys().some(function (k) { if (k === 'disabled') return false; return ci[k] !== info.data[k]; })){
+                           line.setAttribute('data-modified', 'modified');
                     }
+                    disabled_btn.checked = ci.disabled;
+                    ci.disabled ? line.setAttribute('data-disabled', 'disabled' ) : line.removeAttribute('data-disabled');
                 }
-                var disabled_btn = line.querySelector('input.onoff');
-                if (used_data) {
-                    disabled_btn.checked = ('disabled' in used_data && used_data.disabled);
-                } else {
-                    disabled_btn.disabled = true;
-                }
+
                 disabled_btn.onchange = function (e) {
-                    used_data.disabled = !used_data.disabled;
+                    current_siteinfo.disabled = !current_siteinfo.disabled;
                     if (!custom_info[id]) {
                         custom_info[id] = {};
                     }
-                    custom_info[id].disabled = used_data.disabled;
+                    custom_info[id].disabled = current_siteinfo.disabled;
                     storagebase.custom_info = JSON.stringify(custom_info);
+                    current_siteinfo.disabled ? line.setAttribute('data-disabled', 'disabled' ) : line.removeAttribute('data-disabled');
                 };
                 df.appendChild(line);
                 line.querySelector('td.index').textContent = 1 + i + (append || 0);
-                Object.keys(info).forEach(function (k, i, info_keys) {
-                    var data = info[k];
-                    var td = line.querySelector('td.' + k);
+                info.keys().forEach(function (title, i, info_keys) {
+                    var data = info[title];
+                    var td = line.querySelector('td.' + title);
                     if (!td) return;
-                    if (k === 'name') {
-                        var btn = td.firstChild;
-                        btn.onclick = function () {
+                    if (title === 'name') {
+                        var name_btn = td.firstChild;
+                        name_btn.onclick = function () {
+                            if (document.locked) return;
+                            document.locked = true;
                             var dl = document.createElement('dl');
-                            info_keys.forEach(function (k) {
-                                var data = info[k];
+                            info_keys.forEach(function (key) {
+                                var data = info[key];
                                 var dt1 = document.createElement('dt');
-                                dt1.textContent = dt1.className = k;
+                                dt1.className = key;
+                                dt1.textContent = types[key].title;
                                 dl.appendChild(dt1);
                                 var dd1 = document.createElement('dd');
-                                dd1.className = k;
+                                dd1.className = key;
                                 dl.appendChild(dd1);
                                 if (typeof data === 'object') {
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
-                                    Object.keys(data).forEach(function (k2) {
-                                        var inf = (used_data && used_data[k2]) ? used_data[k2] : data[k2];
+                                    data.keys().forEach(function (si_key) {
+                                        var inf = (current_siteinfo && current_siteinfo[si_key]) ? current_siteinfo[si_key] : data[si_key];
                                         if (inf) {
                                             var dt2 = document.createElement('dt');
                                             var dd2 = document.createElement('dd');
                                             dl2.appendChild(dt2);
                                             dl2.appendChild(dd2);
-                                            dt2.textContent = k2;
+                                            dt2.textContent = si_key;
                                             var node2;
-                                            if (Text2Html[k2]) {
-                                                node2 = Text2Html[k2](inf);
+                                            if (text_to_html[si_key]) {
+                                                node2 = text_to_html[si_key](inf);
                                             } else {
                                                 node2 = document.createElement('textarea');
                                                 node2.value = inf;
-                                                if (!used_data) {
+                                                if (!current_siteinfo) {
                                                     node2.setAttribute('readonly', 'readonly');
                                                 }
                                                 node2.onchange = function () {
-                                                    //console.log(used_data,used_data[k2],node2.value);
-                                                    used_data[k2] = node2.value;
-                                                    if (!custom_info[id]) {
-                                                        custom_info[id] = {};
-                                                    }
-                                                    if (used_data[k2] === info.data[k2]) {
-                                                        delete custom_info[id][k2];
+                                                    //console.log(current_siteinfo,current_siteinfo[si_key],node2.value);
+                                                    current_siteinfo[si_key] = node2.value;
+                                                    if (!custom_info[id]) { custom_info[id] = {}; }
+                                                    if (current_siteinfo[si_key] === info.data[si_key]) {
+                                                        delete custom_info[id][si_key];
                                                         var ci = custom_info[id];
-                                                        if (Object.keys(ci).some(function (k) {
-                                                            if (k === 'disabled') {
-                                                                return false;
-                                                            }
+                                                        if (ci.keys().some(function (k) {
+                                                            if (k === 'disabled') return false;
                                                             return ci[k] !== info.data[k];
                                                         })) {} else {
                                                             line.removeAttribute('data-modified');
                                                         }
                                                     } else {
-                                                        custom_info[id][k2] = node2.value;
+                                                        custom_info[id][si_key] = node2.value;
                                                         line.setAttribute('data-modified', 'modified');
                                                     }
                                                     storagebase.custom_info = JSON.stringify(custom_info);
                                                 };
-                                                if (inf !== data[k2]) {
+                                                if (inf !== data[si_key]) {
                                                     node2.setAttribute('data-modified', 'modified');
                                                     line.setAttribute('data-modified', 'modified');
                                                 }
@@ -424,8 +449,8 @@ var MICROFORMATs = [{
                                     });
                                 } else {
                                     var node;
-                                    if (Text2Html[k]) {
-                                        node = Text2Html[k](data);
+                                    if (text_to_html[title]) {
+                                        node = text_to_html[title](data);
                                     } else {
                                         node = document.createElement('span');
                                         node.textContent = data;
@@ -439,9 +464,9 @@ var MICROFORMATs = [{
                             siteinfo_view.firstElementChild.style.top = 
                                 (window.innerHeight - siteinfo_view.firstElementChild.offsetHeight) / 2 + 'px';
                         };
-                        btn.textContent = data;
-                    } else if (Text2Html[k]) {
-                        td.appendChild(Text2Html[k](data));
+                        name_btn.textContent = data;
+                    } else if (text_to_html[title]) {
+                        td.appendChild(text_to_html[title](data));
                     } else {
                         td.textContent = data;
                     }
@@ -463,14 +488,14 @@ var MICROFORMATs = [{
             PageIndex = 0;
             while (nav.firstChild)
             nav.removeChild(nav.firstChild);
-            for (var i = 0, len = siteinfo.length / COUNT; i < len; i++)(function (i) {
+            for (var i = 0, len = siteinfo.length / RECORDS_PER_PAGE; i < len; i++)(function (i) {
                 var a = document.createElement('a');
                 a.textContent = i + 1;
                 a.href = '#a' + i;
                 a.id = 'a' + i;
                 nav.appendChild(a);
                 a.addEventListener('click', function (e) {
-                    SiteInfoView(siteinfo.slice(COUNT * i, COUNT * (i + 1)));
+                    SiteInfoView(siteinfo.slice(RECORDS_PER_PAGE * i, RECORDS_PER_PAGE * (i + 1)));
                     PageIndex = i;
                     window.scrollTo(0, 0);
                     e.preventDefault();
@@ -478,22 +503,6 @@ var MICROFORMATs = [{
             })(i);
             var r = nav.parentNode.getBoundingClientRect();
             siteinfo_table.style.marginTop = r.height + 10 + 'px';
-        }
-
-        function UpdateSiteInfo(callback) {
-            var url = 'http://ss-o.net/json/wedataAutoPagerize.json';
-            var xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                try {
-                    var d = JSON.parse(xhr.responseText);
-                } catch (e) {
-                    console.log(e);
-                    return;
-                }
-                callback(d);
-            };
-            xhr.open('GET', url, true);
-            xhr.send(null);
         }
 
         function toggle_popup(id , state) {
@@ -507,32 +516,19 @@ var MICROFORMATs = [{
             // do we need onresize event at all?
             siteinfo_view.style.top = -window.innerHeight + 'px';
             siteinfo_view.style.bottom = window.innerHeight + 'px';
-            while (siteinfo_view.firstChild)
-            siteinfo_view.removeChild(siteinfo_view.firstChild);
+            while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
+            document.locked = false;
         };
         if (sessionStorage.siteinfo_wedata) {
             siteinfo_data = JSON.parse(sessionStorage.siteinfo_wedata);
             applyStatistics(siteinfo_data);
-            sort_by(siteinfo_data, {
-                number: true,
-                key: failed
-            });
-            SiteInfoView(siteinfo_data.slice(0, COUNT));
+            sort_by(siteinfo_data, { number: true, key: failed });
+            SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
             SiteInfoNavi(siteinfo_data);
             window.onresize();
         } else {
-            UpdateSiteInfo(function (siteinfo) {
-                siteinfo_data = siteinfo;
-                sessionStorage.siteinfo_wedata = JSON.stringify(siteinfo);
-                applyStatistics(siteinfo_data);
-                sort_by(siteinfo_data, {
-                    number: true,
-                    key: failed
-                });
-                SiteInfoView(siteinfo_data.slice(0, COUNT));
-                SiteInfoNavi(siteinfo);
-                window.onresize();
-            });
+            alert('Database is out of date.');
+            return;
         }
         
         dispatch_event('AutoPatchWork.siteinfo', {
@@ -543,13 +539,5 @@ var MICROFORMATs = [{
             }
         });
 
-        function log(arguments) {
-            if (!debug) return;
-            if (window.opera && window.opera.postError) {
-                window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
-            } else if (window.console) {
-                console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
-            }
-        }
     }, false);
 })();

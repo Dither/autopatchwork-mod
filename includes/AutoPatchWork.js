@@ -12,7 +12,8 @@
 
 /* 
  * Normal AutoPatchWork event flow:
- *  AutoPatchWork.siteinfo - got SITEINFO for the current site.
+ *  AutoPatchWork.init - we are on some site, requestiong siteinfo for it.
+ *  AutoPatchWork.siteinfo - got SITEINFOs for the current site.
  *  AutoPatchWork.initialized - initialized APW data.
  *  scroll - got some scrolling on the page.
  *  AutoPatchWork.request - sending request for the next page. 
@@ -31,19 +32,59 @@
 */
 
 (function APW(self, window, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    if (window.name === 'autopatchwork-request-iframe') {
-        return;
-    }
+    if (window.name === 'autopatchwork-request-iframe') return;
 
+    var browser, debug = false,
+        BROWSER_CHROME = 1,
+        BROWSER_SAFARI = 2,
+        BROWSER_OPERA = 3;
+    var options = {
+        BASE_REMAIN_HEIGHT: 400,
+        FORCE_TARGET_WINDOW: true,
+        DEFAULT_STATE: true,
+        TARGET_WINDOW_NAME: '_blank',
+        BAR_STATUS: true,
+        css: ''
+    };
+    var status = {
+        state: true,
+        loaded: false,
+        //page_number: 1,
+        nextLink: null,
+        pageElement: null,
+        last_element: null,
+        insert_point: null,
+        append_point: null,
+        bottom: null,
+        remain_height: null
+    };
+
+    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+    else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+    else */browser = BROWSER_OPERA;
+        
     function APWException(message) {
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
+    
+    /** 
+     * Logging function.
+     * @param {Array|String} arguments Data to put to debug output.
+     * */
+    function log() {
+        if (!debug) return;
+        if (browser === BROWSER_OPERA) {
+            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+        } else if (window.console) {
+            console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+        }
+    }
 
     // Cute AJAX loader gif.
-    window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+    if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
 
-    if (self.opera && !APW.loaded) {
+    if (browser === BROWSER_OPERA && !APW.loaded) {
         var args = arguments;
         document.addEventListener('DOMContentLoaded', function (e) {
             APW.loaded = true;
@@ -52,15 +93,7 @@
         return;
     }
 
-    var sendRequest, browser, 
-        BROWSER_CHROME = 'chrome',
-        BROWSER_SAFARI = 'safari',
-        BROWSER_OPERA = 'opera';
-
-    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
-    else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
-    else */browser = BROWSER_OPERA;
-
+    var sendRequest;
     switch (browser) {
         case BROWSER_CHROME:
             sendRequest = function (data, callback) {
@@ -95,56 +128,26 @@
                 return function (data, callback, name) {
                     name = (name || '') + (Date.now() + Math.random().toString(36));
                     callback && (eventData[name] = callback);
-                    opera.extension.postMessage({
-                        name: name,
-                        data: data
-                    });
+                    opera.extension.postMessage({ name: name, data: data });
                 };
             })();
             break;
         default:
             sendRequest = null;
             throw new APWException('Browser not detected!');
-            return;
     } // switch(browser)
 
-    var options = {
-        BASE_REMAIN_HEIGHT: 400,
-        FORCE_TARGET_WINDOW: true,
-        DEFAULT_STATE: true,
-        TARGET_WINDOW_NAME: '_blank',
-        BAR_STATUS: true,
-        css: ''
-    };
-    var status = {
-        state: true,
-        loaded: false,
-        page_number: 1,
-        nextLink: null,
-        pageElement: null,
-        last_element: null,
-        insert_point: null,
-        append_point: null,
-        bottom: null,
-        remain_height: null
-    };
-    var bar, img,
+    var bar, img, matched_siteinfo, forceIframe,
         rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
-        debug = false,
-        isXHTML = document.documentElement.nodeName !== 'HTML' && document.createElement('p').nodeName !== document.createElement('P').nodeName;
+        isXHTML = document.documentElement.nodeName !== 'HTML' && 
+                  document.createElement('p').nodeName !== document.createElement('P').nodeName;
+    document.apwpagenumber = 1;
 
     // Begin listening for SITEINFO messages and send reset event if got one while active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
 
-    sendRequest({
-            url: location.href,
-            isFrame: window.top != window.self
-        },
-        init,
-        'AutoPatchWork.init'
-    );
+    sendRequest({ url: location.href, isFrame: window.top !== window.self }, init, 'AutoPatchWork.init' );
 
-    var matched_siteinfo, forceIframe;
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
@@ -157,9 +160,7 @@
                 document.dispatchEvent(ev);
             }
         } else if (matched_siteinfo) {
-            matched_siteinfo.some(function (s) {
-                return AutoPatchWork(s);
-            });
+            matched_siteinfo.some(function (s) { return AutoPatchWork(s); });
         }
     }, false);
     
@@ -250,8 +251,7 @@
         }
         if ((next.host && next.host !== location.host) || 
             (next.protocol && next.protocol !== location.protocol) ||
-            forceIframe
-            ){
+            forceIframe ){
                 request = request_iframe;
                 in_iframe = true;
         }
@@ -316,13 +316,19 @@
         function pageloaded() {
             var b = document.getElementById('autopatchwork_bar');
             if (b) b.className = 'autopager_on';
+            
+            /*///////////////////
+            dispatch_notify_event({
+                extension: 'autopatchwork',
+                text: 'Page ' + document.apwpagenumber + ' loaded...',
+                type: '',
+                position: 'top',
+                width: '200px'
+            });
+            ///////////////////*/
         }
 
-        if (in_iframe) {
-            window.addEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
-        } else {
-            window.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
-        }
+        window.addEventListener('AutoPatchWork.pageloaded', in_iframe ? pageloaded_iframe : pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -412,7 +418,7 @@
             Object.keys(evt.siteinfo).forEach(function (k) {
                 status[k] = evt.siteinfo[k];
             });
-            status.page_number = 1;
+            document.apwpagenumber = 1;
             window.removeEventListener('scroll', check_scroll, false);
             window.removeEventListener('AutoPatchWork.request', request, false);
             window.removeEventListener('AutoPatchWork.load', load, false);
@@ -443,6 +449,14 @@
          * @param {Event} evt Event data. *
          */
         function error_event(evt) {
+            ///////////////////
+              dispatch_notify_event({
+                extension: 'autopatchwork',
+                text: evt.message,
+                type: '',
+                position: 'top'
+             });
+             ///////////////////
             error(evt.message);
         }
         /** 
@@ -472,6 +486,16 @@
         function terminated(evt) {
             status.state = false;
             window.removeEventListener('scroll', check_scroll, false);
+            
+            ///////////////////
+              dispatch_notify_event({
+                extension: 'autopatchwork',
+                text: evt.message,
+                type: 'error',
+                position: 'top'
+             });
+             ///////////////////
+            
             bar && (bar.className = 'autopager_terminated');
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
@@ -481,22 +505,6 @@
                 status.bottom.parentNode.removeChild(status.bottom);
             }
         }
-        /** 
-         * Logging function.
-         * @param {Array|String} arguments Data to put to debug output.
-         * */
-        function log(arguments) {
-            if (!debug) return;
-            if (window.opera && window.opera.postError) {
-                window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
-            } else if (window.console) {
-                console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments).join(''));
-            }
-        }
-        /*function message(message) {
-            log(message, JSON.stringify(siteinfo, null, 4));
-            return false;
-        }*/
         /** 
          * Error handler. 
          * Stops scroll processing prints error, sets error statusbar.
@@ -538,6 +546,15 @@
                 mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
                 targetNode.dispatchEvent(mue);
             }
+        }
+        /**
+         * Dispatches custom notification event on the document node.
+         * @param {Object} opt Object of event's message data.
+         * */
+        function dispatch_notify_event(opt) {
+            var noe = document.createEvent('CustomEvent');
+            noe.initCustomEvent('Notify.It', false, false, opt);
+            document.dispatchEvent(noe);
         }
         /** 
          * Checks if document is scrolled enough to begin loading next page 
@@ -720,9 +737,9 @@
             status.loaded = true;
             if (!options.FORCE_TARGET_WINDOW) {
                 if (evt.response) {
-                    saveText(loaded_url, status.page_number, evt.response.responseText);
+                    saveText(loaded_url, document.apwpagenumber, evt.response.responseText);
                 } else if (evt.htmlDoc) {
-                    saveText(loaded_url, status.page_number, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
+                    saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
                 }
             }
             dispatch_event('AutoPatchWork.append');
@@ -767,7 +784,6 @@
                 root = node = document.createElement('div');
             }
 
-            
             var nodes = get_main_content(htmlDoc),
                 first = nodes[0];
             if (!nodes) dispatch_event('AutoPatchWork.error', { message: 'Main content is not found in downloaded page' });
@@ -781,7 +797,7 @@
             var a = span.appendChild(document.createElement('a'));
             a.className = 'autopagerize_link';
             a.href = loaded_url;
-            a.setAttribute('number', ++status.page_number);
+            a.setAttribute('number', ++document.apwpagenumber);
             if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
 
             append_point.insertBefore(root, insert_point);
@@ -807,7 +823,7 @@
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
             next = get_next_link(htmlDoc);
             if (!next) {
-                dispatch_event('AutoPatchWork.terminated', { message: 'nextLink not found.' });
+                dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
             } else {
                 next_href = next.getAttribute('href') || next.getAttribute('action') || next.getAttribute('value');
                 if (next_href && !loaded_urls[next_href]) {
