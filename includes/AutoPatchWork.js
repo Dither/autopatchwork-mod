@@ -137,7 +137,8 @@
             throw new APWException('Browser not detected!');
     } // switch(browser)
 
-    var bar, img, matched_siteinfo, forceIframe,
+    var bar, img, matched_siteinfo, 
+        forceIframe = false,
         rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
         isXHTML = document.documentElement.nodeName !== 'HTML' && 
                   document.createElement('p').nodeName !== document.createElement('P').nodeName;
@@ -145,7 +146,7 @@
 
     // Begin listening for SITEINFO messages and send reset event if got one while active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
-
+    
     sendRequest({ url: location.href, isFrame: window.top !== window.self }, init, 'AutoPatchWork.init' );
 
     window.addEventListener('hashchange', function (e) {
@@ -221,15 +222,17 @@
 
         var location_href = location.href,
             loading = false,
-            in_iframe = false,
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
-            pageElement = status.pageElement = siteinfo.pageElement;
-            //nextMask = status.nextMask = siteinfo.nextMask,
-            //useAjax = status.useAjax = siteinfo.useAjax,
-            //clickLink = status.clickLink = siteinfo.clickLink,
-            //allowScripts = status.allowScripts = siteinfo.allowScripts,
-            //forceIframe = status.forceIframe = siteinfo.forceIframe;
+            pageElement = status.pageElement = siteinfo.pageElement,
+            disableSeparator = status.disableSeparator = (siteinfo.disableSeparator == 'true' || false);
+            //retryCount = status.retryCount = siteinfo.retryCount || 1,
+            //nextMask = status.nextMask = siteinfo.nextMask || null,
+            //useAjax = status.useAjax = siteinfo.useAjax || null,
+            //clickLink = status.clickLink = siteinfo.clickLink || null,
+            //allowScripts = status.allowScripts = siteinfo.allowScripts || false;
+       
+       //forceIframe = status.forceIframe = siteinfo.forceIframe;
 
         log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
@@ -249,16 +252,10 @@
                 return doc;
             };
         }
-        if ((next.host && next.host !== location.host) || 
-            (next.protocol && next.protocol !== location.protocol) ||
-            forceIframe ){
-                request = request_iframe;
-                in_iframe = true;
-        }
         // Individual site fixes.
         if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
-            in_iframe = true;
+            forceIframe = true;
         }
         else if ('www.tumblr.com' === location.host) {
             script_filter = dont_filter;
@@ -277,18 +274,22 @@
                 return next;
             };
             next = get_next_link(document);
+        }       
+        else if ((next.host && next.host !== location.host) || 
+            (next.protocol && next.protocol !== location.protocol) ||
+            forceIframe ){
+                request = request_iframe;
         }
 
-        var htmlDoc, url,
-            first_element = status.first_element = page_elements[0],
+        var first_element = status.first_element = page_elements[0],
             last_element = status.last_element = page_elements.pop(),
             insert_point = status.insert_point = last_element.nextSibling,
             append_point = status.append_point = last_element.parentNode;
         
-        var loaded_urls = {},
+        var htmlDoc, url,
+            loaded_urls = {},
             location_pushed = false,
-            session_object = {},
-            page_num = 0;
+            session_object = {};
 
         loaded_urls[location.href] = true;
         loaded_urls[next.href] = true;
@@ -328,7 +329,7 @@
             ///////////////////*/
         }
 
-        window.addEventListener('AutoPatchWork.pageloaded', in_iframe ? pageloaded_iframe : pageloaded, false);
+        window.addEventListener('AutoPatchWork.pageloaded', forceIframe ? pageloaded_iframe : pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -429,7 +430,7 @@
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             window.removeEventListener('AutoPatchWork.state', state, false);
-            if (in_iframe) {
+            if (forceIframe) {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
             } else {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
@@ -766,41 +767,44 @@
             var append_point = status.append_point;
             status.loaded = false;
 
-            var root, node;
-            // Checking where to add new content. 
-            // In case of table we'll add inside it, otherwise after.
-            if (/^tbody$/i.test(append_point.localName)) {
-                var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                var colums = 0;
-                for (var i = 0, l = colNodes.snapshotLength; i < l; i++) {
-                    var col = colNodes.snapshotItem(i).getAttribute('colspan');
-                    colums += parseInt(col, 10) || 1;
-                }
-                node = document.createElement('td');
-                root = document.createElement('tr');
-                node.setAttribute('colspan', colums);
-                root.appendChild(node);
-            } else {
-                root = node = document.createElement('div');
-            }
-
+            
             var nodes = get_main_content(htmlDoc),
                 first = nodes[0];
             if (!nodes) dispatch_event('AutoPatchWork.error', { message: 'Main content is not found in downloaded page' });
+                
+            // Checking where to add new content. 
+            // In case of table we'll add inside it, otherwise after.
+            if (!disableSeparator) {
+                var root, node;
+                if (/^tbody$/i.test(append_point.localName)) {
+                    var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    var colums = 0;
+                    for (var i = 0, l = colNodes.snapshotLength; i < l; i++) {
+                        var col = colNodes.snapshotItem(i).getAttribute('colspan');
+                        colums += parseInt(col, 10) || 1;
+                    }
+                    node = document.createElement('td');
+                    root = document.createElement('tr');
+                    node.setAttribute('colspan', colums);
+                    root.appendChild(node);
+                } else {
+                    root = node = document.createElement('div');
+                }
 
-            // Adding page separator.
-            node.className = 'autopagerize_page_separator_blocks';
-            var h4 = node.appendChild(document.createElement('h4'));
-            h4.className = 'autopagerize_page_separator';
-            var span = h4.appendChild(document.createElement('span'));
-            span.className = 'autopagerize_page_info';
-            var a = span.appendChild(document.createElement('a'));
-            a.className = 'autopagerize_link';
-            a.href = loaded_url;
-            a.setAttribute('number', ++document.apwpagenumber);
-            if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
-
-            append_point.insertBefore(root, insert_point);
+                // Adding page separator.
+                node.className = 'autopagerize_page_separator_blocks';
+                var h4 = node.appendChild(document.createElement('h4'));
+                h4.className = 'autopagerize_page_separator';
+                var span = h4.appendChild(document.createElement('span'));
+                span.className = 'autopagerize_page_info';
+                var a = span.appendChild(document.createElement('a'));
+                a.className = 'autopagerize_link';
+                a.href = loaded_url;
+                a.setAttribute('number', ++document.apwpagenumber);
+                if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
+    
+                append_point.insertBefore(root, insert_point);
+            }
             
             // Firing node change event on the target node.
             nodes.forEach(function (doc, i, nodes) {
