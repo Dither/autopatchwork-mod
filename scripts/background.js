@@ -92,6 +92,8 @@ window.APWBg = {
     }
 };
 
+//// main //////
+
 if(browser === BROWSER_SAFARI) {
     safari.extension.settings.addEventListener('change', function(evt) {
         if(evt.key in APWBg.config) {

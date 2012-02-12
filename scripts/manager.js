@@ -505,6 +505,22 @@ var isReady = false;
             siteinfo_table.style.marginTop = r.height + 10 + 'px';
         }
 
+        function UpdateSiteInfo(callback) {
+            var url = 'http://ss-o.net/json/wedataAutoPagerize.json';
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                try {
+                    var d = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    console.log(e);
+                    return;
+                }
+                callback(d);
+            };
+            xhr.open('GET', url, true);
+            xhr.send(null);
+        }
+
         function toggle_popup(id , state) {
             setTimeout(function () {
                 var popup = document.getElementById(id);
@@ -527,8 +543,18 @@ var isReady = false;
             SiteInfoNavi(siteinfo_data);
             window.onresize();
         } else {
-            alert('Database is out of date.');
-            return;
+            UpdateSiteInfo(function (siteinfo) {
+                siteinfo_data = siteinfo;
+                sessionStorage.siteinfo_wedata = JSON.stringify(siteinfo);
+                applyStatistics(siteinfo_data);
+                sort_by(siteinfo_data, {
+                    number: true,
+                    key: failed
+                });
+                SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
+                SiteInfoNavi(siteinfo);
+                window.onresize();
+            });
         }
         
         dispatch_event('AutoPatchWork.siteinfo', {
