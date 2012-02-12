@@ -9,11 +9,13 @@ var self = this;
 var siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
 var URL_SITEINFO = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
 var MICROFORMATs = [{
+    MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//a[@rel="next"] | //link[@rel="next"]',
     insertBefore: '//*[contains(concat(" ",@class," "), " autopagerize_insert_before ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " autopagerize_page_element ")]'
 }, {
+    MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'

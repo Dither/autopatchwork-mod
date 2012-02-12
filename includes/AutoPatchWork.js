@@ -31,7 +31,7 @@
  *  AutoPatchWork.toggle - toggle statusbar state.
 */
 
-(function APW(self, window, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
+(function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
     if (window.name === 'autopatchwork-request-iframe') return;
 
     var browser, debug = false,
@@ -45,13 +45,20 @@
         TARGET_WINDOW_NAME: '_blank',
         BAR_STATUS: true,
         css: ''
-    };
+    };      
     var status = {
         state: true,
         loaded: false,
+        ajax_enabled: false,
+        scripts_allowed: false,
+        separator_disabled: false,
+        in_iframe: false,
         //page_number: 1,
         nextLink: null,
+        nextMask: null,
+        clickLink: null,
         pageElement: null,
+        retry_count: 1,
         last_element: null,
         insert_point: null,
         append_point: null,
@@ -137,8 +144,7 @@
             throw new APWException('Browser not detected!');
     } // switch(browser)
 
-    var bar, img, matched_siteinfo, 
-        forceIframe = false,
+    var bar, img, matched_siteinfo,
         rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
         isXHTML = document.documentElement.nodeName !== 'HTML' && 
                   document.createElement('p').nodeName !== document.createElement('P').nodeName;
@@ -154,9 +160,10 @@
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             var status = AutoPatchWorked.status;
             if (status.first_element !== first_element) {
-                forceIframe = true;
+                //forceIframe = true; // probably bugged method
                 var ev = document.createEvent('Event');
                 ev.initEvent('AutoPatchWork.reset', true, true);
+                AutoPatchWorked.siteinfo.forceIframe = true;
                 ev.siteinfo = AutoPatchWorked.siteinfo;
                 document.dispatchEvent(ev);
             }
@@ -225,16 +232,15 @@
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
             pageElement = status.pageElement = siteinfo.pageElement,
-            disableSeparator = status.disableSeparator = (siteinfo.disableSeparator == 'true' || false);
-            //retryCount = status.retryCount = siteinfo.retryCount || 1,
-            //nextMask = status.nextMask = siteinfo.nextMask || null,
-            //useAjax = status.useAjax = siteinfo.useAjax || null,
-            //clickLink = status.clickLink = siteinfo.clickLink || null,
-            //allowScripts = status.allowScripts = siteinfo.allowScripts || false;
-       
-       //forceIframe = status.forceIframe = siteinfo.forceIframe;
+            disableSeparator = status.separator_disabled = (siteinfo.disableSeparator == 'true' || false),
+            clickLink = status.clickLink = (siteinfo.clickLink || null),
+            //retryCount = status.retry_count = (siteinfo.retryCount || 1),
+            //nextMask = status.nextMask = (siteinfo.nextMask || null),
+            //allowScripts = status.scripts_allowed = (siteinfo.allowScripts || false),
+            //useAjax = status.ajax_enabled = (siteinfo.useAjax || null),
+            forceIframe = status.in_iframe = (siteinfo.forceIframe || false);
 
-        log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
+        if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
         var next = get_next_link(document);
         if (!next) return log('next link ' + nextLink + ' not found.');
@@ -255,7 +261,7 @@
         // Individual site fixes.
         if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
-            forceIframe = true;
+            forceIframe = status.in_iframe = true;
         }
         else if ('www.tumblr.com' === location.host) {
             script_filter = dont_filter;
@@ -443,7 +449,7 @@
                 bar.parentNode.removeChild(bar);
             }
             delete window.AutoPatchWorked;
-            AutoPatchWork({ nextLink: status.nextLink, pageElement: status.pageElement });
+            AutoPatchWork({ nextLink: status.nextLink, pageElement: status.pageElement, forceIframe: (status.forceIframe || false) });
         }
         /** 
          * Error event handler.
@@ -774,7 +780,7 @@
                 
             // Checking where to add new content. 
             // In case of table we'll add inside it, otherwise after.
-            if (!disableSeparator) {
+            if (!status.separator_disabled) {
                 var root, node;
                 if (/^tbody$/i.test(append_point.localName)) {
                     var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -994,4 +1000,4 @@
             return xpath.replace(tokenPattern, replacer);
         }
     }
-})(this, window, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);
+})(this, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);
