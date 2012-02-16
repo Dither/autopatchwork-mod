@@ -44,6 +44,7 @@
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
         BAR_STATUS: true,
+        CHANGE_ADDRESS: false,
         css: ''
     };
     var status = {
@@ -87,6 +88,12 @@
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
+    
+    /** 
+     * Checks variable and converts string to corresponding boolean.
+     * @param {Boolean|String} s Data to check.
+     * */
+    function s2b(s) { return (s && (s === 'true' || s === true)) ? true : false; }
 
     // Cute AJAX loader gif.
     if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
@@ -183,7 +190,7 @@
             options.BASE_REMAIN_HEIGHT = info.config.remain_height;
             options.DEFAULT_STATE = info.config.auto_start;
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
-            options.REPLACE_STATE = info.config.replace_state;
+            options.CHANGE_ADDRESS = info.config.change_address;
             options.BAR_STATUS = info.config.bar_status;
             options.css = info.css;
             debug = info.config.debug_mode;
@@ -232,13 +239,14 @@
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
             pageElement = status.pageElement = siteinfo.pageElement,
-            disableSeparator = status.separator_disabled = (siteinfo.disableSeparator == 'true' || false),
+            disableSeparator = status.separator_disabled = s2b(siteinfo.disableSeparator),
             clickLink = status.clickLink = (siteinfo.clickLink || null),
             //retryCount = status.retry_count = (siteinfo.retryCount || 1),
             //nextMask = status.nextMask = (siteinfo.nextMask || null),
-            //allowScripts = status.scripts_allowed = (siteinfo.allowScripts || false),
-            //useAjax = status.ajax_enabled = (siteinfo.useAjax || null),
-            forceIframe = status.in_iframe = (siteinfo.forceIframe || false);
+            allowScripts = status.scripts_allowed = s2b(siteinfo.allowScripts),
+            //useAjax = status.ajax_enabled = s2b(siteinfo.useAjax),
+            forceIframe = status.in_iframe = s2b(siteinfo.forceIframe),
+            changeAddress = siteinfo.forceAddressChange ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
 
         if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
@@ -270,7 +278,7 @@
             forceIframe = status.in_iframe = true;
         }
         else if ('www.tumblr.com' === location.host) {
-            script_filter = dont_filter;
+            allowScripts = true;
         } 
         else if ('matome.naver.jp' === location.host) {
             var _get_next = get_next_link;
@@ -292,6 +300,10 @@
             forceIframe ){
                 request = request_iframe;
         }
+        
+        if (allowScripts) {
+            script_filter = dont_filter;
+        }
 
         var first_element = status.first_element = page_elements[0],
             last_element = status.last_element = page_elements.pop(),
@@ -312,7 +324,7 @@
         window.addEventListener('AutoPatchWork.request', request, false);
         window.addEventListener('AutoPatchWork.load', load, false);
         window.addEventListener('AutoPatchWork.append', append, false);
-        options.REPLACE_STATE && window.addEventListener('AutoPatchWork.append', replace_state, false);
+        if (changeAddress) window.addEventListener('AutoPatchWork.append', change_address, false);
         window.addEventListener('AutoPatchWork.error', error_event, false);
         window.addEventListener('AutoPatchWork.reset', reset, false);
         window.addEventListener('AutoPatchWork.state', state, false);
@@ -436,7 +448,7 @@
             window.removeEventListener('AutoPatchWork.request', request, false);
             window.removeEventListener('AutoPatchWork.load', load, false);
             window.removeEventListener('AutoPatchWork.append', append, false);
-            options.REPLACE_STATE && window.removeEventListener('AutoPatchWork.append', replace_state, false);
+            if (changeAddress) window.removeEventListener('AutoPatchWork.append', change_address, false);
             window.removeEventListener('AutoPatchWork.error', error_event, false);
             window.removeEventListener('AutoPatchWork.reset', reset, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
@@ -733,6 +745,31 @@
             return text;
         }
         /** 
+         * [test] Evaluates included scripts.
+         * @param {Node} node Node to run scripts of.
+         * */
+        /*function eval_scripts(node){
+            if (!node) return;
+
+            var st = node.getElementsByTagName('SCRIPT');
+            var strExec;
+
+            for (var i = 0; i < st.length; i++) {
+                strExec = st[i].text;
+                //st[i].parentNode.removeChild(st[i]);
+                st[i].text = '';
+
+                try {
+                    var x = document.createElement('script');
+                    x.type = 'text/javascript';
+                    x.innerHTML = strExec;
+                   
+                    document.getElementsByTagName('head')[0].appendChild(x);
+                } 
+                catch (bug) {}
+            }
+        };*/
+        /** 
          * Event hadler for parsing new page data.
          * @param {Event} evt Event data.
          * */
@@ -761,7 +798,7 @@
          * Event handler for browser location rewriting on each new page.
          * @param {Event} evt Event data.
          * */
-        function replace_state(evt) {
+        function change_address(evt) {
             if (!location_pushed) {
                 location_pushed = true;
                 history.pushState('', '', location.href);
@@ -821,7 +858,7 @@
             // Firing node change event on the target node.
             nodes.forEach(function (doc, i, nodes) {
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
-                if (insert_node && insert_node.setAttribute) insert_node.setAttribute('apw-data-url', loaded_url);
+                if (insert_node && insert_node.setAttribute) insert_node['apw-data-url'] = loaded_url;
                 var mutation = {
                     targetNode: insert_node,
                     eventName: 'AutoPatchWork.DOMNodeInserted',

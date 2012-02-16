@@ -365,7 +365,7 @@ input[type="range"]{
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в IFRAME'}
-.MSG_replace_state:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
+.MSG_change_address:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар (может подтормаживать)'}
 .MSG_remain_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
@@ -401,7 +401,7 @@ input[type="range"]{
 .MSG_auto_start:lang(ja) {content: 'ページを開いたときにデフォルトで有効にする'}
 .MSG_open_newtab:lang(ja) {content: '継ぎ足ししたコンテンツ内のリンクを新規タブで開(target=_blank指定をする)'}
 .MSG_noiframe:lang(ja) {content: 'フレーム内では起動させない'}
-.MSG_replace_state:lang(ja) {content: '継ぎ足しした時、URL を継ぎ足した URL で置き換える'}
+.MSG_change_address:lang(ja) {content: '継ぎ足しした時、URL を継ぎ足した URL で置き換える'}
 .MSG_bottom_bar:lang(ja) {content: 'ページ下部にステータスを表示'}
 .MSG_remain_height:lang(ja) {content: '読み込みを開始する位置:'}
 .MSG_debugmode:lang(ja) {content: 'デバッグモード'}

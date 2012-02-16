@@ -39,6 +39,7 @@ window.APWBg = {
         target_blank: true,
         remain_height: 400,
         disable_iframe: false,
+        change_address: false,
         debug_mode: false,
         bar_status: 'on'
     },
