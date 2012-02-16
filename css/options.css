@@ -364,14 +364,14 @@ input[type="range"]{
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Управление SITEINFO'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
-.MSG_noiframe:lang(ru) {content: 'Отключить загрузку через IFRAME'}
+.MSG_noiframe:lang(ru) {content: 'Отключать расширение в IFRAME'}
 .MSG_replace_state:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар (может подтормаживать)'}
 .MSG_remain_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
 .MSG_exclude_filter:lang(ru) {content: 'Исключение сайтов по фильтру:'}
 /*
- * It's not working that way.
+ * Так, к сожалению, не работает.
 .MSG_filter_prefix:lang(ru) {content: 'префикс'}
 .MSG_filter_domain:lang(ru) {content: 'домен'}
 .MSG_filter_regexp:lang(ru) {content: 'регулярка'}*/

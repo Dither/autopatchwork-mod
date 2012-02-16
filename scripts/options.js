@@ -21,8 +21,9 @@ else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
 else */browser = BROWSER_OPERA;
 
 // main
+document.addEventListener('DOMContentLoaded',function(){
 (function option_init(opt) {
-        var self = this;
+    var self = this;
     
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
@@ -146,12 +147,12 @@ else */browser = BROWSER_OPERA;
         getAcceptLanguages: function() {},
         getMessage: function() {}
     };
-
+    
     function L10N() {
         i18n.getAcceptLanguages(function(langs) {
             if(langs.indexOf('ja') < 0) {
                 // We should probably load history from language JSONs via AJAX
-                document.querySelector('#menu-tabs > li.history').style.display = 'none';
+                document.querySelector('#menu-tabs > #menu-news').style.display = 'none';
             }
         });
         var elems = document.querySelectorAll('*[class^="MSG_"]');
@@ -400,4 +401,6 @@ else */browser = BROWSER_OPERA;
         sections[0].style.visibility = 'visible';
         document.title = default_title + '#' + sections[0].id;
     }
+    
 })();
+}, false);

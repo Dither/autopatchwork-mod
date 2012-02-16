@@ -45,7 +45,7 @@
         TARGET_WINDOW_NAME: '_blank',
         BAR_STATUS: true,
         css: ''
-    };      
+    };
     var status = {
         state: true,
         loaded: false,
@@ -243,10 +243,16 @@
         if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
         var next = get_next_link(document);
-        if (!next) return log('next link ' + nextLink + ' not found.');
+        if (!next) {
+            if (siteinfo.MICROFORMAT) return;
+            return log('next link ' + nextLink + ' not found.');
+        }
 
         var page_elements = get_main_content(document);
-        if (!page_elements.length) return log('page content like ' + pageElement + ' not found.');
+        if (!page_elements.length) {
+            if (siteinfo.MICROFORMAT) return;
+            return log('page content like ' + pageElement + ' not found.');
+        }
 
         if (history.replaceState) {
             var _createHTML = createHTML;

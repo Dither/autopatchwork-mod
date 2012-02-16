@@ -1,4 +1,4 @@
-var storagebase = opera ? widget.preferences : localStorage;
+var storagebase = window.opera ? widget.preferences : localStorage;
 (function () {
 if (this.Store) return;
 // Storage module that supports expiring
