@@ -45,6 +45,7 @@
         TARGET_WINDOW_NAME: '_blank',
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
+        PAGES_TO_KEEP: 5,
         css: ''
     };
     var status = {
@@ -54,11 +55,13 @@
         scripts_allowed: false,
         separator_disabled: false,
         in_iframe: false,
-        //page_number: 1,
+        page_number: 1,
         nextLink: null,
         nextMask: null,
+        nextLinkSelector: null,
         clickLink: null,
         pageElement: null,
+        pageElementSelector: null,
         retry_count: 1,
         last_element: null,
         insert_point: null,
@@ -238,11 +241,13 @@
             loading = false,
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
+            nextLinkSelector = status.nextLinkSelector = siteinfo.nextLinkSelector,
+            pageElementSelector = status.pageElementSelector = siteinfo.pageElementSelector,
             pageElement = status.pageElement = siteinfo.pageElement,
             disableSeparator = status.separator_disabled = s2b(siteinfo.disableSeparator),
             clickLink = status.clickLink = (siteinfo.clickLink || null),
-            //retryCount = status.retry_count = (siteinfo.retryCount || 1),
-            //nextMask = status.nextMask = (siteinfo.nextMask || null),
+            retryCount = status.retry_count = (siteinfo.retryCount || 1),
+            nextMask = status.nextMask = (siteinfo.nextMask || null),
             allowScripts = status.scripts_allowed = s2b(siteinfo.allowScripts),
             //useAjax = status.ajax_enabled = s2b(siteinfo.useAjax),
             forceIframe = status.in_iframe = s2b(siteinfo.forceIframe),
@@ -346,8 +351,6 @@
             dispatch_notify_event({
                 extension: 'autopatchwork',
                 text: 'Page ' + document.apwpagenumber + ' loaded...',
-                type: '',
-                position: 'top',
                 width: '200px'
             });
             ///////////////////*/
@@ -477,9 +480,7 @@
             ///////////////////
               dispatch_notify_event({
                 extension: 'autopatchwork',
-                text: evt.message,
-                type: '',
-                position: 'top'
+                text: evt.message
              });
              ///////////////////
             error(evt.message);
@@ -515,9 +516,7 @@
             ///////////////////
               dispatch_notify_event({
                 extension: 'autopatchwork',
-                text: evt.message,
-                type: 'error',
-                position: 'top'
+                text: evt.message
              });
              ///////////////////
             
@@ -816,13 +815,30 @@
             var append_point = status.append_point;
             status.loaded = false;
 
+            status.page_number++
+            document.apwpagenumber++;
             
+            /*if (status.page_number % options.PAGES_TO_KEEP === 0 && status.page_number > 3) { //
+                // TODO:
+                    move to initialisation
+                    fix scrolling
+                var i, sel = [];
+                for (i = 1; i < options.PAGES_TO_KEEP; i++) {
+                    sel.push('[apw-page="' + (status.page_number - i) + '"]');
+                }
+                var nodes = document.querySelectorAll(sel.join(','));
+                for (i = 0; i < nodes.length; i++) {
+                    nodes[i].parentNode.removeChild(nodes[i]);
+                }
+            }*/
+
             var nodes = get_main_content(htmlDoc),
                 first = nodes[0];
             if (!nodes) dispatch_event('AutoPatchWork.error', { message: 'Main content is not found in downloaded page' });
-                
+
             // Checking where to add new content. 
             // In case of table we'll add inside it, otherwise after.
+            
             if (!status.separator_disabled) {
                 var root, node;
                 if (/^tbody$/i.test(append_point.localName)) {
@@ -842,6 +858,7 @@
 
                 // Adding page separator.
                 node.className = 'autopagerize_page_separator_blocks';
+                node.setAttribute('apw-page', document.apwpagenumber);
                 var h4 = node.appendChild(document.createElement('h4'));
                 h4.className = 'autopagerize_page_separator';
                 var span = h4.appendChild(document.createElement('span'));
@@ -849,7 +866,7 @@
                 var a = span.appendChild(document.createElement('a'));
                 a.className = 'autopagerize_link';
                 a.href = loaded_url;
-                a.setAttribute('number', ++document.apwpagenumber);
+                a.setAttribute('number', document.apwpagenumber);
                 if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
     
                 append_point.insertBefore(root, insert_point);
@@ -858,7 +875,10 @@
             // Firing node change event on the target node.
             nodes.forEach(function (doc, i, nodes) {
                 var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
-                if (insert_node && insert_node.setAttribute) insert_node['apw-data-url'] = loaded_url;
+                if (insert_node && insert_node.setAttribute) {
+                    insert_node['apw-data-url'] = loaded_url;
+                    insert_node.setAttribute('apw-page', document.apwpagenumber);
+                }
                 var mutation = {
                     targetNode: insert_node,
                     eventName: 'AutoPatchWork.DOMNodeInserted',
@@ -878,7 +898,7 @@
             if (!next) {
                 dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
             } else {
-                next_href = next.getAttribute('href') || next.getAttribute('action') || next.getAttribute('value');
+                next_href = next.href || next.action || next.value;
                 if (next_href && !loaded_urls[next_href]) {
                     loaded_urls[next_href] = true;
                 } else {
@@ -945,7 +965,15 @@
          * @return {Node} Matched node.
          * */
         function get_next_link(doc) {
-            return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (status.nextLink) {
+                return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } else if  (status.nextMask) {
+                // format linkuptopagenumber|step[|linkafterpagenumber]
+                var arr = status.nextMask.split('|');
+                return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
+            } else {
+                return doc.querySelectorAll(status.nextLinkSelector);
+            }
         }
         /** 
          * Evaluates XPath to find nodes containing main page content.
@@ -953,12 +981,19 @@
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
-            var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i < l; i++) res[i] = r.snapshotItem(i);
-            return element_filter(res);
+            if (status.pageElement) {
+                var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
+                    res = (l && new Array(l)) || [],
+                    l = r.snapshotLength;
+                for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+                
+                return element_filter(res);
+            } else {
+                return element_filter(doc.querySelectorAll(status.pageElementSelector));
+            }
         }
         /** 
-         * Evaluates XPath to find node containing next page link in XML.
+         * Evaluates XPath to find node containing next page link in XHTML.
          * @param {Node} doc Node to perform XPath search on.
          * @return {Node} Matched node.
          * */
@@ -966,13 +1001,16 @@
             return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
         /** 
-         * Evaluates XPath to find nodes containing main page content in XML.
+         * Evaluates XPath to find nodes containing main page content in XHTML.
          * @param {Node} doc Node to perform XPath search on.
          * @return {NodeList} Matched nodes.
          * */
         function x_get_main_content(doc) {
             var r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            for (var i = 0, l = r.snapshotLength, res = (l && new Array(l)) || []; i < l; i++) res[i] = r.snapshotItem(i);
+                res = (l && new Array(l)) || [],
+                l = r.snapshotLength;
+            for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+            
             return element_filter(res);
         }
         /** 

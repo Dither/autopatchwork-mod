@@ -166,12 +166,14 @@ function applyCustomFields(info) {
 }
 
 function initDatabase() {
-    if(Store.has('siteinfo_wedata')) {
+    // Sometimes the base gets corrupt when incorrectly exiting Opera.
+    try { 
+        if(!Store.has('siteinfo_wedata')) throw 'database expired';
         var data = Store.get('siteinfo_wedata');
         siteinfo = APWBg.custompatterns.concat(data.siteinfo);
         timestamp = new Date(data.timestamp);
         applyCustomFields();
-    } else {
+    } catch (bug) {
         downloadDatabase();
     }
 }
@@ -235,8 +237,12 @@ function downloadDatabase(callback, error_back) {
             error_back(err);
         }
     };
-    xhr.open('GET', URL_SITEINFO, true);
-    xhr.send(null);
+    try {
+       xhr.open('GET', URL_SITEINFO, true);
+       xhr.send(null);
+   } catch (bug) { 
+       console.log(bug.message || bug);
+   }
 }
 
 getManifest(function(_manifest) { Manifest = _manifest; version = _manifest.version; });
