@@ -358,7 +358,7 @@
         /* Sets status bar to ready state. */
         function pageloaded() {
             var b = document.getElementById('autopatchwork_bar');
-            if (b) b.className = 'autopager_on';
+            if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
             
             /*///////////////////
             dispatch_notify_event({
@@ -865,7 +865,7 @@
             }*/
 
             var nodes = get_main_content(htmlDoc),
-                first = nodes[0],
+                //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
                 
             next = get_next_link(htmlDoc);
@@ -931,9 +931,10 @@
                     attrChange: 2 // MutationEvent.ADDITION
                 };
                 dispatch_mutation_event(mutation);
-                nodes[i] = insert_node;
+                //nodes[i] = insert_node;
             });
             nodes = null;
+            dispatch_event('AutoPatchWork.pageloaded');
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
 
@@ -944,13 +945,11 @@
                 if (next_href && !loaded_urls[next_href]) {
                     loaded_urls[next_href] = true;
                 } else {
-                    return dispatch_event('AutoPatchWork.error', { message: next_href + ' is already loaded.' });
+                    return dispatch_event('AutoPatchWork.error', { message: 'next page ' + next_href + ' already loaded.' });
                 }
-                bar && (bar.className = status.state ? 'autopager_on' : 'autopager_off');
                 //if (status.state) 
                 //    setTimeout(function () { check_scroll(); }, 1000);
             }
-            dispatch_event('AutoPatchWork.pageloaded');
         }
         /** 
          * Creates XHTML document object from a string.
@@ -985,12 +984,13 @@
                     base: true /*,
                     isindex: true,*/
                 };
-                var child, head = doc.querySelector('head') || doc.createElement('head'),
+                var child,
+                    head = doc.querySelector('head') || doc.createElement('head'),
                     body = doc.querySelector('body') || doc.createElement('body');
                 while ((child = fragment.firstChild)) {
                     if ((child.nodeType === Node.ELEMENT_NODE && 
-                        !(child.nodeName.toLowerCase() in headChildNames)) || 
-                        (child.nodeType === Node.TEXT_NODE && /\S/.test(child.nodeValue))
+                          !(child.nodeName.toLowerCase() in headChildNames)) || 
+                          (child.nodeType === Node.TEXT_NODE && /\S/.test(child.nodeValue))
                         ) break;
                     head.appendChild(child);
                 }
@@ -1009,7 +1009,7 @@
             if (status.nextLink) {
                 return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             } else if (status.nextMask) {
-                // format linkuptopagenumber|step[|linkafterpagenumber]
+                // format link-up-to-page-number|step[|link-after-page-number]
                 var arr = status.nextMask.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
             } else if (status.nextLinkSelector) {
