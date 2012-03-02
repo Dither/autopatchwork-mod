@@ -34,7 +34,7 @@
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
     if (window.name === 'autopatchwork-request-iframe') return;
 
-    var browser, debug = false,
+    var browser, debug = false, dump_request = false,
         BROWSER_CHROME = 1,
         BROWSER_SAFARI = 2,
         BROWSER_OPERA = 3;
@@ -253,10 +253,23 @@
             forceIframe = status.in_iframe = s2b(siteinfo.forceIframe),
             changeAddress = siteinfo.forceAddressChange ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
 
+        if (status.nextMask) {
+            var arr = status.nextMask.split('|'),
+                matches = /\d{1,}/.exec(window.location.href.replace(arr[0],'').replace(arr[2],'')),
+                pagen = parseInt(arr[1], 10);
+            if (isNaN(pagen) || !matches) {
+                status.page_number = 1;
+            } else {
+                status.page_number = parseInt(matches[0], 10) / pagen;
+            }
+        } else {
+            status.page_number = 1;
+        }
+
         if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
         var next = get_next_link(document);
-        if (!next) {
+        if (!get_node_href(next)) {
             if (siteinfo.MICROFORMAT) return;
             return log('next link ' + nextLink + ' not found.');
         }
@@ -321,7 +334,7 @@
             session_object = {};
 
         loaded_urls[location.href] = true;
-        loaded_urls[next.href] = true;
+        loaded_urls[get_node_href(next)] = true;
         status.remain_height || (status.remain_height = calc_remain_height());
 
         window.addEventListener('scroll', check_scroll, false);
@@ -412,9 +425,7 @@
         document.head.appendChild(style);
 
         var pageHeight = rootNode.offsetHeight;
-        if (window.innerHeight >= pageHeight) {
-            check_scroll();
-        }
+        if (window.innerHeight >= pageHeight) check_scroll();
 
         // Replace all target attributes to user defined on all appended pages.
         if (options.FORCE_TARGET_WINDOW) {
@@ -524,7 +535,7 @@
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
-            }, 1000);
+            }, 3000);
             if (status.bottom && status.bottom.parentNode) {
                 status.bottom.parentNode.removeChild(status.bottom);
             }
@@ -586,10 +597,9 @@
          * */
         function check_scroll() {
             if (loading || !status.state) return;
-
-            var remain = rootNode.scrollHeight - window.innerHeight - window.pageYOffset;
-            if (remain < status.remain_height) {
+            if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
+                loading = true;
                 dispatch_event('AutoPatchWork.request');
             }
         }
@@ -682,21 +692,25 @@
         }
         /* Requests next page via XMLHttpRequest method. */
         function request() {
-            if (!loading) loading = true;
-            var url = state.nextURL = next.href || next.getAttribute('href') || next.action || next.value;
-            var req = 'GET';
+            loading = true;
+            var url = state.nextURL = get_node_href(next);
+            //log('requesting ' + url);
             if (!url) {
-                dispatch_event('AutoPatchWork.error', { message: 'No destination supplied for the next page' });
+                // we shouldn't be here
+                dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
+                return;
             }
-            
+
             // TODO:
             // If AJAX -> 'POST' -> load -> AutoPatchWork.load
             // New request_ func:
             // If button auto-click -> click and return -> delay or wait for DOMNodeInserted
             //  => AutoPatchWork.pageloaded
-            
+
+            var req = 'GET';
             var x = new XMLHttpRequest();
             x.onload = function () {
+                if (dump_request) console.log(x.responseText);
                 dispatch_event('AutoPatchWork.load', { response: x, url: url });
             };
             x.onerror = function () {
@@ -712,14 +726,21 @@
         }
         /* Requests next page via IFRAME load method. */
         function request_iframe() {
-            if (!loading) loading = true;
-            var url = state.nextURL = next.href || next.getAttribute('href') || next.action || next.value;
+            loading = true;
+            var url = state.nextURL = get_node_href(next);
+            //log('requesting ' + url);
+            if (!url) {
+                // we shouldn't be here
+                dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
+                return;
+            }
             var iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
+            //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'autopatchwork-request-iframe';
             iframe.onload = function () {
                 var doc = iframe.contentDocument;
+                if (dump_request) console.log(doc.innerHTML);
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
                 iframe.parentNode && iframe.parentNode.removeChild(iframe);
             };
@@ -728,6 +749,15 @@
             };
             iframe.src = url;
             document.body.appendChild(iframe);
+        }
+        /** 
+         * Returns link node reference.
+         * @param {Node} node The input node.
+         * */
+        function get_node_href(node) {
+            if (!node) return null;
+            if (typeof node.getAttribute == 'function' && node.getAttribute('href')) return node.getAttribute('href');
+            return node.href || node.action || node.value;
         }
         /** 
          * Removes scripts from a page text.
@@ -776,6 +806,8 @@
             loading = false;
             if (!evt.response && !evt.htmlDoc) return;
             loaded_url = evt.url;
+            //log('loaded ' + loaded_url);
+            
             if (evt.response) {
                 htmlDoc = createHTML(script_filter(evt.response.responseText), evt.url);
             } else if (evt.htmlDoc) {
@@ -811,20 +843,20 @@
         function append(evt) {
             if (!status.loaded || !htmlDoc) return;
 
-            var insert_point = status.insert_point;
-            var append_point = status.append_point;
+            var insert_point = status.insert_point,
+                append_point = status.append_point;
+            
             status.loaded = false;
-
             status.page_number++
             document.apwpagenumber++;
             
-            /*if (status.page_number % options.PAGES_TO_KEEP === 0 && status.page_number > 3) { //
+            /*if (document.apwpagenumber % options.PAGES_TO_KEEP === 0 && document.apwpagenumber > 3) { //
                 // TODO:
                     move to initialisation
                     fix scrolling
                 var i, sel = [];
                 for (i = 1; i < options.PAGES_TO_KEEP; i++) {
-                    sel.push('[apw-page="' + (status.page_number - i) + '"]');
+                    sel.push('[apw-page="' + (document.apwpagenumber - i) + '"]');
                 }
                 var nodes = document.querySelectorAll(sel.join(','));
                 for (i = 0; i < nodes.length; i++) {
@@ -833,13 +865,20 @@
             }*/
 
             var nodes = get_main_content(htmlDoc),
-                first = nodes[0];
-            if (!nodes) dispatch_event('AutoPatchWork.error', { message: 'Main content is not found in downloaded page' });
+                first = nodes[0],
+                title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
+                
+            next = get_next_link(htmlDoc);
 
-            // Checking where to add new content. 
-            // In case of table we'll add inside it, otherwise after.
-            
+            htmlDoc = null;
+            if (!nodes.length) {
+                dispatch_event('AutoPatchWork.error', { message: 'page content like ' + pageElement + ' not found.' });
+                return;
+            }
+
             if (!status.separator_disabled) {
+                // Checking where to add new content. 
+                // In case of table we'll add inside it, otherwise after.
                 var root, node;
                 if (/^tbody$/i.test(append_point.localName)) {
                     var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -867,15 +906,16 @@
                 a.className = 'autopagerize_link';
                 a.href = loaded_url;
                 a.setAttribute('number', document.apwpagenumber);
-                if (htmlDoc.querySelector('title')) a.setAttribute('title', htmlDoc.querySelector('title').textContent.trim());
+                if (title !== '') a.setAttribute('title', title);
     
                 append_point.insertBefore(root, insert_point);
             }
             
-            // Firing node change event on the target node.
-            nodes.forEach(function (doc, i, nodes) {
-                var insert_node = append_point.insertBefore(document.importNode(doc, true), insert_point);
-                if (insert_node && insert_node.setAttribute) {
+            // Firing node change event on each target node
+            nodes.forEach(function (element, i, nodes) {
+                var insert_node = append_point.insertBefore(document.importNode(element, true), insert_point);
+                if (insert_node && typeof insert_node.setAttribute == 'function') {
+                    // service data for external page processing
                     insert_node['apw-data-url'] = loaded_url;
                     insert_node.setAttribute('apw-page', document.apwpagenumber);
                 }
@@ -887,18 +927,20 @@
                     relatedNode: append_point,
                     prevValue: null,
                     newValue: loaded_url,
-                    attrName: 'URL',
+                    attrName: 'url',
                     attrChange: 2 // MutationEvent.ADDITION
                 };
                 dispatch_mutation_event(mutation);
                 nodes[i] = insert_node;
             });
+            nodes = null;
+
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
-            next = get_next_link(htmlDoc);
+
             if (!next) {
-                dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
+                return dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
             } else {
-                next_href = next.href || next.action || next.value;
+                next_href = get_node_href(next);
                 if (next_href && !loaded_urls[next_href]) {
                     loaded_urls[next_href] = true;
                 } else {
@@ -906,10 +948,9 @@
                 }
                 bar && (bar.className = status.state ? 'autopager_on' : 'autopager_off');
                 //if (status.state) 
-                    setTimeout(function () { check_scroll(); }, 1000);
+                //    setTimeout(function () { check_scroll(); }, 1000);
             }
             dispatch_event('AutoPatchWork.pageloaded');
-            htmlDoc = null;
         }
         /** 
          * Creates XHTML document object from a string.
@@ -967,13 +1008,14 @@
         function get_next_link(doc) {
             if (status.nextLink) {
                 return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if  (status.nextMask) {
+            } else if (status.nextMask) {
                 // format linkuptopagenumber|step[|linkafterpagenumber]
                 var arr = status.nextMask.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else {
+            } else if (status.nextLinkSelector) {
                 return doc.querySelectorAll(status.nextLinkSelector);
             }
+            return null;
         }
         /** 
          * Evaluates XPath to find nodes containing main page content.
@@ -983,14 +1025,14 @@
         function get_main_content(doc) {
             if (status.pageElement) {
                 var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
-                    res = (l && new Array(l)) || [],
-                    l = r.snapshotLength;
+                    l = r.snapshotLength,
+                    res = (l && new Array(l)) || [];
                 for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-                
                 return element_filter(res);
-            } else {
+            } else if (status.pageElementSelector) {
                 return element_filter(doc.querySelectorAll(status.pageElementSelector));
             }
+            return null;
         }
         /** 
          * Evaluates XPath to find node containing next page link in XHTML.
@@ -1006,11 +1048,10 @@
          * @return {NodeList} Matched nodes.
          * */
         function x_get_main_content(doc) {
-            var r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                res = (l && new Array(l)) || [],
-                l = r.snapshotLength;
+            var r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
+                l = r.snapshotLength
+                res = (l && new Array(l)) || [];
             for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-            
             return element_filter(res);
         }
         /** 
