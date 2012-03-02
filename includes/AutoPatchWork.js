@@ -938,18 +938,15 @@
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
 
-            if (!next) {
-                return dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
+            var next_href = get_node_href(next);
+            if (!next_href) return dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
+            if (!loaded_urls[next_href]) {
+                loaded_urls[next_href] = true;
             } else {
-                next_href = get_node_href(next);
-                if (next_href && !loaded_urls[next_href]) {
-                    loaded_urls[next_href] = true;
-                } else {
-                    return dispatch_event('AutoPatchWork.error', { message: 'next page ' + next_href + ' already loaded.' });
-                }
-                //if (status.state) 
-                //    setTimeout(function () { check_scroll(); }, 1000);
+                return dispatch_event('AutoPatchWork.error', { message: 'next page ' + next_href + ' already loaded.' });
             }
+            //if (status.state) 
+            //    setTimeout(function () { check_scroll(); }, 1000);
         }
         /** 
          * Creates XHTML document object from a string.
