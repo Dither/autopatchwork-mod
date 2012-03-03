@@ -47,12 +47,12 @@
         TARGET_WINDOW_NAME: '_blank',
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
-        PAGES_TO_KEEP: 5,
+        PAGES_TO_KEEP: 3,
         css: ''
     };
     var status = {
         state: true,
-        loaded: false,
+        loading: false,
         ajax_enabled: false,
         scripts_allowed: false,
         separator_disabled: false,
@@ -277,7 +277,7 @@
         }
 
         var page_elements = get_main_content(document);
-        if (!page_elements.length) {
+        if (!page_elements || !page_elements.length) {
             if (siteinfo.MICROFORMAT) return;
             return log('page content like ' + pageElement || pageElementSelector  + ' not found.');
         }
@@ -818,7 +818,7 @@
             } else {
                 return;
             }
-            status.loaded = true;
+            status.loading = true;
             if (!options.FORCE_TARGET_WINDOW) {
                 if (evt.response) {
                     saveText(loaded_url, document.apwpagenumber, evt.response.responseText);
@@ -844,29 +844,15 @@
          * @param {Event} evt Event data.
          * */
         function append(evt) {
-            if (!status.loaded || !htmlDoc) return;
+            if (!status.loading || !htmlDoc) return;
 
             var insert_point = status.insert_point,
                 append_point = status.append_point;
             
-            status.loaded = false;
+            status.loading = false;
             status.page_number++
             document.apwpagenumber++;
             
-            /*if (document.apwpagenumber % options.PAGES_TO_KEEP === 0 && document.apwpagenumber > 3) { //
-                // TODO:
-                    move to initialisation
-                    fix scrolling
-                var i, sel = [];
-                for (i = 1; i < options.PAGES_TO_KEEP; i++) {
-                    sel.push('[apw-page="' + (document.apwpagenumber - i) + '"]');
-                }
-                var nodes = document.querySelectorAll(sel.join(','));
-                for (i = 0; i < nodes.length; i++) {
-                    nodes[i].parentNode.removeChild(nodes[i]);
-                }
-            }*/
-
             var nodes = get_main_content(htmlDoc),
                 //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
@@ -874,7 +860,7 @@
             next = get_next_link(htmlDoc);
 
             htmlDoc = null;
-            if (!nodes.length) {
+            if (!nodes || !nodes.length) {
                 dispatch_event('AutoPatchWork.error', { message: 'page content like ' + pageElement + ' not found.' });
                 return;
             }

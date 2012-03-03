@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded',function(){
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
-    
 
     switch (browser) {
         case BROWSER_CHROME:
@@ -82,7 +81,10 @@ document.addEventListener('DOMContentLoaded',function(){
             }
             break;
         case BROWSER_OPERA:
-            if(!opt) {
+            bgProcess = opera.extension.bgProcess;
+            if (typeof bgProcess == 'object') AutoPatchWork = bgProcess.AutoPatchWorkBG;
+            else {
+            /*if(!opt) {
                 opera.extension.onmessage = function(evt) {
                     if(evt.data.name === 'option_init') {
                         option_init(evt.data.data);
@@ -132,6 +134,7 @@ document.addEventListener('DOMContentLoaded',function(){
                         });
                     }
                 };
+            }*/
             }
             break;
         default:
