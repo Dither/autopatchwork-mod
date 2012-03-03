@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded',function(){
     switch (browser) {
         case BROWSER_CHROME:
             bgProcess = chrome.extension.getBackgroundPage();
-            AutoPatchWork = bgProcess.APWBg;
+            AutoPatchWork = bgProcess.AutoPatchWorkBG;
             break;
         case BROWSER_SAFARI:
             if(!opt) {

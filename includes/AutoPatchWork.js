@@ -33,6 +33,8 @@
 
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
     if (window.name === 'autopatchwork-request-iframe') return;
+    
+    //var bf = new BloomFilter();
 
     var browser, debug = false, dump_request = false,
         BROWSER_CHROME = 1,
@@ -271,13 +273,13 @@
         var next = get_next_link(document);
         if (!get_node_href(next)) {
             if (siteinfo.MICROFORMAT) return;
-            return log('next link ' + nextLink + ' not found.');
+            return log('next link ' + nextLink || nextLinkSelector + ' not found.');
         }
 
         var page_elements = get_main_content(document);
         if (!page_elements.length) {
             if (siteinfo.MICROFORMAT) return;
-            return log('page content like ' + pageElement + ' not found.');
+            return log('page content like ' + pageElement || pageElementSelector  + ' not found.');
         }
 
         if (history.replaceState) {
@@ -296,7 +298,7 @@
             forceIframe = status.in_iframe = true;
         }
         else if ('www.tumblr.com' === location.host) {
-            allowScripts = true;
+            status.scripts_allowed = allowScripts = true;
         } 
         else if ('matome.naver.jp' === location.host) {
             var _get_next = get_next_link;
@@ -481,6 +483,7 @@
                 bar.parentNode.removeChild(bar);
             }
             delete window.AutoPatchWorked;
+            //FIXME: add new features
             AutoPatchWork({ nextLink: status.nextLink, pageElement: status.pageElement, forceIframe: (status.forceIframe || false) });
         }
         /** 
@@ -777,7 +780,7 @@
          * [test] Evaluates included scripts.
          * @param {Node} node Node to run scripts of.
          * */
-        /*function eval_scripts(node){
+        function eval_scripts(node){
             if (!node) return;
 
             var st = node.getElementsByTagName('SCRIPT');
@@ -797,7 +800,7 @@
                 } 
                 catch (bug) {}
             }
-        };*/
+        };
         /** 
          * Event hadler for parsing new page data.
          * @param {Event} evt Event data.
@@ -914,6 +917,7 @@
             // Firing node change event on each target node
             nodes.forEach(function (element, i, nodes) {
                 var insert_node = append_point.insertBefore(document.importNode(element, true), insert_point);
+                //if (status.scripts_allowed) eval_scripts(element);
                 if (insert_node && typeof insert_node.setAttribute == 'function') {
                     // service data for external page processing
                     insert_node['apw-data-url'] = loaded_url;
@@ -1003,6 +1007,7 @@
          * @return {Node} Matched node.
          * */
         function get_next_link(doc) {
+            if (!doc) return null;
             if (status.nextLink) {
                 return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             } else if (status.nextMask) {
@@ -1010,7 +1015,7 @@
                 var arr = status.nextMask.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
             } else if (status.nextLinkSelector) {
-                return doc.querySelectorAll(status.nextLinkSelector);
+                return doc.querySelector(status.nextLinkSelector);
             }
             return null;
         }
@@ -1020,14 +1025,20 @@
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
+            if (!doc) return null;
+            var  r, l, res;
             if (status.pageElement) {
-                var r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
-                    l = r.snapshotLength,
-                    res = (l && new Array(l)) || [];
+                r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                l = r.snapshotLength;
+                res = (l && new Array(l)) || [];
                 for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
                 return element_filter(res);
             } else if (status.pageElementSelector) {
-                return element_filter(doc.querySelectorAll(status.pageElementSelector));
+                 r = doc.querySelectorAll(status.pageElementSelector);
+                 l = r.length;
+                 res = (l && new Array(l)) || [];
+                for (var i = 0; i < l; i++) res[i] = r[i];
+                return element_filter(res);
             }
             return null;
         }
@@ -1037,7 +1048,17 @@
          * @return {Node} Matched node.
          * */
         function x_get_next_link(doc) {
-            return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (!doc) return null;
+            if (status.nextLink) {
+                return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } else if (status.nextMask) {
+                // format link-up-to-page-number|step[|link-after-page-number]
+                var arr = status.nextMask.split('|');
+                return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
+            } else if (status.nextLinkSelector) {
+                return doc.querySelector(status.nextLinkSelector);
+            }
+            return null;
         }
         /** 
          * Evaluates XPath to find nodes containing main page content in XHTML.
@@ -1045,11 +1066,22 @@
          * @return {NodeList} Matched nodes.
          * */
         function x_get_main_content(doc) {
-            var r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
-                l = r.snapshotLength
+            if (!doc) return null;
+            var  r, l, res;
+            if (status.pageElement) {
+                r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
-            for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-            return element_filter(res);
+                for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+                return element_filter(res);
+            } else if (status.pageElementSelector) {
+                 r = doc.querySelectorAll(status.pageElementSelector);
+                 l = r.length;
+                 res = (l && new Array(l)) || [];
+                for (var i = 0; i < l; i++) res[i] = r[i];
+                return element_filter(res);
+            }
+            return null;
         }
         /** 
          * Keeps elements only on the same level the first one in list.
@@ -1057,6 +1089,7 @@
          * @return {NodeList} Filtered list.
          * */
         function element_filter(nodes) {
+            if (!nodes || !nodes.length) return null;
             var first = nodes[0];
             return nodes.filter(function (node) {
                 if (first === node || first.compareDocumentPosition(node) === Node.DOCUMENT_POSITION_FOLLOWING) return true;

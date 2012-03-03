@@ -30,7 +30,7 @@ else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
 else */browser = BROWSER_OPERA;
 
 var H = location.href.replace('index.html', '');
-window.APWBg = {
+window.AutoPatchWorkBG = {
     state: true,
     css: '',
     custompatterns: [],
@@ -45,28 +45,28 @@ window.APWBg = {
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
-        APWBg.custompatterns = JSON.parse(patterns);
-        init_database();
+        AutoPatchWorkBG.custompatterns = JSON.parse(patterns);
+        initDatabase();
     },
     reset_custom_patterns: function() {
-        APWBg.custompatterns = [];
+        AutoPatchWorkBG.custompatterns = [];
         storagebase.AutoPatchWorkPatterns = '';
     },
     init_css: function(css) {
         if (css && css.replace(/[\s\n]*/, '') !== '') {
-            APWBg.css = storagebase.AutoPatchWorkCSS = css;
+            AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS = css;
         } else {
-            storagebase.AutoPatchWorkCSS = APWBg.css = getCSS();
+            storagebase.AutoPatchWorkCSS = AutoPatchWorkBG.css = getCSS();
         }
     },
     update: function() {
-        storagebase.AutoPatchWorkConfig = JSON.stringify(APWBg.config);
+        storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
     },
     disabled_sites: [],
     blacklist_check: function(url) {
         if(url.indexOf('http') !== 0)
             return true;
-        return APWBg.disabled_sites.some(function(site) {
+        return AutoPatchWorkBG.disabled_sites.some(function(site) {
             if(site.type === 'regexp')
                 return new RegExp(site.matcher).test(url);
             else if(site.type === 'prefix')
@@ -76,19 +76,19 @@ window.APWBg = {
         });
     },
     add_disabled_site: function(site) {
-        APWBg.disabled_sites.push(site);
-        storagebase.disabled_sites = JSON.stringify(APWBg.disabled_sites);
+        AutoPatchWorkBG.disabled_sites.push(site);
+        storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
     },
     save_disabled_site: function() {
-        storagebase.disabled_sites = JSON.stringify(APWBg.disabled_sites);
+        storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
     },
     delete_disabled_site: function(site) {
         var site_s = JSON.stringify(site);
-        for(var i = 0; i < APWBg.disabled_sites.length; i++) {
-            var str = JSON.stringify(APWBg.disabled_sites[i]);
+        for(var i = 0; i < AutoPatchWorkBG.disabled_sites.length; i++) {
+            var str = JSON.stringify(AutoPatchWorkBG.disabled_sites[i]);
             if(str === site_s) {
-                APWBg.disabled_sites.splice(i, 1);
-                storagebase.disabled_sites = JSON.stringify(APWBg.disabled_sites);
+                AutoPatchWorkBG.disabled_sites.splice(i, 1);
+                storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
                 break;
             }
         }
@@ -99,23 +99,23 @@ window.APWBg = {
 
 if(browser === BROWSER_SAFARI) {
     safari.extension.settings.addEventListener('change', function(evt) {
-        if(evt.key in APWBg.config) {
-            APWBg.config[evt.key] = evt.newValue;
+        if(evt.key in AutoPatchWorkBG.config) {
+            AutoPatchWorkBG.config[evt.key] = evt.newValue;
         } else if(evt.key === 'excludes') {
             var urls = evt.newValue.trim().split(' ');
-            APWBg.disabled_sites = urls.map(function(url) {
+            AutoPatchWorkBG.disabled_sites = urls.map(function(url) {
                 return { type: 'prefix', matcher: url };
             });
-            APWBg.save_disabled_site();
+            AutoPatchWorkBG.save_disabled_site();
         }
     }, false);
 }
 
-if(storagebase.disabled_sites) APWBg.disabled_sites = JSON.parse(storagebase.disabled_sites);
-else storagebase.disabled_sites = JSON.stringify(APWBg.disabled_sites);
+if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
+else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
 
-if(storagebase.AutoPatchWorkConfig) APWBg.config = JSON.parse(storagebase.AutoPatchWorkConfig);
-else storagebase.AutoPatchWorkConfig = JSON.stringify(APWBg.config);
+if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
+else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
 
 if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
 else storagebase.site_stats = JSON.stringify(site_stats);
@@ -126,11 +126,11 @@ else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
 if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
 else storagebase.custom_info = JSON.stringify(custom_info);
 
-if(storagebase.AutoPatchWorkCSS) APWBg.css = storagebase.AutoPatchWorkCSS;
-else APWBg.init_css();
+if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
+else AutoPatchWorkBG.init_css();
 
-if(storagebase.AutoPatchWorkPatterns) APWBg.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
-else APWBg.reset_custom_patterns();
+if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+else AutoPatchWorkBG.reset_custom_patterns();
 
 var version = '', Manifest, IconData = {};
 
@@ -170,7 +170,7 @@ function initDatabase() {
     try { 
         if(!Store.has('siteinfo_wedata')) throw 'database expired';
         var data = Store.get('siteinfo_wedata');
-        siteinfo = APWBg.custompatterns.concat(data.siteinfo);
+        siteinfo = AutoPatchWorkBG.custompatterns.concat(data.siteinfo);
         timestamp = new Date(data.timestamp);
         applyCustomFields();
     } catch (bug) {
@@ -273,20 +273,20 @@ switch(browser) {
         safari.application.addEventListener("message", function(evt) {
             var name = evt.name;
             if(name === 'option_init') {
-                evt.target.page.dispatchMessage(name, APWBg);
+                evt.target.page.dispatchMessage(name, AutoPatchWorkBG);
             } else if(name === 'invoke_action') {
                 if(evt.message.action === 'update') {
-                    APWBg.config = evt.message.config;
-                    APWBg.update();
+                    AutoPatchWorkBG.config = evt.message.config;
+                    AutoPatchWorkBG.update();
                 } else if(evt.message.action === 'save_disabled_site') {
-                    APWBg.disabled_sites = evt.message.disabled_sites;
-                    APWBg.save_disabled_site();
+                    AutoPatchWorkBG.disabled_sites = evt.message.disabled_sites;
+                    AutoPatchWorkBG.save_disabled_site();
                 } else if(evt.message.action === 'downloadDatabase') {
                     downloadDatabase(function() {
                         evt.target.page.dispatchMessage('updated_siteinfo');
                     });
                 } else {
-                    APWBg[evt.message.action].apply(APWBg, evt.message.args);
+                    AutoPatchWorkBG[evt.message.action].apply(AutoPatchWorkBG, evt.message.args);
                 }
             } else if(name === 'siteinfo_init') {
                 evt.target.page.dispatchMessage(name, {
@@ -294,7 +294,7 @@ switch(browser) {
                     custom_info: custom_info,
                     site_stats: site_stats,
                     site_fail_stats: site_fail_stats,
-                    APWBg: APWBg
+                    AutoPatchWorkBG: AutoPatchWorkBG
                 });
             } else {
                 handleMessage(evt.message, {}, function(data) {
@@ -312,7 +312,7 @@ switch(browser) {
                 case 'option_init': // WTF??
                     evt.source.postMessage({
                         name: name,
-                        data: JSON.parse(JSON.stringify(APWBg))
+                        data: JSON.parse(JSON.stringify(AutoPatchWorkBG))
                     });
                     break;
                 case 'siteinfo_init':
@@ -323,25 +323,25 @@ switch(browser) {
                             custom_info: custom_info,
                             site_stats: site_stats,
                             site_fail_stats: site_fail_stats,
-                            APWBg: JSON.parse(JSON.stringify(APWBg))
+                            AutoPatchWorkBG: JSON.parse(JSON.stringify(AutoPatchWorkBG))
                         }
                     });
                     break;
                 case 'invoke_action':
                     switch(message.action) {
                         case 'update':
-                            APWBg.config = message.config;
-                            APWBg.update();
+                            AutoPatchWorkBG.config = message.config;
+                            AutoPatchWorkBG.update();
                             break;
                         case 'save_disabled_site':
-                            APWBg.disabled_sites = message.disabled_sites;
-                            APWBg.save_disabled_site();
+                            AutoPatchWorkBG.disabled_sites = message.disabled_sites;
+                            AutoPatchWorkBG.save_disabled_site();
                             break;
                         case 'download_database':
                             downloadDatabase(function() { evt.source.postMessage({ name: 'updated_siteinfo' }); });
                             break;
                         default:
-                            APWBg[message.action].apply(APWBg, message.args);
+                            AutoPatchWorkBG[message.action].apply(AutoPatchWorkBG, message.args);
                     }
                     break;
                 default:
@@ -376,12 +376,12 @@ function handleMessage(request, sender, sendResponse) {
         openOrFocusTab('options.html');
         return;
     }
-    if(!APWBg.state || (request.isFrame && APWBg.config.disable_iframe))
+    if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_iframe))
         return;
 
     var infos = [], url = request.url;
 
-    if(!url || APWBg.blacklist_check(url) || url.index)
+    if(!url || AutoPatchWorkBG.blacklist_check(url) || url.index)
         return;
 
     for(var i = 0, len = siteinfo.length, s; i < len; i++) {
@@ -392,8 +392,8 @@ function handleMessage(request, sender, sendResponse) {
 
     sendResponse({
         siteinfo: infos,
-        config: APWBg.config,
-        css: APWBg.css
+        config: AutoPatchWorkBG.config,
+        css: AutoPatchWorkBG.css
     });
 }
 
