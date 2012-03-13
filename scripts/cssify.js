@@ -119,9 +119,9 @@ function cssify(xpath) {
                     if (isNaN(parseInt(match['nth'], 10))) {
                         throw new XPathException('Invalid or unsupported XPath attribute: ' + match['nth']);
                     }
-                    nth = parseInt(match['nth'], 10) !== 1 ? ':nth-of-type(' + match['nth'] + ')' : ':first-child';
+                    nth = parseInt(match['nth'], 10) !== 1 ? ':nth-of-type(' + match['nth'] + ')' : ':first-of-type';
                 } else {
-                    nth = ':last-child';
+                    nth = ':last-of-type';
                 }
             } else {
                 nth = '';

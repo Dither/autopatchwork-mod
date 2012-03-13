@@ -97,8 +97,9 @@
     /** 
      * Checks variable and converts string to corresponding boolean.
      * @param {Boolean|String} s Data to check.
+     * @return {Boolean} Boolean result.
      * */
-    function s2b(s) { return (s && (s === 'true' || s === true)) ? true : false; }
+    function s2b(s) { return (s && (s == 'true' || s == '1')) ? true : false; }
 
     // Cute AJAX loader gif.
     if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
@@ -616,7 +617,7 @@
                 for (var i = 0, l = as.length; i < l; i++) {
                     var a = as[i],
                         _a = a.getAttribute('href');
-                    if (_a && !/^javascript:/.test(_a) && !/^#/.test(_a) && !a.target) {
+                    if (_a && !/^(?:javascript|mailto|data):/.test(_a) && !/^#/.test(_a) && !a.target) {
                         a.setAttribute('target', options.TARGET_WINDOW_NAME);
                     }
                 }
@@ -782,21 +783,18 @@
          * */
         function eval_scripts(node){
             if (!node) return;
-
-            var st = node.getElementsByTagName('SCRIPT');
-            var strExec;
-
-            for (var i = 0; i < st.length; i++) {
+            for (var i = 0, strExec = '', st = node.querySelectorAll('SCRIPT'); i < st.length; i++) {
                 strExec = st[i].text;
-                //st[i].parentNode.removeChild(st[i]);
-                st[i].text = '';
+                if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
+                else st[i].text = '';
+
+                var x = document.createElement('script');
+                x.type = 'text/javascript';
+                x.text = strExec;
 
                 try {
-                    var x = document.createElement('script');
-                    x.type = 'text/javascript';
-                    x.innerHTML = strExec;
-                   
-                    document.getElementsByTagName('head')[0].appendChild(x);
+                    (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(x);
+                    setTimeout( (function(){ x.parentNode.removeChild(x); })(x), 100)
                 } 
                 catch (bug) {}
             }
@@ -903,7 +901,7 @@
             // Firing node change event on each target node
             nodes.forEach(function (element, i, nodes) {
                 var insert_node = append_point.insertBefore(document.importNode(element, true), insert_point);
-                //if (status.scripts_allowed) eval_scripts(element);
+                //if (status.scripts_allowed) eval_scripts(insert_node);
                 if (insert_node && typeof insert_node.setAttribute == 'function') {
                     // service data for external page processing
                     insert_node['apw-data-url'] = loaded_url;
@@ -936,7 +934,7 @@
                 return dispatch_event('AutoPatchWork.error', { message: 'next page ' + next_href + ' already loaded.' });
             }
             //if (status.state) 
-            //    setTimeout(function () { check_scroll(); }, 1000);
+                setTimeout(function () { check_scroll(); }, 1000);
         }
         /** 
          * Creates XHTML document object from a string.
