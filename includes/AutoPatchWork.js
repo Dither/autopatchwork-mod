@@ -241,6 +241,7 @@
         }
 
         var location_href = location.href,
+            preloaded_pages = [],
             loading = false,
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
@@ -274,7 +275,7 @@
         var next = get_next_link(document);
         if (!get_node_href(next)) {
             if (siteinfo.MICROFORMAT) return;
-            return log('next link ' + nextLink || nextLinkSelector + ' not found.');
+            return log('next link ' + nextLink || nextLinkSelector || nextMask + ' not found.');
         }
 
         var page_elements = get_main_content(document);
@@ -345,7 +346,6 @@
         window.addEventListener('AutoPatchWork.request', request, false);
         window.addEventListener('AutoPatchWork.load', load, false);
         window.addEventListener('AutoPatchWork.append', append, false);
-        if (changeAddress) window.addEventListener('AutoPatchWork.append', change_address, false);
         window.addEventListener('AutoPatchWork.error', error_event, false);
         window.addEventListener('AutoPatchWork.reset', reset, false);
         window.addEventListener('AutoPatchWork.state', state, false);
@@ -465,7 +465,6 @@
             window.removeEventListener('AutoPatchWork.request', request, false);
             window.removeEventListener('AutoPatchWork.load', load, false);
             window.removeEventListener('AutoPatchWork.append', append, false);
-            if (changeAddress) window.removeEventListener('AutoPatchWork.append', change_address, false);
             window.removeEventListener('AutoPatchWork.error', error_event, false);
             window.removeEventListener('AutoPatchWork.reset', reset, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
@@ -485,7 +484,17 @@
             }
             delete window.AutoPatchWorked;
             //FIXME: add new features
-            AutoPatchWork({ nextLink: status.nextLink, pageElement: status.pageElement, forceIframe: (status.forceIframe || false) });
+
+            AutoPatchWork({
+                nextLink: status.nextLink,
+                nextLinkSelector: status.nextLinkSelector,
+                nextMask: status.nextMask,
+                pageElement: status.pageElement,
+                pageElementSelector: status.pageElementSelector,
+                forceIframe: (status.forceIframe || false)
+            });
+
+
         }
         /** 
          * Error event handler.
@@ -596,10 +605,50 @@
             document.dispatchEvent(noe);
         }
         /** 
+         * Gets current height of viewport.
+         * @return Number Height of viewport
+         * */
+        function get_viewport_height() {
+            var height = window.innerHeight; // Safari, Opera
+            var mode = document.compatMode;
+            
+            if ((mode || (browser !== BROWSER_OPERA && browser !== BROWSER_SAFARI))) { // IE, Gecko
+                height = (mode == 'CSS1Compat') ? document.documentElement.clientHeight : // Standards
+                document.body.clientHeight; // Quirks
+            }
+            
+            return height;
+        }
+        /** 
          * Checks if document is scrolled enough to begin loading next page 
          * and dispatches event for a new page request.
          * */
         function check_scroll() {
+            if (changeAddress) {
+                var viewporth = get_viewport_height(),
+                    scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop),
+                    elems = document.querySelectorAll('[data-apw-offview]');
+                    
+                if (elems.length) {
+                    for (var i = 0; i < elems.length; i++) {
+                        var elem = elems[i],
+                            top = elem.offsetTop,
+                            height = elem.clientHeight;
+        
+                        //if (scrolltop > (top + height) || scrolltop + viewporth < top) {} // to do something on hide; unused now
+                        //else 
+                        if (scrolltop + viewporth > top && scrolltop < (top + height)) {
+                            elem.removeAttribute('data-apw-offview');
+                            // not using apw-url attribute for safety; we always have first loaded page in the other end of the fifo
+                            if (preloaded_pages.length) change_address(preloaded_pages.shift());
+                        } else {
+                            //is the nodelist always gets ordered with depth-first pre-order traversal?
+                            //break;
+                        }
+                    }
+                }
+            }
+            
             if (loading || !status.state) return;
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
@@ -830,12 +879,9 @@
          * Event handler for browser location rewriting on each new page.
          * @param {Event} evt Event data.
          * */
-        function change_address(evt) {
-            if (!location_pushed) {
-                location_pushed = true;
-                history.pushState('', '', location.href);
-            }
-            history.replaceState('', '', loaded_url);
+        function change_address(to_url) {
+            history.pushState('', '', location.href);
+            history.replaceState('', '', to_url);
         }
         /** 
          * Event handler for appending new pages.
@@ -847,9 +893,9 @@
             var insert_point = status.insert_point,
                 append_point = status.append_point;
             
-            status.loading = false;
             status.page_number++
             document.apwpagenumber++;
+            if (changeAddress) preloaded_pages.push(loaded_url);
             
             var nodes = get_main_content(htmlDoc),
                 //first = nodes[0],
@@ -859,7 +905,7 @@
 
             htmlDoc = null;
             if (!nodes || !nodes.length) {
-                dispatch_event('AutoPatchWork.error', { message: 'page content like ' + pageElement + ' not found.' });
+                dispatch_event('AutoPatchWork.error', { message: 'page content like ' + pageElement || pageElementSelector + ' not found.' });
                 return;
             }
 
@@ -904,8 +950,12 @@
                 //if (status.scripts_allowed) eval_scripts(insert_node);
                 if (insert_node && typeof insert_node.setAttribute == 'function') {
                     // service data for external page processing
-                    insert_node['apw-data-url'] = loaded_url;
-                    insert_node.setAttribute('apw-page', document.apwpagenumber);
+                    insert_node['data-apw-url'] = loaded_url;
+                    if (i === 0) {
+                        // don't clutter structure
+                        insert_node.setAttribute('data-apw-page', document.apwpagenumber);
+                        if (changeAddress) insert_node.setAttribute('data-apw-offview', 'true');
+                    }
                 }
                 var mutation = {
                     targetNode: insert_node,
@@ -922,6 +972,7 @@
                 //nodes[i] = insert_node;
             });
             nodes = null;
+            status.loading = false;
             dispatch_event('AutoPatchWork.pageloaded');
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
