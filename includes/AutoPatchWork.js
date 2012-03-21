@@ -275,13 +275,13 @@
         var next = get_next_link(document);
         if (!get_node_href(next)) {
             if (siteinfo.MICROFORMAT) return;
-            return log('next link ' + nextLink || nextLinkSelector || nextMask + ' not found.');
+            return log('next link ' + (nextLink || nextLinkSelector || nextMask) + ' not found.');
         }
 
         var page_elements = get_main_content(document);
         if (!page_elements || !page_elements.length) {
             if (siteinfo.MICROFORMAT) return;
-            return log('page content like ' + pageElement || pageElementSelector  + ' not found.');
+            return log('page content like ' + (pageElement || pageElementSelector)  + ' not found.');
         }
 
         if (history.replaceState) {
@@ -529,29 +529,42 @@
             status.state ? state_off() : state_on();
         }
         /** 
+         * Cleanup after stopping;
+         *  */
+        function cleanup() {
+            window.removeEventListener('scroll', check_scroll, false);
+
+            if (changeAddress) {
+                while (preloaded_pages.length) change_address(preloaded_pages.shift());
+
+                var elems = document.querySelectorAll('[data-apw-offview]');
+                for (var i = 0; i < elems.length; i++) elems[i].removeAttribute('data-apw-offview');
+            }
+
+            if (status.bottom && status.bottom.parentNode) {
+                status.bottom.parentNode.removeChild(status.bottom);
+            }
+        }
+        /** 
          * Termination event handler. 
          * Stops scroll processing and removes statusbar.
          * @param {Event} evt Event data. 
          * */
         function terminated(evt) {
             status.state = false;
-            window.removeEventListener('scroll', check_scroll, false);
-            
+            cleanup();
             ///////////////////
-              dispatch_notify_event({
+            dispatch_notify_event({
                 extension: 'autopatchwork',
                 text: evt.message
-             });
-             ///////////////////
-            
+            });
+            ///////////////////
             bar && (bar.className = 'autopager_terminated');
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
             }, 3000);
-            if (status.bottom && status.bottom.parentNode) {
-                status.bottom.parentNode.removeChild(status.bottom);
-            }
+
         }
         /** 
          * Error handler. 
@@ -559,10 +572,7 @@
          * */
         function error(message) {
             status.state = false;
-            window.removeEventListener('scroll', check_scroll, false);
-            if (status.bottom && status.bottom.parentNode) {
-                status.bottom.parentNode.removeChild(status.bottom);
-            }
+            cleanup();
             bar && (bar.className = 'autopager_error');
             log(message);
             return false;
@@ -596,7 +606,7 @@
             }
         }
         /**
-         * Dispatches custom notification event on the document node.
+         * Dispatches custom notification event on the document.
          * @param {Object} opt Object of event's message data.
          * */
         function dispatch_notify_event(opt) {
@@ -606,7 +616,7 @@
         }
         /** 
          * Gets current height of viewport.
-         * @return Number Height of viewport
+         * @return {Number} Height of viewport
          * */
         function get_viewport_height() {
             var height = window.innerHeight; // Safari, Opera
@@ -620,10 +630,26 @@
             return height;
         }
         /** 
+         * Filters scroll processing requests.
+         * */
+        var processed = false, timer = 0;
+        function check_scroll() {
+            if(!processed) {       
+                timer = setInterval(function() {
+                    if(processed) {
+                        processed = false;
+                        clearTimeout(timer);
+                        do_scroll();
+                    }
+                }, 250);
+            }
+            processed = true;
+        }
+        /** 
          * Checks if document is scrolled enough to begin loading next page 
          * and dispatches event for a new page request.
          * */
-        function check_scroll() {
+        function do_scroll() {
             if (changeAddress) {
                 var viewporth = get_viewport_height(),
                     scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop),
@@ -889,6 +915,7 @@
          * */
         function append(evt) {
             if (!status.loading || !htmlDoc) return;
+            status.loading = false;
 
             var insert_point = status.insert_point,
                 append_point = status.append_point;
@@ -905,7 +932,7 @@
 
             htmlDoc = null;
             if (!nodes || !nodes.length) {
-                dispatch_event('AutoPatchWork.error', { message: 'page content like ' + pageElement || pageElementSelector + ' not found.' });
+                dispatch_event('AutoPatchWork.error', { message: 'page content not found.' });
                 return;
             }
 
@@ -952,7 +979,6 @@
                     // service data for external page processing
                     insert_node['data-apw-url'] = loaded_url;
                     if (i === 0) {
-                        // don't clutter structure
                         insert_node.setAttribute('data-apw-page', document.apwpagenumber);
                         if (changeAddress) insert_node.setAttribute('data-apw-offview', 'true');
                     }
@@ -972,7 +998,6 @@
                 //nodes[i] = insert_node;
             });
             nodes = null;
-            status.loading = false;
             dispatch_event('AutoPatchWork.pageloaded');
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
@@ -982,7 +1007,7 @@
             if (!loaded_urls[next_href]) {
                 loaded_urls[next_href] = true;
             } else {
-                return dispatch_event('AutoPatchWork.error', { message: 'next page ' + next_href + ' already loaded.' });
+                return dispatch_event('AutoPatchWork.error', { message: 'next page is already loaded.' });
             }
             //if (status.state) 
                 setTimeout(function () { check_scroll(); }, 1000);
