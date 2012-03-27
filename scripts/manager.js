@@ -506,17 +506,24 @@ var isReady = false;
         }
 
         function UpdateSiteInfo(callback) {
-            var url = 'http://ss-o.net/json/wedataAutoPagerize.json';
-            var xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                try {
-                    var d = JSON.parse(xhr.responseText);
-                } catch (e) {
-                    console.log(e);
-                    return;
-                }
-                callback(d);
-            };
+            var url = 'http://ss-o.net/json/wedataAutoPagerize.json',
+                xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function (evt) {  
+              if (xhr.readyState === 4 /*XMLHttpRequest.DONE*/) {
+                if (xhr.status === 200) {
+                  var d;
+                  try { 
+                      d = JSON.parse(xhr.responseText);
+                  } catch (bug) {
+                      console.log("JSON.parse error: ", bug.message);
+                      return;
+                  }
+                  callback(d);
+                } else {  
+                  console.log("XMLHttpRequest error: ", xhr.statusText);  
+                }  
+              }  
+            }; 
             xhr.open('GET', url, true);
             xhr.send(null);
         }
