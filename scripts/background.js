@@ -41,6 +41,7 @@ window.AutoPatchWorkBG = {
         disable_iframe: false,
         change_address: false,
         debug_mode: false,
+        crc_check: false,
         bar_status: 'on'
     },
     save_custom_patterns: function(patterns) {

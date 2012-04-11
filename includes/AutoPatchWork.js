@@ -62,6 +62,7 @@ fastCRC32.prototype = {
         FORCE_TARGET_WINDOW: true,
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
+        CRC_CHECKING: false,
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
         PAGES_TO_KEEP: 3,
@@ -210,6 +211,7 @@ fastCRC32.prototype = {
     function init(info) {
         matched_siteinfo = info.siteinfo;
         if (info.config) {
+            options.CRC_CHECKING =  info.config.check_crc;
             options.BASE_REMAIN_HEIGHT = info.config.remain_height;
             options.DEFAULT_STATE = info.config.auto_start;
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
@@ -853,7 +855,11 @@ fastCRC32.prototype = {
          * */
         function get_node_href(node) {
             if (!node) return null;
-            if (typeof node.getAttribute == 'function' && node.getAttribute('href')) return node.getAttribute('href');
+            if (typeof node.getAttribute == 'function') {
+                if (node.getAttribute('href')) return node.getAttribute('href');
+                else if (node.getAttribute('action')) return node.getAttribute('action');
+                else if (node.getAttribute('value')) return node.getAttribute('value');
+            }
             return node.href || node.action || node.value;
         }
         /** 
@@ -957,7 +963,7 @@ fastCRC32.prototype = {
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
             // is a high probability of non-paging content changes like random ad names
-            if (nodes.length === 1) {
+            if (nodes.length === 1 && options.CRC_CHECKING) {
                 var insert_node_crc = checksum.crc(nodes[0].innerHTML);
                 if (!loaded_crcs[insert_node_crc]) loaded_crcs[insert_node_crc] = true
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
