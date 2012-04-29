@@ -699,7 +699,7 @@ fastCRC32.prototype = {
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
                 loading = true;
-                dispatch_event('AutoPatchWork.request');
+                dispatch_event('AutoPatchWork.request', {link: next});
             }
         }
         /** 
@@ -790,9 +790,9 @@ fastCRC32.prototype = {
             bar && (bar.className = 'autopager_off');
         }
         /* Requests next page via XMLHttpRequest method. */
-        function request() {
+        function request(event) {
             loading = true;
-            var url = state.nextURL = get_node_href(next);
+            var url = state.nextURL = get_node_href(event.link);
             //log('requesting ' + url);
             if (!url) {
                 // we shouldn't be here
@@ -824,9 +824,9 @@ fastCRC32.prototype = {
             x.send(null);
         }
         /* Requests next page via IFRAME load method. */
-        function request_iframe() {
+        function request_iframe(event) {
             loading = true;
-            var url = state.nextURL = get_node_href(next);
+            var url = state.nextURL = get_node_href(event.link);
             //log('requesting ' + url);
             if (!url) {
                 // we shouldn't be here
@@ -894,8 +894,7 @@ fastCRC32.prototype = {
                 try {
                     (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(x);
                     setTimeout( (function(){ x.parentNode.removeChild(x); })(x), 100)
-                } 
-                catch (bug) {}
+                } catch (bug) {}
             }
         };
         /** 
@@ -963,7 +962,7 @@ fastCRC32.prototype = {
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
             // is a high probability of non-paging content changes like random ad names
-            if (nodes.length === 1 && options.CRC_CHECKING) {
+            if (options.CRC_CHECKING && nodes.length === 1) {
                 var insert_node_crc = checksum.crc(nodes[0].innerHTML);
                 if (!loaded_crcs[insert_node_crc]) loaded_crcs[insert_node_crc] = true
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
@@ -1044,7 +1043,7 @@ fastCRC32.prototype = {
                 return dispatch_event('AutoPatchWork.error', { message: 'next page is already loaded.' });
             }
             //if (status.state) 
-                setTimeout(function () { check_scroll(); }, 1000);
+            //    setTimeout(function () { check_scroll(); }, 1000);
         }
         /** 
          * Creates XHTML document object from a string.
