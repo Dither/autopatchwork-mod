@@ -352,13 +352,12 @@ fastCRC32.prototype = {
             append_point = status.append_point = last_element.parentNode;
         
         var htmlDoc, url,
-            loaded_urls = {},
+            requested_urls = {},
             loaded_crcs = {},
             location_pushed = false,
             session_object = {};
 
-        loaded_urls[location.href] = true;
-        loaded_urls[get_node_href(next)] = true;
+        requested_urls[location.href] = true;
         status.remain_height || (status.remain_height = calc_remain_height());
 
         window.addEventListener('scroll', check_scroll, false);
@@ -793,11 +792,19 @@ fastCRC32.prototype = {
         function request(event) {
             loading = true;
             var url = state.nextURL = get_node_href(event.link);
+
             //log('requesting ' + url);
             if (!url) {
                 // we shouldn't be here
-                dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
+                dispatch_event('AutoPatchWork.terminated', { message: 'Invalid next link requested' });
                 return;
+            }
+            // if we ever do retries should do it inside the request function
+            // otherwise can be sure that requested = loaded (or failed)
+            if (!requested_urls[url]) {
+                requested_urls[url] = true;
+            } else {
+                return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
             }
 
             // TODO:
@@ -827,12 +834,19 @@ fastCRC32.prototype = {
         function request_iframe(event) {
             loading = true;
             var url = state.nextURL = get_node_href(event.link);
+
             //log('requesting ' + url);
             if (!url) {
                 // we shouldn't be here
                 dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
                 return;
             }
+            if (!requested_urls[url]) {
+                requested_urls[url] = true;
+            } else {
+                return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
+            }
+            
             var iframe = document.createElement('iframe');
             //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
@@ -1035,13 +1049,6 @@ fastCRC32.prototype = {
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
 
-            var next_href = get_node_href(next);
-            if (!next_href) return dispatch_event('AutoPatchWork.terminated', { message: 'next page link not found.' });
-            if (!loaded_urls[next_href]) {
-                loaded_urls[next_href] = true;
-            } else {
-                return dispatch_event('AutoPatchWork.error', { message: 'next page is already loaded.' });
-            }
             //if (status.state) 
             //    setTimeout(function () { check_scroll(); }, 1000);
         }
