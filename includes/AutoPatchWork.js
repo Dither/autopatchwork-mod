@@ -796,6 +796,7 @@ fastCRC32.prototype = {
             //log('requesting ' + url);
             if (!url) {
                 // we shouldn't be here
+                log('Invalid next link requested: ' + url);
                 dispatch_event('AutoPatchWork.terminated', { message: 'Invalid next link requested' });
                 return;
             }
@@ -804,6 +805,7 @@ fastCRC32.prototype = {
             if (!requested_urls[url]) {
                 requested_urls[url] = true;
             } else {
+                log('next page ' + url + ' is already requested');
                 return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
             }
 
@@ -817,7 +819,10 @@ fastCRC32.prototype = {
             var x = new XMLHttpRequest();
             x.onload = function () {
                 if (dump_request) console.log(x.responseText);
-                dispatch_event('AutoPatchWork.load', { response: x, url: url });
+                dispatch_event('AutoPatchWork.load', {
+                    htmlDoc: createHTML(script_filter(x.responseText), url),
+                    url: url
+                });
             };
             x.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'XMLHttpRequest failed. Status: ' + x.status });
@@ -921,13 +926,8 @@ fastCRC32.prototype = {
             loaded_url = evt.url;
             //log('loaded ' + loaded_url);
             
-            if (evt.response) {
-                htmlDoc = createHTML(script_filter(evt.response.responseText), evt.url);
-            } else if (evt.htmlDoc) {
-                htmlDoc = evt.htmlDoc;
-            } else {
-                return;
-            }
+            if (evt.htmlDoc) htmlDoc = evt.htmlDoc;
+            else return;
            
             status.loading = true;
             if (!options.FORCE_TARGET_WINDOW) {
