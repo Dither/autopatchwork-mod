@@ -792,6 +792,7 @@ fastCRC32.prototype = {
         function request(event) {
             loading = true;
             var url = state.nextURL = get_node_href(event.link);
+            delete event.link;
 
             //log('requesting ' + url);
             if (!url) {
@@ -805,8 +806,16 @@ fastCRC32.prototype = {
             if (!requested_urls[url]) {
                 requested_urls[url] = true;
             } else {
-                log('next page ' + url + ' is already requested');
-                return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
+                log('Next page ' + url + ' is already requested');
+                return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
+            }
+            
+            if (typeof event.norequest !== 'undefined' && !!event.norequest) {
+                dispatch_event('AutoPatchWork.load', {
+                    htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
+                    url: url
+                });
+                return;
             }
 
             // TODO:
@@ -839,6 +848,7 @@ fastCRC32.prototype = {
         function request_iframe(event) {
             loading = true;
             var url = state.nextURL = get_node_href(event.link);
+            delete event.link;
 
             //log('requesting ' + url);
             if (!url) {
@@ -928,6 +938,8 @@ fastCRC32.prototype = {
             
             if (evt.htmlDoc) htmlDoc = evt.htmlDoc;
             else return;
+           
+            delete evt.htmlDoc;
            
             status.loading = true;
             if (!options.FORCE_TARGET_WINDOW) {
