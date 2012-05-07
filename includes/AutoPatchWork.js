@@ -862,6 +862,14 @@ fastCRC32.prototype = {
                 return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
             }
             
+            if (typeof event.norequest !== 'undefined' && !!event.norequest) {
+                dispatch_event('AutoPatchWork.load', {
+                    htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
+                    url: url
+                });
+                return;
+            }
+            
             var iframe = document.createElement('iframe');
             //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
