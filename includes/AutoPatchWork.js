@@ -795,19 +795,11 @@ fastCRC32.prototype = {
             delete event.link;
 
             //log('requesting ' + url);
-            if (!url) {
+            if (!url || url === '') {
                 // we shouldn't be here
                 log('Invalid next link requested: ' + url);
                 dispatch_event('AutoPatchWork.terminated', { message: 'Invalid next link requested' });
                 return;
-            }
-            // if we ever do retries should do it inside the request function
-            // otherwise can be sure that requested = loaded (or failed)
-            if (!requested_urls[url]) {
-                requested_urls[url] = true;
-            } else {
-                log('Next page ' + url + ' is already requested');
-                return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
             }
             
             if (typeof event.norequest !== 'undefined' && !!event.norequest) {
@@ -816,6 +808,15 @@ fastCRC32.prototype = {
                     url: url
                 });
                 return;
+            }
+
+            // if we ever do retries should do it inside the request function
+            // otherwise can be sure that requested = loaded (or failed)
+            if (!requested_urls[url]) {
+                requested_urls[url] = true;
+            } else {
+                log('Next page ' + url + ' is already requested');
+                return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
             }
 
             // TODO:
@@ -844,22 +845,17 @@ fastCRC32.prototype = {
             x.overrideMimeType('text/html; charset=' + document.characterSet);
             x.send(null);
         }
-        /* Requests next page via IFRAME load method. */
+        /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
             loading = true;
             var url = state.nextURL = get_node_href(event.link);
             delete event.link;
 
             //log('requesting ' + url);
-            if (!url) {
+            if (!url || url === '') {
                 // we shouldn't be here
                 dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
                 return;
-            }
-            if (!requested_urls[url]) {
-                requested_urls[url] = true;
-            } else {
-                return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
             }
             
             if (typeof event.norequest !== 'undefined' && !!event.norequest) {
@@ -869,7 +865,13 @@ fastCRC32.prototype = {
                 });
                 return;
             }
-            
+           
+            if (!requested_urls[url]) {
+                requested_urls[url] = true;
+            } else {
+                return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
+            }
+           
             var iframe = document.createElement('iframe');
             //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
