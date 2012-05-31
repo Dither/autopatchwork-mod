@@ -185,7 +185,18 @@ function createDatabase(info) {
     info.forEach(function(i) {
         var d = i.data || i, r = {};
         keys.forEach(function(k) { if(d[k]) r[k] = d[k]; });
-        try { new RegExp(r.url); } catch (bug) { return; }
+        try { new RegExp(r.url); } catch (bug) { 
+        	console.log('[AutoPatchWork] Invalid RegExp ' + r.url + ': ' +  (bug.message || bug)); 
+        	return;
+        }
+        try { document.evaluate(r.nextLink, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug) { 
+        	console.log('[AutoPatchWork] Invalid XPath '  + r.nextLink + ': ' +  (bug.message || bug)); 
+        	return;
+        }
+        try { document.evaluate(r.pageElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug)  { 
+        	console.log('[AutoPatchWork] Invalid XPath '  + r.pageElement + ': ' + (bug.message || bug)); 
+        	return;
+        }
         r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
         siteinfo.push(r);
     });
