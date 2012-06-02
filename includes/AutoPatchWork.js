@@ -470,9 +470,6 @@ fastCRC32.prototype = {
             status: status
         };
         
-        // load next page if there is no scrollbar so we can begin to scroll afterwards
-        if (rootNode.scrollHeight < rootNode.clientHeight) dispatch_event('AutoPatchWork.request', {link: next});
-
         return true;
         /** 
          * Reinitialize APW handler: removes listeners and restarts class
