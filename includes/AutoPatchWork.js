@@ -370,7 +370,7 @@ fastCRC32.prototype = {
         window.addEventListener('AutoPatchWork.state', state, false);
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
-        
+      
         /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
             pageloaded();
@@ -469,6 +469,9 @@ fastCRC32.prototype = {
             get_main_content: get_main_content,
             status: status
         };
+        
+        // load next page if there is no scrollbar so we can begin to scroll afterwards
+        if (rootNode.scrollHeight < rootNode.clientHeight) dispatch_event('AutoPatchWork.request', {link: next});
 
         return true;
         /** 
@@ -502,8 +505,8 @@ fastCRC32.prototype = {
                 bar.parentNode.removeChild(bar);
             }
             delete window.AutoPatchWorked;
-            //FIXME: add new features
 
+            //FIXME: add new features
             AutoPatchWork({
                 nextLink: status.nextLink,
                 nextLinkSelector: status.nextLinkSelector,
