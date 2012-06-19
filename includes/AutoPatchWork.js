@@ -28,10 +28,11 @@ fastCRC32.prototype = {
 
 /* 
  * Normal AutoPatchWork event flow:
- *  AutoPatchWork.init - we are on some site, requestiong siteinfo for it.
+ *  AutoPatchWork.init (internal) - we are on some site, requestiong siteinfo for it.
+ *  AutoPatchWork.ready - extension is configured and ready to work.
  *  AutoPatchWork.siteinfo - got SITEINFOs for the current site.
- *  AutoPatchWork.initialized - initialized APW data.
- *  scroll - got some scrolling on the page.
+ *  AutoPatchWork.initialized (internal) - initialized APW data.
+ *  scroll (internal) - got some scrolling on the page.
  *  AutoPatchWork.request - sending request for the next page. 
  *  AutoPatchWork.load - getting new page data and processing it.
  *  AutoPatchWork.append - appending page to the current.
@@ -39,7 +40,7 @@ fastCRC32.prototype = {
  *  AutoPatchWork.pageloaded - page loaded successfully.
  *  AutoPatchWork.error - page not loaded, error can be generated on every previous stage. 
  *  AutoPatchWork.terminated - page not loaded, stopping extension.
- *  AutoPatchWork.reset - resetting extension on changes within location.
+ *  AutoPatchWork.reset (internal) - resetting extension on changes within location.
  * 
  * Service events:
  *  resize - on window resize
@@ -58,7 +59,7 @@ fastCRC32.prototype = {
         BROWSER_SAFARI = 2,
         BROWSER_OPERA = 3;
     var options = {
-        BASE_REMAIN_HEIGHT: 400,
+        BASE_REMAIN_HEIGHT: 1000,
         FORCE_TARGET_WINDOW: true,
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
@@ -117,7 +118,45 @@ fastCRC32.prototype = {
      * @param {Boolean|String} s Data to check.
      * @return {Boolean} Boolean result.
      * */
-    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s == '1')) ? true : false; }
+    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s == 'on' || s == '1')) ? true : false; }
+    
+    /** 
+     * Dispatches standard event on the document.
+     * @param {String} type Event name string.
+     * @param {Array} opt Array of event's parameters.
+     * */
+    function dispatch_event(type, opt) {
+        var ev = document.createEvent('Event');
+        ev.initEvent(type, true, false);
+        if (opt) {
+        var ret = [];
+            for(x in opt) if(opt.hasOwnProperty(x)) ret.push(x);
+            ret.forEach(function (k) {
+                if (!ev[k]) ev[k] = opt[k];
+            });
+        }
+        document.dispatchEvent(ev);
+    }
+    /** 
+     * Dispatches modification event on the target node.
+     * @param {Array} opt Array of event's parameters.
+     * */
+    function dispatch_mutation_event(opt) {
+        var mue = document.createEvent('MutationEvent');
+        with(opt) {
+            mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
+            targetNode.dispatchEvent(mue);
+        }
+    }
+    /**
+     * Dispatches custom notification event on the document.
+     * @param {Object} opt Object of event's message data.
+     * */
+    function dispatch_notify_event(opt) {
+        var noe = document.createEvent('CustomEvent');
+        noe.initCustomEvent('Notify.It', false, false, opt);
+        document.dispatchEvent(noe);
+    }
 
     // Cute AJAX loader gif.
     if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
@@ -183,9 +222,19 @@ fastCRC32.prototype = {
 
     // Begin listening for SITEINFO messages and send reset event if got one while active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
+    window.addEventListener('AutoPatchWork.init', init, false);
     
-    sendRequest({ url: location.href, isFrame: window.top !== window.self }, init, 'AutoPatchWork.init' );
+    /** 
+     * APW initialisation, config reading and fail registration.
+     * Will be replaced by AutoPatchWork function later.
+     * @param {Object} info Contains APW paramenters.
+     * */
+    function init() {
+        sendRequest({ url: location.href, isFrame: window.top !== window.self }, begin_init, 'AutoPatchWork' );
+    }
 
+    init();
+    
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
@@ -208,7 +257,7 @@ fastCRC32.prototype = {
      * Will be replaced by AutoPatchWork function later.
      * @param {Object} info Contains APW paramenters.
      * */
-    function init(info) {
+    function begin_init(info) {
         matched_siteinfo = info.siteinfo;
         if (info.config) {
             options.CRC_CHECKING =  info.config.check_crc;
@@ -220,18 +269,20 @@ fastCRC32.prototype = {
             options.css = info.css;
             debug = info.config.debug_mode;
         }
+        if (!info.siteinfo || !info.siteinfo.length) return dispatch_event('AutoPatchWork.ready');
         var fails = [];
         var ready = info.siteinfo.some(function (s) {
             return AutoPatchWork(s) || (fails.push(s), false);
         });
         (ready === false) && sendRequest({ failed_siteinfo: fails });
+        return dispatch_event('AutoPatchWork.ready');
     }
     /** 
      * Event handler for receiving SITEINFO.
      * @param {Event} evt Event data.
      * */
     function siteinfo(evt) {
-        if (evt.siteinfo) {
+        if (!!evt.siteinfo) {
             evt.siteinfo.allowScripts = false;
             if (!window.AutoPatchWorked) {
                 AutoPatchWork(evt.siteinfo);
@@ -484,6 +535,7 @@ fastCRC32.prototype = {
                 status[k] = evt.siteinfo[k];
             });
             document.apwpagenumber = 1;
+            window.removeEventListener('AutoPatchWork.init', init, false);
             window.removeEventListener('scroll', check_scroll, false);
             window.removeEventListener('AutoPatchWork.request', request, false);
             window.removeEventListener('AutoPatchWork.load', load, false);
@@ -537,14 +589,7 @@ fastCRC32.prototype = {
          * @param {Event} evt Event data. 
          * */
         function state(evt) {
-            switch (evt.status) {
-            case 'on':
-                state_on();
-                break;
-            case 'off':
-                state_off();
-                break;
-            }
+            s2b(evt.status) ? state_on() : state_off();
         }
         /** 
          * Toggles statusbar state. */
@@ -599,43 +644,6 @@ fastCRC32.prototype = {
             bar && (bar.className = 'autopager_error');
             log(message);
             return false;
-        }
-        /** 
-         * Dispatches standard event on the document.
-         * @param {String} type Event name string.
-         * @param {Array} opt Array of event's parameters.
-         * */
-        function dispatch_event(type, opt) {
-            var ev = document.createEvent('Event');
-            ev.initEvent(type, true, false);
-            if (opt) {
-                Object.keys(opt).forEach(function (k) {
-                    if (!ev[k]) {
-                        ev[k] = opt[k];
-                    }
-                });
-            }
-            document.dispatchEvent(ev);
-        }
-        /** 
-         * Dispatches modification event on the target node.
-         * @param {Array} opt Array of event's parameters.
-         * */
-        function dispatch_mutation_event(opt) {
-            var mue = document.createEvent('MutationEvent');
-            with(opt) {
-                mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
-                targetNode.dispatchEvent(mue);
-            }
-        }
-        /**
-         * Dispatches custom notification event on the document.
-         * @param {Object} opt Object of event's message data.
-         * */
-        function dispatch_notify_event(opt) {
-            var noe = document.createEvent('CustomEvent');
-            noe.initCustomEvent('Notify.It', false, false, opt);
-            document.dispatchEvent(noe);
         }
         /** 
          * Gets current height of viewport.
@@ -998,7 +1006,7 @@ fastCRC32.prototype = {
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
             }
 
-            if (!status.separator_disabled) {
+            if (!disableSeparator) {
                 // Checking where to add new content. 
                 // In case of table we'll add inside it, otherwise after.
                 var root, node;

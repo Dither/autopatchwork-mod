@@ -371,6 +371,7 @@ function handleMessage(request, sender, sendResponse) {
         storagebase.site_stats = JSON.stringify(site_stats);
         return;
     }
+    
     if(request.failed_siteinfo) {
         request.failed_siteinfo.forEach(function(s) {
             var id = s['wedata.net.id'];
@@ -380,14 +381,17 @@ function handleMessage(request, sender, sendResponse) {
         storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
         return;
     }
+    
     if(request.manage) {
         openOrFocusTab('siteinfo_manager.html');
         return;
     }
+    
     if(request.options) {
         openOrFocusTab('options.html');
         return;
     }
+    
     if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_iframe))
         return;
 
@@ -398,8 +402,7 @@ function handleMessage(request, sender, sendResponse) {
 
     for(var i = 0, len = siteinfo.length, s; i < len; i++) {
         s = siteinfo[i];
-        if(!s.disabled && new RegExp(siteinfo[i].url).test(url))
-            infos.push(siteinfo[i]);
+        if(!s.disabled && new RegExp(siteinfo[i].url).test(url)) infos.push(siteinfo[i]);
     }
 
     sendResponse({
