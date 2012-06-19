@@ -143,7 +143,7 @@
             <section id='news' class='content' style='visibility: hidden; height: 100px'>
                 <ul>
                     <li>
-                        <h4>2012/02/02</h4>Current functionality:
+                        <h4>2012/02/02</h4>
                         <ul>
                             <li>
                                 Autostart option.
@@ -185,18 +185,20 @@
                                 Status bar: loading animation, toggle APW, call SI-manager or APW's preferences page.
                             </li>
                         </ul>
-                        <h4>2012/19/06</h4>Current functionality:
+                        <h4>2012/19/06</h4>
                         <ul>
                             <li>
-                                Following custom SITEINFO fields were added: nextMask, pageElementSelector, nextLinkSelector, forceIframe, disableSeparator, forceAddressChange, allowScripts.
+                                Following custom SITEINFO fields were added: <i>nextMask, pageElementSelector, nextLinkSelector, forceIframe, disableSeparator, forceAddressChange, allowScripts</i>.
                             </li>
                             <li>
-                                In <i>AutoPatchWork.request</i> event <i>link</i> property is now available. It contains an element (of Node type) with reference to the next page Also there is the option <i><i>norequest (Boolean type), which indicates whether or not to request the page referenced from previous element (if you set it to false blank page template will be returned).
-                                In <i>AutoPatchWork.load</i> event added the option to work with the next page before it is loaded (including bringing it to the form specified in SITEINFO-pattern of the site). DOM-document of new pages is always available as <i>htmlDoc</i> property of this event.
+                                The <i>link</i> property is now available in <i>AutoPatchWork.request</i> event. It contains an element (Node type) with reference to the next page. Also there is <i>norequest</i> option (Boolean type) which defines whether or not to download the page referenced from previous element (if you set it to false blank page template will be returned).
+                            </li>
+                            <li>
+                                Added the option to process next page before it is appended in <i>AutoPatchWork.load</i> event (including bringing it to the form specified in SITEINFO-pattern of the site). DOM-document of new pages is always available as <i>htmlDoc</i> (HTMLDocument type) property of this event.
                             </li>
                         </ul>
                     </li>
-                </ul>
+                </ul><br />
             </section>
             <section id='about' class='content' style='visibility: hidden; height: 100px'>
                 <dl>
