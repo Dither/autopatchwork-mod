@@ -231,15 +231,18 @@ fastCRC32.prototype = {
      * @param {Event} evt Event data.
      * */
     function siteinfo(evt) {
-        if (evt.siteinfo && !window.AutoPatchWorked) {
-            AutoPatchWork(evt.siteinfo);
-        } else if (evt.siteinfo) {
-            var ev = document.createEvent('Event');
-            ev.initEvent('AutoPatchWork.reset', true, true);
-            for (var k in evt.siteinfo) {
-                ev[k] = evt.siteinfo[k];
+        if (evt.siteinfo) {
+            evt.siteinfo.allowScripts = false;
+            if (!window.AutoPatchWorked) {
+                AutoPatchWork(evt.siteinfo);
+            } else {
+                var ev = document.createEvent('Event');
+                ev.initEvent('AutoPatchWork.reset', true, true);
+                for (var k in evt.siteinfo) {
+                    ev[k] = evt.siteinfo[k];
+                }
+                document.dispatchEvent(ev);
             }
-            document.dispatchEvent(ev);
         }
     }
     /** 
@@ -342,10 +345,6 @@ fastCRC32.prototype = {
             (next.protocol && next.protocol !== location.protocol) ||
             forceIframe ){
                 request = request_iframe;
-        }
-        
-        if (allowScripts) {
-            script_filter = dont_filter;
         }
 
         var first_element = status.first_element = page_elements[0],
@@ -829,7 +828,7 @@ fastCRC32.prototype = {
             x.onload = function () {
                 if (dump_request) console.log(x.responseText);
                 dispatch_event('AutoPatchWork.load', {
-                    htmlDoc: createHTML(script_filter(x.responseText), url),
+                    htmlDoc: createHTML(x.responseText, url),
                     url: url
                 });
             };
@@ -905,20 +904,6 @@ fastCRC32.prototype = {
             return node.href || node.action || node.value;
         }
         /** 
-         * Removes scripts from a page text.
-         * @param {String} text The input string.
-         * */
-        function script_filter(text) {
-            return text.replace(/<script(?:[ \t\r\n][^>]*)?>[\S\s]*?<\/script[ \t\r\n]*>/gi, ' ');
-        }
-        /** 
-         * Returns page text as it is.
-         * @param {String} text The input string.
-         * */
-        function dont_filter(text) {
-            return text;
-        }
-        /** 
          * [test] Evaluates included scripts.
          * @param {Node} node Node to run scripts of.
          * */
@@ -988,6 +973,13 @@ fastCRC32.prototype = {
             var nodes = get_main_content(htmlDoc),
                 //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
+                
+            // filter scripts
+            if (!allowScripts) {
+                for (var i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++) {
+                    if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
+                }
+            }
                 
             next = get_next_link(htmlDoc);
 
