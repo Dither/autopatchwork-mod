@@ -42,7 +42,7 @@ window.AutoPatchWorkBG = {
         change_address: false,
         debug_mode: false,
         crc_check: false,
-        bar_status: 'on'
+        bar_status: true
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;

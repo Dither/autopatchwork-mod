@@ -568,7 +568,8 @@ var isReady = false;
             siteinfo: {
                 url: '.',
                 nextLink: '//*',
-                pageElement: '//*'
+                pageElement: '//*',
+                SERVICE: true
             }
         });
 

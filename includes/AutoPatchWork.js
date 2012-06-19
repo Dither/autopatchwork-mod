@@ -117,7 +117,7 @@ fastCRC32.prototype = {
      * @param {Boolean|String} s Data to check.
      * @return {Boolean} Boolean result.
      * */
-    function s2b(s) { return (s && (s == 'true' || s == '1')) ? true : false; }
+    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s == '1')) ? true : false; }
 
     // Cute AJAX loader gif.
     if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
@@ -261,7 +261,6 @@ fastCRC32.prototype = {
 
         var location_href = location.href,
             preloaded_pages = [],
-            loading = false,
             scroll = false,
             nextLink = status.nextLink = siteinfo.nextLink,
             nextLinkSelector = status.nextLinkSelector = siteinfo.nextLinkSelector,
@@ -291,14 +290,16 @@ fastCRC32.prototype = {
 
         if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
-        var next = get_next_link(document);
-        if (!get_node_href(next)) {
+        var isNotService = !s2b(siteinfo.SERVICE),
+            next = get_next_link(document);
+            
+        if (!get_node_href(next) && isNotService) {
             if (siteinfo.MICROFORMAT) return;
             return log('next link ' + (nextLink || nextLinkSelector || nextMask) + ' not found.');
         }
 
         var page_elements = get_main_content(document);
-        if (!page_elements || !page_elements.length) {
+        if ((!page_elements || !page_elements.length) && isNotService) {
             if (siteinfo.MICROFORMAT) return;
             return log('page content like ' + (pageElement || pageElementSelector)  + ' not found.');
         }
@@ -314,6 +315,7 @@ fastCRC32.prototype = {
             };
         }
         // Individual site fixes.
+        // DON'T MODIFY! Use external scripts API to handle them instead.
         if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
             forceIframe = status.in_iframe = true;
@@ -322,7 +324,7 @@ fastCRC32.prototype = {
             status.scripts_allowed = allowScripts = true;
         } 
         else if ('matome.naver.jp' === location.host) {
-            var _get_next = get_next_link;
+            /*var _get_next = get_next_link;
             get_next_link = function (doc) {
                 var next = _get_next(doc);
                 if (!next || !next.hasAttribute('onclick')) return;
@@ -334,7 +336,7 @@ fastCRC32.prototype = {
                 next.href = location.pathname + '?' + param;
                 return next;
             };
-            next = get_next_link(document);
+            next = get_next_link(document);*/
         }       
         else if ((next.host && next.host !== location.host) || 
             (next.protocol && next.protocol !== location.protocol) ||
@@ -379,6 +381,9 @@ fastCRC32.prototype = {
         }
         /* Sets status bar to ready state. */
         function pageloaded() {
+            // pause to do things before next page load and flood prevention
+            setTimeout( function(){ status.loading = false; }, 1000);
+        
             var b = document.getElementById('autopatchwork_bar');
             if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
             
@@ -684,7 +689,7 @@ fastCRC32.prototype = {
                         //else 
                         if (scrolltop + viewporth > top && scrolltop < (top + height)) {
                             elem.removeAttribute('data-apw-offview');
-                            // not using apw-url attribute for safety; we always have first loaded page in the other end of the fifo
+                            // we always have first loaded page on the other end of the fifo
                             if (preloaded_pages.length) change_address(preloaded_pages.shift());
                         } else {
                             //is the nodelist always gets ordered with depth-first pre-order traversal?
@@ -694,10 +699,10 @@ fastCRC32.prototype = {
                 }
             }
             
-            if (loading || !status.state) return;
+            if (status.loading || !status.state) return;
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
-                loading = true;
+                status.loading = true;
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
         }
@@ -790,7 +795,7 @@ fastCRC32.prototype = {
         }
         /* Requests next page via XMLHttpRequest method. */
         function request(event) {
-            loading = true;
+            status.loading = true;
             var url = state.nextURL = get_node_href(event.link);
             delete event.link;
 
@@ -819,14 +824,8 @@ fastCRC32.prototype = {
                 return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
             }
 
-            // TODO:
-            // If AJAX -> 'POST' -> load -> AutoPatchWork.load
-            // New request_ func:
-            // If button auto-click -> click and return -> delay or wait for DOMNodeInserted
-            //  => AutoPatchWork.pageloaded
-
-            var req = 'GET';
-            var x = new XMLHttpRequest();
+            var req = 'GET',
+                x = new XMLHttpRequest();
             x.onload = function () {
                 if (dump_request) console.log(x.responseText);
                 dispatch_event('AutoPatchWork.load', {
@@ -843,11 +842,15 @@ fastCRC32.prototype = {
             //}
             x.open(req, url, true);
             x.overrideMimeType('text/html; charset=' + document.characterSet);
-            x.send(null);
+            try {
+               x.send();
+            } catch (bug) {
+                return dispatch_event('AutoPatchWork.error', { message: 'Network access error' });
+            }
         }
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
-            loading = true;
+            status.loading = true;
             var url = state.nextURL = get_node_href(event.link);
             delete event.link;
 
@@ -941,10 +944,9 @@ fastCRC32.prototype = {
          * @param {Event} evt Event data.
          * */
         function load(evt) {
-            loading = false;
+            status.loading = false;
             if (!evt.response && !evt.htmlDoc) return;
             loaded_url = evt.url;
-            //log('loaded ' + loaded_url);
             
             if (evt.htmlDoc) htmlDoc = evt.htmlDoc;
             else return;
@@ -1065,8 +1067,8 @@ fastCRC32.prototype = {
                 dispatch_mutation_event(mutation);
                 //nodes[i] = insert_node;
             });
+            
             nodes = null;
-            status.loading = false;
             dispatch_event('AutoPatchWork.pageloaded');
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
