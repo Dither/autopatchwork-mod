@@ -309,9 +309,11 @@ switch(browser) {
                     AutoPatchWorkBG: AutoPatchWorkBG
                 });
             } else {
-                handleMessage(evt.message, {}, function(data) {
-                    evt.target.page.dispatchMessage(name, data);
-                });
+                try {
+                    handleMessage(evt.message, {}, function(data) {
+                        evt.target.page.dispatchMessage(name, data);
+                    });
+                } catch (bug) {}
             }
         }, false);
         break;
@@ -357,9 +359,11 @@ switch(browser) {
                     }
                     break;
                 default:
-                    handleMessage(message, {}, function(data) {
-                        evt.source.postMessage({ name: name, data: data });
-                    });
+                    try {
+                        handleMessage(message, {}, function(data) {
+                            evt.source.postMessage({ name: name, data: data });
+                        });
+                    } catch (bug) {}
             }
         };
 }

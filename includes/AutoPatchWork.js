@@ -220,17 +220,16 @@ fastCRC32.prototype = {
                   document.createElement('p').nodeName !== document.createElement('P').nodeName;
     document.apwpagenumber = 1;
 
-    // Begin listening for SITEINFO messages and send reset event if got one while active
-    window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
+    // Begin listening for init messages and request configuration if got one
     window.addEventListener('AutoPatchWork.init', init, false);
-    
+    // Begin listening and processing SITEINFO messages; send reset event if got one while active
+    window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
+   
     /** 
-     * APW initialisation, config reading and fail registration.
-     * Will be replaced by AutoPatchWork function later.
-     * @param {Object} info Contains APW paramenters.
+     * APW configuration sync with the background process handler
      * */
     function init() {
-        sendRequest({ url: location.href, isFrame: window.top !== window.self }, begin_init, 'AutoPatchWork' );
+        sendRequest({ url: location.href, isFrame: window.top !== window.self }, begin_init, 'AutoPatchWorkInit' );
     }
 
     init();
@@ -254,8 +253,7 @@ fastCRC32.prototype = {
     
     /** 
      * APW initialisation, config reading and fail registration.
-     * Will be replaced by AutoPatchWork function later.
-     * @param {Object} info Contains APW paramenters.
+      * @param {Object} info Contains APW paramenters.
      * */
     function begin_init(info) {
         matched_siteinfo = info.siteinfo;
