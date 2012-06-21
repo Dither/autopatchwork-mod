@@ -1019,13 +1019,15 @@ fastCRC32.prototype = {
                     root = document.createElement('tr');
                     node.setAttribute('colspan', colums);
                     root.appendChild(node);
+                } else if (/^(?:ol|ul)$/i.test(append_point.localName)) {
+                    root = node = document.createElement('li');
                 } else {
                     root = node = document.createElement('div');
                 }
 
                 // Adding page separator.
                 node.className = 'autopagerize_page_separator_blocks';
-                node.setAttribute('apw-page', document.apwpagenumber);
+                //node.setAttribute('data-apw-page', document.apwpagenumber);
                 var h4 = node.appendChild(document.createElement('h4'));
                 h4.className = 'autopagerize_page_separator';
                 var span = h4.appendChild(document.createElement('span'));
