@@ -225,7 +225,7 @@ var isReady = false;
         };
 
         siteinfo_search_input.addEventListener('input', function (evt) {
-            if (!siteinfo_data.length) return;
+            if (!siteinfo_data || !siteinfo_data.length) return;
             // show ajax loader here
             toggle_popup('loader', true);
             var fullword = siteinfo_search_input.value,
@@ -263,12 +263,12 @@ var isReady = false;
                 })) return true;
                 return false;
             });
-            debug && log('search completed in ' + (new Date - s) + 'ms');
+            //debug && log('search completed in ' + (new Date - s) + 'ms');
             var v = new Date * 1;
             SiteInfoView(siteinfo.slice(0, RECORDS_PER_PAGE));
             filtered_info = siteinfo;
             SiteInfoNavi(siteinfo);
-            debug && log('view completed in ' + (new Date - v) + 'ms');
+            //debug && log('view completed in ' + (new Date - v) + 'ms');
             // hide ajax loader here
             toggle_popup('loader', false);
         }, false);

@@ -680,7 +680,7 @@ fastCRC32.prototype = {
          * */
         function do_scroll() {
             if (changeAddress) {
-                var viewporth = get_viewport_height(),
+                var viewporth = get_viewport_height()/2,
                     scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop),
                     elems = document.querySelectorAll('[data-apw-offview]');
                     
@@ -692,7 +692,7 @@ fastCRC32.prototype = {
         
                         //if (scrolltop > (top + height) || scrolltop + viewporth < top) {} // to do something on hide; unused now
                         //else 
-                        if (scrolltop + viewporth > top && scrolltop < (top + height)) {
+                        if (scrolltop + viewporth > top && scrolltop < top + height) {
                             elem.removeAttribute('data-apw-offview');
                             // we always have first loaded page on the other end of the fifo
                             if (preloaded_pages.length) change_address(preloaded_pages.shift());
