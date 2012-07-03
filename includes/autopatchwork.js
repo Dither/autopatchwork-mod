@@ -1038,29 +1038,20 @@ fastCRC32.prototype = {
                 append_point.insertBefore(root, insert_point);
             }
             
-            var fragment = document.createDocumentFragment();
-            // Merge nodes to fragment to avoid slowdowns
+            // Firing node change event on each target node
             for (var insert_node, i = 0; i < nodes.length; i++) {
-                insert_node = fragment.appendChild(document.importNode(nodes[i], true));
-
+                insert_node = append_point.insertBefore(document.importNode(nodes[i], true), insert_point);
+                //if (status.scripts_allowed) eval_scripts(insert_node);
                 if (insert_node && typeof insert_node.setAttribute == 'function') {
+                    // service data for external page processing
+                    insert_node['data-apw-url'] = loaded_url;
                     if (i === 0) {
                         insert_node.setAttribute('data-apw-page', document.apwpagenumber);
                         if (changeAddress) insert_node.setAttribute('data-apw-offview', 'true');
                     }
                 }
-            };
-            nodes = null;
-
-            var insert_node = append_point.insertBefore(document.importNode(fragment, true), insert_point),
-                new_nodes = insert_node.childNodes;
-                
-            // this will fail in Opera 12
-            for (var i = 0; i < new_nodes.length; i++) {
-                // service data for external page processing
-                new_nodes[i]['data-apw-url'] = loaded_url;
-                dispatch_mutation_event({
-                    targetNode: new_nodes[i],
+                var mutation = {
+                    targetNode: insert_node,
                     eventName: 'AutoPatchWork.DOMNodeInserted',
                     bubbles: true,
                     cancelable: false,
@@ -1069,11 +1060,11 @@ fastCRC32.prototype = {
                     newValue: loaded_url,
                     attrName: 'url',
                     attrChange: 2 // MutationEvent.ADDITION
-                });
+                };
+                dispatch_mutation_event(mutation);
             };
-
-            //if (status.scripts_allowed) eval_scripts(append_point);
-           
+            
+            nodes = null;
             dispatch_event('AutoPatchWork.pageloaded');
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
