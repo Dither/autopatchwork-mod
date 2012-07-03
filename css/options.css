@@ -366,6 +366,7 @@ input[type="range"]{
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Управление SITEINFO'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
+.MSG_check_crc:lang(ru) {content: 'Проверять CRC страниц на повторы'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в IFRAME'}
 .MSG_change_address:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар (может подтормаживать)'}
