@@ -533,8 +533,9 @@ fastCRC32.prototype = {
                 status[k] = evt.siteinfo[k];
             });
             document.apwpagenumber = 1;
-            window.removeEventListener('AutoPatchWork.init', init, false);
             window.removeEventListener('scroll', check_scroll, false);
+            window.removeEventListener('resize', check_scroll, false);
+            window.removeEventListener('AutoPatchWork.init', init, false);
             window.removeEventListener('AutoPatchWork.request', request, false);
             window.removeEventListener('AutoPatchWork.load', load, false);
             window.removeEventListener('AutoPatchWork.append', append, false);
@@ -599,6 +600,7 @@ fastCRC32.prototype = {
          *  */
         function cleanup() {
             window.removeEventListener('scroll', check_scroll, false);
+            window.removeEventListener('resize', check_scroll, false);
 
             if (changeAddress) {
                 while (preloaded_pages.length) change_address(preloaded_pages.shift());
@@ -618,6 +620,7 @@ fastCRC32.prototype = {
          * */
         function terminated(evt) {
             status.state = false;
+            status.loading = false;
             cleanup();
             ///////////////////
             dispatch_notify_event({
@@ -638,6 +641,7 @@ fastCRC32.prototype = {
          * */
         function error(message) {
             status.state = false;
+            status.loading = false;
             cleanup();
             bar && (bar.className = 'autopager_error');
             log(message);
@@ -705,6 +709,7 @@ fastCRC32.prototype = {
             }
             
             if (status.loading || !status.state) return;
+
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
                 status.loading = true;
@@ -935,23 +940,15 @@ fastCRC32.prototype = {
          * @param {Event} evt Event data.
          * */
         function load(evt) {
-            status.loading = false;
-            if (!evt.response && !evt.htmlDoc) return;
-            loaded_url = evt.url;
+            if (!evt.htmlDoc)
+                return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
             
-            if (evt.htmlDoc) htmlDoc = evt.htmlDoc;
-            else return;
-           
+            loaded_url = evt.url;
+            htmlDoc = evt.htmlDoc;
             delete evt.htmlDoc;
            
-            status.loading = true;
-            if (!options.FORCE_TARGET_WINDOW) {
-                if (evt.response) {
-                    saveText(loaded_url, document.apwpagenumber, evt.response.responseText);
-                } else if (evt.htmlDoc) {
-                    saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
-                }
-            }
+            if (!options.FORCE_TARGET_WINDOW)
+                saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
             dispatch_event('AutoPatchWork.append');
         }
         /** 
@@ -1079,6 +1076,7 @@ fastCRC32.prototype = {
         /** 
          * Creates XHTML document object from a string.
          * @param {String} str String with XHTML-formatted text.
+         * @return {XMLDocument} DOM-document.
          * */
         function createXHTML(str) {
             return new DOMParser().parseFromString(str, 'application/xhtml+xml');
@@ -1087,6 +1085,7 @@ fastCRC32.prototype = {
          * Creates HTML document object from a string.
          * @param {String} str String with HTML-formatted text.
          * @param {String} url String with URL of original page.
+         * @return {HTMLDocument} DOM-document.
          * */
         function createHTML(source, url) {
             // http://gist.github.com/198443
