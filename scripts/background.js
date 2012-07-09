@@ -406,14 +406,12 @@ function handleMessage(request, sender, sendResponse) {
 
     for(var i = 0, len = siteinfo.length, s; i < len; i++) {
         s = siteinfo[i];
-        if(!s.disabled && new RegExp(siteinfo[i].url).test(url)) infos.push(siteinfo[i]);
+        try {
+            if(!s.disabled && (new RegExp(siteinfo[i].url)).test(url)) infos.push(siteinfo[i]);
+        } catch (bug) { console.log((bug.message || bug) + ' ' + siteinfo[i].url); }
     }
 
-    sendResponse({
-        siteinfo: infos,
-        config: AutoPatchWorkBG.config,
-        css: AutoPatchWorkBG.css
-    });
+    sendResponse({ siteinfo: infos, config: AutoPatchWorkBG.config, css: AutoPatchWorkBG.css });
 }
 
 function openOrFocusTab(uri) {

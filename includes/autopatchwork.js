@@ -4,6 +4,16 @@
 // @exclude chrome:*
 // @exclude about:*
 // @exclude widget:*
+// @exclude *.js
+// @exclude *.txt
+// @exclude *.pdf
+// @exclude *.fb2
+// @exclude *.jpg
+// @exclude *.jpeg
+// @exclude *.png
+// @exclude *.apng
+// @exclude *.gif
+// @exclude *.swf
 // @exclude *://localhost*
 // @exclude *://192.168.*
 // @exclude *://0.0.0.0*
@@ -430,7 +440,7 @@ fastCRC32.prototype = {
         /* Sets status bar to ready state. */
         function pageloaded() {
             // pause to do things before next page load and flood prevention
-            setTimeout( function(){ status.loading = false; }, 1000);
+            setTimeout( function(){ status.loading = false; }, 500);
         
             var b = document.getElementById('autopatchwork_bar');
             if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
@@ -1130,15 +1140,17 @@ fastCRC32.prototype = {
          * */
         function get_next_link(doc) {
             if (!doc) return null;
-            if (status.nextLink) {
-                return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.nextMask) {
-                // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextMask.split('|');
-                return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else if (status.nextLinkSelector) {
-                return doc.querySelector(status.nextLinkSelector);
-            }
+            try {
+                if (status.nextLink) {
+                    return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                } else if (status.nextMask) {
+                    // format link-up-to-page-number|step[|link-after-page-number]
+                    var arr = status.nextMask.split('|');
+                    return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
+                } else if (status.nextLinkSelector) {
+                    return doc.querySelector(status.nextLinkSelector);
+                }
+            } catch (bug) {}
             return null;
         }
         /** 
@@ -1149,19 +1161,21 @@ fastCRC32.prototype = {
         function get_main_content(doc) {
             if (!doc) return null;
             var  r, l, res;
-            if (status.pageElement) {
-                r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                l = r.snapshotLength;
-                res = (l && new Array(l)) || [];
-                for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-                return element_filter(res);
-            } else if (status.pageElementSelector) {
-                 r = doc.querySelectorAll(status.pageElementSelector);
-                 l = r.length;
-                 res = (l && new Array(l)) || [];
-                for (var i = 0; i < l; i++) res[i] = r[i];
-                return element_filter(res);
-            }
+            try {
+                if (status.pageElement) {
+                    r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    l = r.snapshotLength;
+                    res = (l && new Array(l)) || [];
+                    for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+                    return element_filter(res);
+                } else if (status.pageElementSelector) {
+                     r = doc.querySelectorAll(status.pageElementSelector);
+                     l = r.length;
+                     res = (l && new Array(l)) || [];
+                    for (var i = 0; i < l; i++) res[i] = r[i];
+                    return element_filter(res);
+                }
+            } catch (bug) {}
             return null;
         }
         /** 
@@ -1171,15 +1185,17 @@ fastCRC32.prototype = {
          * */
         function x_get_next_link(doc) {
             if (!doc) return null;
-            if (status.nextLink) {
-                return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.nextMask) {
-                // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextMask.split('|');
-                return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else if (status.nextLinkSelector) {
-                return doc.querySelector(status.nextLinkSelector);
-            }
+            try {
+                if (status.nextLink) {
+                    return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                } else if (status.nextMask) {
+                    // format link-up-to-page-number|step[|link-after-page-number]
+                    var arr = status.nextMask.split('|');
+                    return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
+                } else if (status.nextLinkSelector) {
+                    return doc.querySelector(status.nextLinkSelector);
+                }
+            } catch (bug) {}
             return null;
         }
         /** 
@@ -1190,19 +1206,21 @@ fastCRC32.prototype = {
         function x_get_main_content(doc) {
             if (!doc) return null;
             var  r, l, res;
-            if (status.pageElement) {
-                r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                l = r.snapshotLength;
-                res = (l && new Array(l)) || [];
-                for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-                return element_filter(res);
-            } else if (status.pageElementSelector) {
-                 r = doc.querySelectorAll(status.pageElementSelector);
-                 l = r.length;
-                 res = (l && new Array(l)) || [];
-                for (var i = 0; i < l; i++) res[i] = r[i];
-                return element_filter(res);
-            }
+            try {
+                if (status.pageElement) {
+                    r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    l = r.snapshotLength;
+                    res = (l && new Array(l)) || [];
+                    for (var i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+                    return element_filter(res);
+                } else if (status.pageElementSelector) {
+                     r = doc.querySelectorAll(status.pageElementSelector);
+                     l = r.length;
+                     res = (l && new Array(l)) || [];
+                    for (var i = 0; i < l; i++) res[i] = r[i];
+                    return element_filter(res);
+                }
+            } catch (bug) {}
             return null;
         }
         /** 
