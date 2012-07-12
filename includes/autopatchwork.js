@@ -93,6 +93,8 @@ fastCRC32.prototype = {
         clickLink: null,
         pageElement: null,
         pageElementSelector: null,
+        buttonElement: null,
+        buttonElementSelector: null,
         retry_count: 1,
         last_element: null,
         insert_point: null,
@@ -246,8 +248,9 @@ fastCRC32.prototype = {
     
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
-            var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             var status = AutoPatchWorked.status;
+            if (!!status.buttonElement && !!status.buttonElementSelector) return;
+            var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             if (status.first_element !== first_element) {
                 //forceIframe = true; // probably bugged method
                 var ev = document.createEvent('Event');
@@ -328,6 +331,8 @@ fastCRC32.prototype = {
             nextLinkSelector = status.nextLinkSelector = siteinfo.nextLinkSelector,
             pageElementSelector = status.pageElementSelector = siteinfo.pageElementSelector,
             pageElement = status.pageElement = siteinfo.pageElement,
+            buttonElement = status.buttonElement = siteinfo.buttonElement,
+            buttonElementSelector = status.buttonElementSelector = siteinfo.buttonElementSelector,
             disableSeparator = status.separator_disabled = s2b(siteinfo.disableSeparator),
             clickLink = status.clickLink = (siteinfo.clickLink || null),
             retryCount = status.retry_count = (siteinfo.retryCount || 1),
@@ -355,13 +360,13 @@ fastCRC32.prototype = {
         var isNotService = !s2b(siteinfo.SERVICE),
             next = get_next_link(document);
             
-        if (!get_node_href(next) && isNotService) {
+        if (!get_node_href(next) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
             if (siteinfo.MICROFORMAT) return;
             return log('next link ' + (nextLink || nextLinkSelector || nextMask) + ' not found.');
         }
 
         var page_elements = get_main_content(document);
-        if ((!page_elements || !page_elements.length) && isNotService) {
+        if ((!page_elements || !page_elements.length) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
             if (siteinfo.MICROFORMAT) return;
             return log('page content like ' + (pageElement || pageElementSelector)  + ' not found.');
         }
@@ -400,16 +405,21 @@ fastCRC32.prototype = {
             };
             next = get_next_link(document);*/
         }       
-        else if ((next.host && next.host !== location.host) || 
-            (next.protocol && next.protocol !== location.protocol) ||
-            forceIframe ){
-                request = request_iframe;
+        else {
+            if (typeof next !== 'undefined' && !!next)
+                if ((!!next.host && next.host !== location.host) || 
+                    (!!next.protocol && next.protocol !== location.protocol)) 
+                        request = request_iframe;
+            if (forceIframe)
+                request = request_iframe; 
         }
-
-        var first_element = status.first_element = page_elements[0],
-            last_element = status.last_element = page_elements.pop(),
-            insert_point = status.insert_point = last_element.nextSibling,
-            append_point = status.append_point = last_element.parentNode;
+            
+        if (!status.buttonElement && !status.buttonElementSelector) {
+            var first_element = status.first_element = page_elements[0],
+                last_element = status.last_element = page_elements.pop(),
+                insert_point = status.insert_point = last_element.nextSibling,
+                append_point = status.append_point = last_element.parentNode;
+        }
         
         var htmlDoc, url,
             requested_urls = {},
@@ -719,6 +729,24 @@ fastCRC32.prototype = {
             }
             
             if (status.loading || !status.state) return;
+            
+            if (!!status.buttonElement || !!status.buttonElementSelector) {
+                var viewporth = get_viewport_height(),
+                    scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop),
+                    elem, top, height;
+                if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
+                else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (!!elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
+                    top = elem.offsetTop;
+                    height = elem.clientHeight;
+                    if ((scrolltop + viewporth) > top && scrolltop < (top + height)) {
+                        status.loading = true;
+                        elem.click();
+                        window.setTimeout( function() { status.loading = false; }, 500 ); 
+                    }
+                }
+                return;
+            }
 
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
                 if (bar) bar.className = 'autopager_loading';
