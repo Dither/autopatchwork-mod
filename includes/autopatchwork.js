@@ -294,7 +294,9 @@ fastCRC32.prototype = {
      * */
     function siteinfo(evt) {
         if (!!evt.siteinfo) {
-            evt.siteinfo.allowScripts = false;
+            /*delete evt.siteinfo.allowScripts;
+            delete evt.siteinfo.buttonElementSelector;
+            delete evt.siteinfo.buttonElement;*/
             if (!window.AutoPatchWorked) {
                 AutoPatchWork(evt.siteinfo);
             } else {
@@ -360,11 +362,20 @@ fastCRC32.prototype = {
         var isNotService = !s2b(siteinfo.SERVICE),
             next = get_next_link(document);
             
+        if (!!status.buttonElement || !!status.buttonElementSelector) {
+            var elem;
+            try {
+                if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
+                else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } catch (bug) { return; }
+            if (!elem) return;
+        }
+            
         if (!get_node_href(next) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
             if (siteinfo.MICROFORMAT) return;
             return log('next link ' + (nextLink || nextLinkSelector || nextMask) + ' not found.');
         }
-
+        
         var page_elements = get_main_content(document);
         if ((!page_elements || !page_elements.length) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
             if (siteinfo.MICROFORMAT) return;
