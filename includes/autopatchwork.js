@@ -745,8 +745,12 @@ fastCRC32.prototype = {
                 var viewporth = get_viewport_height(),
                     scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop),
                     elem, top, height;
-                if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
-                else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                try {
+                    if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
+                    else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                } catch (bug) {
+                    dispatch_event('AutoPatchWork.terminated', { message: 'Error finding button to click' });
+                }
                 if (!!elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
                     top = elem.offsetTop;
                     height = elem.clientHeight;
@@ -755,7 +759,10 @@ fastCRC32.prototype = {
                         elem.click();
                         window.setTimeout( function() { status.loading = false; }, 500 ); 
                     }
+                } else {
+                    dispatch_event('AutoPatchWork.terminated', { message: 'No button found' });
                 }
+                
                 return;
             }
 
