@@ -141,7 +141,7 @@ function getManifest(callback) {
     xhr.onload = function() {
         callback(JSON.parse(xhr.responseText));
     };
-    xhr.open('GET', url, true);
+    xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
     xhr.send(null);
 }
 

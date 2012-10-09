@@ -524,7 +524,7 @@ var isReady = false;
                 }  
               }  
             }; 
-            xhr.open('GET', url, true);
+            xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
             xhr.send(null);
         }
 

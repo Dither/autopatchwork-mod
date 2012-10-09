@@ -3,8 +3,8 @@ html {
 }
 
 html * {
-  font-size: 100%;
-  line-height: 1.6;
+    font-size: 100%;
+    line-height: 1.6;
 }
 
 body {
@@ -66,13 +66,12 @@ ul, li, section, div, button{
 }
 
 .tabbox .tabs a {
-    -moz-border-radius: 8px 8px 0 0;
-    -webkit-border-radius: 8px 8px 0 0;
     background: #EEE;
     behavior: url(PIE.htc);
     border-bottom: 0;
+    -moz-border-radius: 8px 8px 0 0;
+    -webkit-border-radius: 8px 8px 0 0;
     border-radius: 8px 8px 0 0;
-    border: 1px solid #CCC;
     color: #000;
     display: inline-block;
     float: left;
@@ -95,12 +94,10 @@ ul, li, section, div, button{
     background: -ms-linear-gradient(#EEF, #FFF 70%);
     background: -o-linear-gradient(#EEF, #FFF 70%);
     background: -webkit-gradient(linear, 0 0, 0 70%, from(#EEF), to(#FFF));
-    background: -webkit-linear-gradient(#EEF, #FFF 70%);
     background: linear-gradient(#EEF, #FFF 70%);
 }
 
 span.key, kbd.key{
-    -webkit-border-radius:4px;
     background:#334455;
     border:2px solid black;
     color:#eeeeee;
@@ -129,7 +126,7 @@ dt.disabled .key,li.disabled .key{
     overflow: hidden;
     width: 817px;
     height: 287px;
-    z-index: 2;
+    z-index: 5;
     margin-top: -2px;
 }
 
