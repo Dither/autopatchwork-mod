@@ -757,8 +757,8 @@ FastCRC32.prototype = {
                     height = elem.clientHeight;
                     if ((scrolltop + viewporth) > top && scrolltop < (top + height)) {
                         status.loading = true;
-                        elem.click();
-                        window.setTimeout( function() { status.loading = false; }, 500 ); 
+                        elem.click(); // should find a better way
+                        window.setTimeout( function() { status.loading = false; }, 1000 ); 
                     }
                 } else {
                     dispatch_event('AutoPatchWork.terminated', { message: 'No button found' });

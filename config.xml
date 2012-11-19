@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+ <?xml version="1.0" encoding="utf-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" version="1.9.6" id="http://my.opera.com/DitherSky/blog/mod-autopatchwork">
   <name>AutoPatchWorkOpera</name>
   <description xml:lang="en">Automatically loads the next page and inserts into current one.</description>
@@ -7,6 +7,14 @@
   <author href="http://my.opera.com/DitherSky/blog/">Dither, os0x (original version)</author>
   <icon src="icons/icon-64.png" />
   <access origin="http://ss-o.net" subdomains="true" />
+  <preference name="AutoPatchWorkCSS" value="" />
+  <preference name="AutoPatchWorkConfig" value="" />
+  <preference name="AutoPatchWorkPatterns" value="" />
+  <preference name="custom_info" value="" />
+  <preference name="site_fail_stats" value="" />
+  <preference name="disabled_sites" value="" />
+  <preference name="disabled_sites" value="" />
+  <preference name="siteinfo_wedata" value="" />
   <!--<update-description href="https://raw.github.com/Dither/AutoPatchWorkOpera/master/update.xml" />-->
   <license href="http://www.opensource.org/licenses/mit-license.php">Licensed under the Open Source Initiative OSI - The MIT License (MIT);
 you may not use this file except in compliance with the License.
