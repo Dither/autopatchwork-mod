@@ -88,13 +88,8 @@ FastCRC32.prototype = {
         in_iframe: false,
         page_number: 1,
         nextLink: null,
-        nextMask: null,
-        nextLinkSelector: null,
-        clickLink: null,
         pageElement: null,
-        pageElementSelector: null,
         buttonElement: null,
-        buttonElementSelector: null,
         retry_count: 1,
         last_element: null,
         insert_point: null,
@@ -329,16 +324,11 @@ FastCRC32.prototype = {
         var location_href = location.href,
             preloaded_pages = [],
             scroll = false,
-            nextLink = status.nextLink = siteinfo.nextLink,
-            nextLinkSelector = status.nextLinkSelector = siteinfo.nextLinkSelector,
-            pageElementSelector = status.pageElementSelector = siteinfo.pageElementSelector,
-            pageElement = status.pageElement = siteinfo.pageElement,
-            buttonElement = status.buttonElement = siteinfo.buttonElement,
-            buttonElementSelector = status.buttonElementSelector = siteinfo.buttonElementSelector,
+            nextLink = status.nextLink = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask),
+            pageElement = status.pageElement = (siteinfo.pageElement || siteinfo.pageElementSelector),
+            buttonElement = status.buttonElement = (siteinfo.buttonElement || siteinfo.buttonElementSelector),
             disableSeparator = status.separator_disabled = s2b(siteinfo.disableSeparator),
-            clickLink = status.clickLink = (siteinfo.clickLink || null),
             retryCount = status.retry_count = (siteinfo.retryCount || 1),
-            nextMask = status.nextMask = (siteinfo.nextMask || null),
             allowScripts = status.scripts_allowed = s2b(siteinfo.allowScripts),
             //useAjax = status.ajax_enabled = s2b(siteinfo.useAjax),
             forceIframe = status.in_iframe = s2b(siteinfo.forceIframe),
@@ -742,15 +732,16 @@ FastCRC32.prototype = {
             
             if (status.loading || !status.state) return;
             
-            if (!!status.buttonElement || !!status.buttonElementSelector) {
+            if (!!status.buttonElement) {
                 viewporth = get_viewport_height();
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
 
                 try {
-                    if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
-                    else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (status.buttonElement[0] === '/' || status.buttonElement.substr(0,2) === 'id') elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    else elem = document.querySelector(status.buttonElement);
+
                 } catch (bug) {
-                    dispatch_event('AutoPatchWork.terminated', { message: 'Error finding button to click' });
+                    dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
                 if (!!elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
                     top = elem.offsetTop;
@@ -758,7 +749,7 @@ FastCRC32.prototype = {
                     if ((scrolltop + viewporth) > top && scrolltop < (top + height)) {
                         status.loading = true;
                         elem.click(); // should find a better way
-                        window.setTimeout( function() { status.loading = false; }, 1000 ); 
+                        window.setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 1000 ); 
                     }
                 } else {
                     dispatch_event('AutoPatchWork.terminated', { message: 'No button found' });
@@ -783,7 +774,7 @@ FastCRC32.prototype = {
                 for (var i = 0, l = as.length; i < l; i++) {
                     var a = as[i],
                         _a = a.getAttribute('href');
-                    if (_a && !/^(?:javascript|mailto|data):/.test(_a) && !/^#/.test(_a) && !a.target) {
+                    if (_a && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(_a) && !/^#/.test(_a) && !a.target) {
                         a.setAttribute('target', options.TARGET_WINDOW_NAME);
                     }
                 }
@@ -1182,38 +1173,15 @@ FastCRC32.prototype = {
          * @return {Node} Matched node.
          * */
         function get_next_link(doc) {
-            if (!doc) return null;
-            if (!!status.nextLink) {
+            if (!doc || !status.nextLink) return null;
+            if (status.nextLink[0] === '/' || status.nextLink.substr(0,2) === 'id') {
                 return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (!!status.nextMask) {
+            } else if (status.nextLink.substr(0,4) === 'http') {
                 // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextMask.split('|');
+                var arr = status.nextLink.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else if (!!status.nextLinkSelector) {
-                return doc.querySelector(status.nextLinkSelector);
-            }
-            return null;
-        }
-        /** 
-         * Evaluates XPath to find nodes containing main page content.
-         * @param {Node} doc Node to perform XPath search on.
-         * @return {NodeList} Matched nodes.
-         * */
-        function get_main_content(doc) {
-            if (!doc) return null;
-            var i, r, l, res;
-            if (!!status.pageElement) {
-                r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                l = r.snapshotLength;
-                res = (l && new Array(l)) || [];
-                for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-                return element_filter(res);
-            } else if (!!status.pageElementSelector) {
-                 r = doc.querySelectorAll(status.pageElementSelector);
-                 l = r.length;
-                 res = (l && new Array(l)) || [];
-                for (i = 0; i < l; i++) res[i] = r[i];
-                return element_filter(res);
+            } else {
+                return doc.querySelector(status.nextLink);
             }
             return null;
         }
@@ -1223,17 +1191,37 @@ FastCRC32.prototype = {
          * @return {Node} Matched node.
          * */
         function x_get_next_link(doc) {
-            if (!doc) return null;
-            if (!!status.nextLink) {
+            if (!doc || !status.nextLink) return null;
+            if (status.nextLink[0] === '/' || status.nextLink.substr(0,2) === 'id') {
                 return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (!!status.nextMask) {
+            } else if (status.nextLink.substr(0,4) === 'http') {
                 // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextMask.split('|');
+                var arr = status.nextLink.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else if (!!status.nextLinkSelector) {
-                return doc.querySelector(status.nextLinkSelector);
+            } else {
+                return doc.querySelector(status.nextLink);
             }
-            return null;
+        }
+        /** 
+         * Evaluates XPath to find nodes containing main page content.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {NodeList} Matched nodes.
+         * */
+        function get_main_content(doc) {
+            if (!doc || !status.pageElement) return null;
+            var i, r, l, res;
+            if (status.pageElement[0] === '/' || status.pageElement.substr(0,2) === 'id') {
+                r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                l = r.snapshotLength;
+                res = (l && new Array(l)) || [];
+                for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
+            } else{
+                r = doc.querySelectorAll(status.pageElement);
+                l = r.length;
+                res = (l && new Array(l)) || [];
+                for (i = 0; i < l; i++) res[i] = r[i];
+            }
+            return element_filter(res);
         }
         /** 
          * Evaluates XPath to find nodes containing main page content in XHTML.
@@ -1241,22 +1229,20 @@ FastCRC32.prototype = {
          * @return {NodeList} Matched nodes.
          * */
         function x_get_main_content(doc) {
-            if (!doc) return null;
+            if (!doc || !status.pageElement) return null;
             var i, r, l, res;
-            if (!!status.pageElement) {
+            if (status.pageElement[0] === '/' || status.pageElement.substr(0,2) === 'id') {
                 r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-                return element_filter(res);
-            } else if (!!status.pageElementSelector) {
-                 r = doc.querySelectorAll(status.pageElementSelector);
-                 l = r.length;
-                 res = (l && new Array(l)) || [];
+            } else {
+                r = doc.querySelectorAll(status.pageElement);
+                l = r.length;
+                res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r[i];
-                return element_filter(res);
             }
-            return null;
+            return element_filter(res);
         }
         /** 
          * Keeps elements only on the same level the first one in list.
