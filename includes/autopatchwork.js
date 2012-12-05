@@ -359,7 +359,7 @@ FastCRC32.prototype = {
                 if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id')
                     elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 else
-                     elem = document.querySelector(status.button_elem);
+                    elem = document.querySelector(status.button_elem);
             } catch (bug) { return; }
             if (!elem) return;
         }
@@ -729,26 +729,25 @@ FastCRC32.prototype = {
                     }
                 }
             }
-            
+
             if (status.loading || !status.state) return;
-            
+
             if (status.button_elem) {
-                viewporth = get_viewport_height();
-                scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
+                //viewporth = get_viewport_height();
+                //scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
 
                 try {
                     if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id') elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     else elem = document.querySelector(status.button_elem);
-
                 } catch (bug) {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
                 if (elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
-                    top = elem.offsetTop;
-                    height = elem.clientHeight;
+                    //top = elem.offsetTop;
+                    //height = elem.clientHeight;
                     if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {//((scrolltop + viewporth) > top && scrolltop < (top + height)) {
                         status.loading = true;
-                        elem.click(); // should find a better way
+                        elem.click();
                         window.setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 1000 ); 
                     }
                 } else {
@@ -1259,13 +1258,19 @@ FastCRC32.prototype = {
         }
         /* Calculates remaining height when scrolling page. */
         function calc_remain_height() {
-            var rect, bottom;
+            var rect = null, bottom = null;
             var _point = insert_point;
-            while (_point && !_point.getBoundingClientRect) {
-                _point = _point.nextSibling;
+            while (_point) {
+                rect = null;
+                if (typeof _point.getBoundingClientRect === 'function') rect = _point.getBoundingClientRect();
+                if (rect && !(rect.top === 0 && rect.right === 0 && rect.bottom === 0 && rect.left === 0)) break; 
+                else if (_point.nextSibling) _point = _point.nextSibling;
+                else {
+                    rect = null;
+                    break; 
+                }
             }
-            if (_point) {
-                rect = _point.getBoundingClientRect();
+            if (rect) {
                 bottom = rect.top + window.pageYOffset;
             } else if (append_point && append_point.getBoundingClientRect) {
                 rect = append_point.getBoundingClientRect();
