@@ -86,10 +86,11 @@ FastCRC32.prototype = {
         scripts_allowed: false,
         separator_disabled: false,
         in_iframe: false,
+        change_address: false,
         page_number: 1,
-        nextLink: null,
-        pageElement: null,
-        buttonElement: null,
+        next_link: null,
+        page_elem: null,
+        button_elem: null,
         retry_count: 1,
         last_element: null,
         insert_point: null,
@@ -121,11 +122,13 @@ FastCRC32.prototype = {
     }
     
     /** 
-     * Checks variable and converts string to corresponding boolean.
-     * @param {Boolean|String} s Data to check.
+     * Checks variable and explictly converts string to corresponding boolean.
+     * Possible data values are: undefined, null, unknown text or number (treated as false here),
+     *                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
+     * @param {Boolean|String|undefined|null} s Data to check.
      * @return {Boolean} Boolean result.
      * */
-    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s == 'on' || s == '1')) ? true : false; }
+    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s === 'on' || s == '1')) ? true : false; }
     
     /** 
      * Dispatches standard event on the document.
@@ -244,7 +247,7 @@ FastCRC32.prototype = {
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
             var status = AutoPatchWorked.status;
-            if (!!status.buttonElement && !!status.buttonElementSelector) return;
+            if (status.button_elem) return;
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             if (status.first_element !== first_element) {
                 //forceIframe = true; // probably bugged method
@@ -288,10 +291,7 @@ FastCRC32.prototype = {
      * @param {Event} evt Event data.
      * */
     function siteinfo(evt) {
-        if (!!evt.siteinfo) {
-            /*delete evt.siteinfo.allowScripts;
-            delete evt.siteinfo.buttonElementSelector;
-            delete evt.siteinfo.buttonElement;*/
+        if (evt.siteinfo) {
             if (!window.AutoPatchWorked) {
                 AutoPatchWork(evt.siteinfo);
             } else {
@@ -323,19 +323,20 @@ FastCRC32.prototype = {
 
         var location_href = location.href,
             preloaded_pages = [],
-            scroll = false,
-            nextLink = status.nextLink = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask),
-            pageElement = status.pageElement = (siteinfo.pageElement || siteinfo.pageElementSelector),
-            buttonElement = status.buttonElement = (siteinfo.buttonElement || siteinfo.buttonElementSelector),
-            disableSeparator = status.separator_disabled = s2b(siteinfo.disableSeparator),
-            retryCount = status.retry_count = (siteinfo.retryCount || 1),
-            allowScripts = status.scripts_allowed = s2b(siteinfo.allowScripts),
-            //useAjax = status.ajax_enabled = s2b(siteinfo.useAjax),
-            forceIframe = status.in_iframe = s2b(siteinfo.forceIframe),
-            changeAddress = siteinfo.forceAddressChange ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
+            scroll = false;
 
-        if (status.nextMask) {
-            var arr = status.nextMask.split('|'),
+        status.next_link = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask || null);
+        status.page_elem = (siteinfo.pageElement || siteinfo.pageElementSelector || null);
+        status.button_elem = (siteinfo.buttonElement || siteinfo.buttonElementSelector || null);
+        status.separator_disabled = s2b(siteinfo.disableSeparator);
+        //status.retry_count = (siteinfo.retryCount || 1);
+        status.scripts_allowed = s2b(siteinfo.allowScripts);
+        //status.ajax_enabled = s2b(siteinfo.useAjax);
+        status.in_iframe = s2b(siteinfo.forceIframe);
+        status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
+
+        if (status.next_link && status.next_link.substr(0,4) === 'http') {
+            var arr = status.next_link.split('|'),
                 matches = /\d{1,}/.exec(window.location.href.replace(arr[0],'').replace(arr[2],'')),
                 pagen = parseInt(arr[1], 10);
             if (isNaN(pagen) || !matches) {
@@ -347,29 +348,31 @@ FastCRC32.prototype = {
             status.page_number = 1;
         }
 
-        if (!siteinfo.MICROFORMAT) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
+        if (!s2b(siteinfo.MICROFORMAT)) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
         var isNotService = !s2b(siteinfo.SERVICE),
             next = get_next_link(document);
             
-        if (!!status.buttonElement || !!status.buttonElementSelector) {
+        if (status.button_elem) {
             var elem;
             try {
-                if (!!status.buttonElementSelector) elem = document.querySelector(status.buttonElementSelector);
-                else elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id')
+                    elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                else
+                     elem = document.querySelector(status.button_elem);
             } catch (bug) { return; }
             if (!elem) return;
         }
             
-        if (!get_node_href(next) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
-            if (siteinfo.MICROFORMAT) return;
-            return log('next link ' + (nextLink || nextLinkSelector || nextMask) + ' not found.');
+        if (!get_node_href(next) && isNotService && !status.button_elem) {
+            if (s2b(siteinfo.MICROFORMAT)) return;
+            return log('next link ' + status.next_link + ' not found.');
         }
         
         var page_elements = get_main_content(document);
-        if ((!page_elements || !page_elements.length) && isNotService && !status.buttonElement && !status.buttonElementSelector) {
-            if (siteinfo.MICROFORMAT) return;
-            return log('page content like ' + (pageElement || pageElementSelector)  + ' not found.');
+        if ((!page_elements || !page_elements.length) && isNotService && !status.button_elem) {
+            if (s2b(siteinfo.MICROFORMAT)) return;
+            return log('page content like ' + status.page_elem  + ' not found.');
         }
 
         if (history.replaceState) {
@@ -386,10 +389,10 @@ FastCRC32.prototype = {
         // DON'T MODIFY! Use external scripts API to handle them instead.
         if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
-            forceIframe = status.in_iframe = true;
+            status.in_iframe = true;
         }
         else if ('www.tumblr.com' === location.host) {
-            status.scripts_allowed = allowScripts = true;
+            status.scripts_allowed = true;
         } 
         else if ('matome.naver.jp' === location.host) {
             /*var _get_next = get_next_link;
@@ -407,15 +410,15 @@ FastCRC32.prototype = {
             next = get_next_link(document);*/
         }       
         else {
-            if (typeof next !== 'undefined' && !!next)
-                if ((!!next.host && next.host !== location.host) || 
-                    (!!next.protocol && next.protocol !== location.protocol)) 
+            if (typeof next !== 'undefined' && next)
+                if ((next.host && next.host !== location.host) || 
+                    (next.protocol && next.protocol !== location.protocol)) 
                         request = request_iframe;
-            if (forceIframe)
+            if (status.in_iframe)
                 request = request_iframe; 
         }
             
-        if (!status.buttonElement && !status.buttonElementSelector) {
+        if (!status.button_elem) {
             var first_element = status.first_element = page_elements[0],
                 last_element = status.last_element = page_elements.pop(),
                 insert_point = status.insert_point = last_element.nextSibling,
@@ -465,7 +468,7 @@ FastCRC32.prototype = {
             ///////////////////*/
         }
 
-        window.addEventListener('AutoPatchWork.pageloaded', forceIframe ? pageloaded_iframe : pageloaded, false);
+        window.addEventListener('AutoPatchWork.pageloaded', status.in_iframe ? pageloaded_iframe : pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -565,7 +568,7 @@ FastCRC32.prototype = {
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             window.removeEventListener('AutoPatchWork.state', state, false);
-            if (forceIframe) {
+            if (status.in_iframe) {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
             } else {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
@@ -581,12 +584,9 @@ FastCRC32.prototype = {
 
             //FIXME: add new features
             AutoPatchWork({
-                nextLink: status.nextLink,
-                nextLinkSelector: status.nextLinkSelector,
-                nextMask: status.nextMask,
-                pageElement: status.pageElement,
-                pageElementSelector: status.pageElementSelector,
-                forceIframe: (status.forceIframe || false)
+                nextLink: status.next_link,
+                pageElement: status.page_elem,
+                forceIframe: (status.in_iframe || false)
             });
 
 
@@ -623,7 +623,7 @@ FastCRC32.prototype = {
             window.removeEventListener('scroll', check_scroll, false);
             window.removeEventListener('resize', check_scroll, false);
 
-            if (changeAddress) {
+            if (status.change_address) {
                 while (preloaded_pages.length) change_address(preloaded_pages.shift());
 
                 var elems = document.querySelectorAll('[data-apw-offview]');
@@ -705,7 +705,7 @@ FastCRC32.prototype = {
          * */
         function do_scroll() {
             var viewporth, scrolltop, elem, top, height;
-            if (changeAddress) {
+            if (status.change_address) {
                 viewporth = get_viewport_height()/2;
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
                 elems = document.querySelectorAll('[data-apw-offview]');
@@ -732,21 +732,21 @@ FastCRC32.prototype = {
             
             if (status.loading || !status.state) return;
             
-            if (!!status.buttonElement) {
+            if (status.button_elem) {
                 viewporth = get_viewport_height();
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
 
                 try {
-                    if (status.buttonElement[0] === '/' || status.buttonElement.substr(0,2) === 'id') elem = document.evaluate(status.buttonElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    else elem = document.querySelector(status.buttonElement);
+                    if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id') elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    else elem = document.querySelector(status.button_elem);
 
                 } catch (bug) {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
-                if (!!elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
+                if (elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
                     top = elem.offsetTop;
                     height = elem.clientHeight;
-                    if ((scrolltop + viewporth) > top && scrolltop < (top + height)) {
+                    if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {//((scrolltop + viewporth) > top && scrolltop < (top + height)) {
                         status.loading = true;
                         elem.click(); // should find a better way
                         window.setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 1000 ); 
@@ -864,7 +864,7 @@ FastCRC32.prototype = {
                 return dispatch_event('AutoPatchWork.terminated', { message: 'Invalid next link requested' });
             }
             
-            if (typeof event.norequest !== 'undefined' && !!event.norequest) {
+            if (typeof event.norequest !== 'undefined' && event.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
                     url: url
@@ -916,7 +916,7 @@ FastCRC32.prototype = {
                 return dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
             }
             
-            if (typeof event.norequest !== 'undefined' && !!event.norequest) {
+            if (typeof event.norequest !== 'undefined' && event.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
                     url: url
@@ -1015,14 +1015,14 @@ FastCRC32.prototype = {
             
             status.page_number++;
             document.apwpagenumber++;
-            if (changeAddress) preloaded_pages.push(loaded_url);
+            if (status.change_address) preloaded_pages.push(loaded_url);
             
             var nodes = get_main_content(htmlDoc),
                 //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
                 
             // filter scripts
-            if (!allowScripts) {
+            if (!status.scripts_allowed) {
                 for (i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++) {
                     if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
                 }
@@ -1045,7 +1045,7 @@ FastCRC32.prototype = {
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
             }
 
-            if (!disableSeparator) {
+            if (!status.separator_disabled) {
                 // Checking where to add new content. 
                 // In case of table we'll add inside it, otherwise after.
                 var root, node;
@@ -1091,7 +1091,7 @@ FastCRC32.prototype = {
                     insert_node['data-apw-url'] = loaded_url;
                     if (i === 0) {
                         insert_node.setAttribute('data-apw-page', document.apwpagenumber);
-                        if (changeAddress) insert_node.setAttribute('data-apw-offview', 'true');
+                        if (status.change_address) insert_node.setAttribute('data-apw-offview', 'true');
                     }
                 }
                 var mutation = {
@@ -1173,15 +1173,15 @@ FastCRC32.prototype = {
          * @return {Node} Matched node.
          * */
         function get_next_link(doc) {
-            if (!doc || !status.nextLink) return null;
-            if (status.nextLink[0] === '/' || status.nextLink.substr(0,2) === 'id') {
-                return doc.evaluate(status.nextLink, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.nextLink.substr(0,4) === 'http') {
+            if (!doc || !status.next_link) return null;
+            if (status.next_link[0] === '/' || status.next_link.substr(0,2) === 'id') {
+                return doc.evaluate(status.next_link, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } else if (status.next_link.substr(0,4) === 'http') {
                 // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextLink.split('|');
+                var arr = status.next_link.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
             } else {
-                return doc.querySelector(status.nextLink);
+                return doc.querySelector(status.next_link);
             }
             return null;
         }
@@ -1191,15 +1191,15 @@ FastCRC32.prototype = {
          * @return {Node} Matched node.
          * */
         function x_get_next_link(doc) {
-            if (!doc || !status.nextLink) return null;
-            if (status.nextLink[0] === '/' || status.nextLink.substr(0,2) === 'id') {
-                return doc.evaluate(status.nextLink, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.nextLink.substr(0,4) === 'http') {
+            if (!doc || !status.next_link) return null;
+            if (status.next_link[0] === '/' || status.next_link.substr(0,2) === 'id') {
+                return doc.evaluate(status.next_link, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } else if (status.next_link.substr(0,4) === 'http') {
                 // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.nextLink.split('|');
+                var arr = status.next_link.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
             } else {
-                return doc.querySelector(status.nextLink);
+                return doc.querySelector(status.next_link);
             }
         }
         /** 
@@ -1208,15 +1208,15 @@ FastCRC32.prototype = {
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
-            if (!doc || !status.pageElement) return null;
+            if (!doc || !status.page_elem) return null;
             var i, r, l, res;
-            if (status.pageElement[0] === '/' || status.pageElement.substr(0,2) === 'id') {
-                r = doc.evaluate(status.pageElement, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+            if (status.page_elem[0] === '/' || status.page_elem.substr(0,2) === 'id') {
+                r = doc.evaluate(status.page_elem, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
             } else{
-                r = doc.querySelectorAll(status.pageElement);
+                r = doc.querySelectorAll(status.page_elem);
                 l = r.length;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r[i];
@@ -1229,15 +1229,15 @@ FastCRC32.prototype = {
          * @return {NodeList} Matched nodes.
          * */
         function x_get_main_content(doc) {
-            if (!doc || !status.pageElement) return null;
+            if (!doc || !status.page_elem) return null;
             var i, r, l, res;
-            if (status.pageElement[0] === '/' || status.pageElement.substr(0,2) === 'id') {
-                r = doc.evaluate(status.pageElement, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+            if (status.page_elem[0] === '/' || status.page_elem.substr(0,2) === 'id') {
+                r = doc.evaluate(status.page_elem, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
             } else {
-                r = doc.querySelectorAll(status.pageElement);
+                r = doc.querySelectorAll(status.page_elem);
                 l = r.length;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r[i];
