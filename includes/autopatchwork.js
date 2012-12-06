@@ -125,10 +125,10 @@ FastCRC32.prototype = {
      * Checks variable and explictly converts string to corresponding boolean.
      * Possible data values are: undefined, null, unknown text or number (treated as false here),
      *                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
-     * @param {Boolean|String|undefined|null} s Data to check.
+     * @param {Boolean|String|Number|undefined|null} s Data to check.
      * @return {Boolean} Boolean result.
      * */
-    function s2b(s) { return (typeof s !== 'undefined' && s && (s == 'true' || s === 'on' || s == '1')) ? true : false; }
+    function s2b(s) { return ((typeof s !== 'undefined') && s && (s === true || s === 'true' || s === 'on' || s == 1)) ? true : false; }
     
     /** 
      * Dispatches standard event on the document.
@@ -1258,21 +1258,19 @@ FastCRC32.prototype = {
         }
         /* Calculates remaining height when scrolling page. */
         function calc_remain_height() {
-            var rect = null, bottom = null;
-            var _point = insert_point;
+            var rect = null, bottom = null, _point = insert_point;
             while (_point) {
-                rect = null;
-                if (typeof _point.getBoundingClientRect === 'function') rect = _point.getBoundingClientRect();
-                if (rect && !(rect.top === 0 && rect.right === 0 && rect.bottom === 0 && rect.left === 0)) break; 
-                else if (_point.nextSibling) _point = _point.nextSibling;
-                else {
-                    rect = null;
-                    break; 
+                if (typeof _point.getBoundingClientRect === 'function') {
+                    rect = _point.getBoundingClientRect();
+                    if (rect && !(rect.top === 0 && rect.right === 0 && rect.bottom === 0 && rect.left === 0)) break;
+                    else rect = null;
                 }
+                if (_point.nextSibling) _point = _point.nextSibling;
+                else break; 
             }
             if (rect) {
                 bottom = rect.top + window.pageYOffset;
-            } else if (append_point && append_point.getBoundingClientRect) {
+            } else if (append_point && typeof append_point.getBoundingClientRect === 'function') {
                 rect = append_point.getBoundingClientRect();
                 bottom = rect.top + rect.height + window.pageYOffset;
             }

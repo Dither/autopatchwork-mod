@@ -190,8 +190,9 @@ optgroup > option{
 }
 
 #css_text, #custom_patterns, #config_text{
-    height:300px;
+    height:400px;
     width:98%;
+    max-width: 98%;
 }
 
 #advanced .margin{
@@ -200,6 +201,12 @@ optgroup > option{
 
 input:not([type="text"]),button,label{
     cursor:pointer;
+}
+
+section.content {
+    -o-transition-property: height;
+    -o-transition-timing-function: cubic-bezier(0.2, 0.4, 0.7, 0.9)
+    -o-transition: 0.25s;
 }
 
 section.content > div.sub{
