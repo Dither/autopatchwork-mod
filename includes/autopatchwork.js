@@ -61,7 +61,6 @@ FastCRC32.prototype = {
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
     if (window.name === 'autopatchwork-request-iframe') return;
     
-    //var bf = new BloomFilter();
     var checksum = new FastCRC32;
 
     var browser, debug = false, dump_request = false,
@@ -90,6 +89,7 @@ FastCRC32.prototype = {
         page_number: 1,
         next_link: null,
         page_elem: null,
+        remove_elem: null,
         button_elem: null,
         retry_count: 1,
         last_element: null,
@@ -328,6 +328,7 @@ FastCRC32.prototype = {
         status.next_link = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask || null);
         status.page_elem = (siteinfo.pageElement || siteinfo.pageElementSelector || null);
         status.button_elem = (siteinfo.buttonElement || siteinfo.buttonElementSelector || null);
+        status.remove_elem = siteinfo.removeElement || null;
         status.separator_disabled = s2b(siteinfo.disableSeparator);
         //status.retry_count = (siteinfo.retryCount || 1);
         status.scripts_allowed = s2b(siteinfo.allowScripts);
@@ -704,8 +705,8 @@ FastCRC32.prototype = {
          * and dispatches event for a new page request.
          * */
         function do_scroll() {
-            var viewporth, scrolltop, elem, top, height;
-            if (status.change_address) {
+            var viewporth, scrolltop, top, height, elem = null;
+            if (status.change_address && !status.button_elem) {
                 viewporth = get_viewport_height()/2;
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
                 elems = document.querySelectorAll('[data-apw-offview]');
@@ -742,16 +743,17 @@ FastCRC32.prototype = {
                 } catch (bug) {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
-                if (elem) { // && elem.innerText.indexOf(status.busyString) === -1) {
+                if (elem) { // && status.busy_string && !~elem.innerText.indexOf(status.busy_string)) {
                     //top = elem.offsetTop;
                     //height = elem.clientHeight;
                     if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {//((scrolltop + viewporth) > top && scrolltop < (top + height)) {
                         status.loading = true;
                         elem.click();
-                        window.setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 1000 ); 
+                        // should timeout be a variable depending on page loading speed or as SITEINFO field?
+                        window.setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 2000 ); //parseInt((status.busy_time || 2000), 10);
                     }
                 } else {
-                    dispatch_event('AutoPatchWork.terminated', { message: 'No button found' });
+                    dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
                 
                 return;
@@ -1026,8 +1028,26 @@ FastCRC32.prototype = {
                     if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
                 }
             }
-                
+
             next = get_next_link(htmlDoc);
+
+            // filter elements
+            if (status.remove_elem) {
+                var r, l;
+                if (status.remove_elem[0] === '/' || status.remove_elem.substr(0,2) === 'id') {
+                    r = htmlDoc.evaluate(status.remove_elem, htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    l = r.snapshotLength;
+                    for (i = 0; i < l; i++)
+                        if (r.snapshotItem(i).parentNode) 
+                            r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
+                } else {
+                    r = htmlDoc.querySelectorAll(status.remove_elem);
+                    l = r.length;
+                    for (i = 0; i < l; i++)
+                        if (r[i].parentNode)
+                            r[i].parentNode.removeChild(r[i]);
+                }
+            }
 
             htmlDoc = null;
             if (!nodes || !nodes.length) {
