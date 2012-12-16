@@ -40,11 +40,11 @@ FastCRC32.prototype = {
  * Normal AutoPatchWork event flow:
  *  AutoPatchWork.init (internal) - we are on some site, requestiong siteinfo for it.
  *  AutoPatchWork.ready - extension is configured and ready to work.
- *  AutoPatchWork.siteinfo - got SITEINFOs for the current site.
+ *  AutoPatchWork.siteinfo - receive SITEINFOs for the current site.
  *  AutoPatchWork.initialized (internal) - initialized APW data.
  *  scroll (internal) - got some scrolling on the page.
  *  AutoPatchWork.request - sending request for the next page. 
- *  AutoPatchWork.load - getting new page data and processing it.
+ *  AutoPatchWork.load - got new page data and ready to process it.
  *  AutoPatchWork.append - appending page to the current.
  *  AutoPatchWork.DOMNodeInserted - firing Node changing event.
  *  AutoPatchWork.pageloaded - page loaded successfully.
@@ -880,6 +880,8 @@ FastCRC32.prototype = {
                 log('Next page ' + url + ' is already requested');
                 return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
             }
+            
+            setTimeout(function(){
 
             var req = 'GET',
                 x = new XMLHttpRequest();
@@ -904,6 +906,8 @@ FastCRC32.prototype = {
             } catch (bug) {
                 return dispatch_event('AutoPatchWork.error', { message: 'Network access error' });
             }
+            
+            },0);
         }
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
@@ -1010,6 +1014,8 @@ FastCRC32.prototype = {
          * */
         function append(evt) {
             if (!status.loading || !htmlDoc) return;
+            
+            setTimeout(function(){
 
             var i, insert_point = status.insert_point,
                 append_point = status.append_point;
@@ -1134,6 +1140,7 @@ FastCRC32.prototype = {
 
             //if (status.state) 
             //    setTimeout(function () { check_scroll(); }, 1000);
+            },0);
         }
         /** 
          * Creates XHTML document object from a string.
