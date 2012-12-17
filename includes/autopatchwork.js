@@ -60,7 +60,6 @@ FastCRC32.prototype = {
 
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
     if (window.name === 'autopatchwork-request-iframe') return;
-    
     var checksum = new FastCRC32;
 
     var browser, debug = false, dump_request = false,
@@ -93,8 +92,8 @@ FastCRC32.prototype = {
         button_elem: null,
         retry_count: 1,
         last_element: null,
-        insert_point: null,
-        append_point: null,
+        content_last: null,
+        content_parent: null,
         bottom: null,
         remain_height: null
     };
@@ -102,12 +101,12 @@ FastCRC32.prototype = {
     /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
     else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
     else */browser = BROWSER_OPERA;
-        
+
     function APWException(message) {
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
-    
+
     /** 
      * Logging function.
      * @param {Array|String} arguments Data to put to debug output.
@@ -120,7 +119,7 @@ FastCRC32.prototype = {
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
-    
+
     /** 
      * Checks variable and explictly converts string to corresponding boolean.
      * Possible data values are: undefined, null, unknown text or number (treated as false here),
@@ -129,7 +128,7 @@ FastCRC32.prototype = {
      * @return {Boolean} Boolean result.
      * */
     function s2b(s) { return ((typeof s !== 'undefined') && s && (s === true || s === 'true' || s === 'on' || s == 1)) ? true : false; }
-    
+
     /** 
      * Dispatches standard event on the document.
      * @param {String} type Event name string.
@@ -234,7 +233,7 @@ FastCRC32.prototype = {
     window.addEventListener('AutoPatchWork.init', init, false);
     // Begin listening and processing SITEINFO messages; send reset event if got one while active
     window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
-   
+
     /** 
      * APW configuration sync with the background process handler
      * */
@@ -243,7 +242,7 @@ FastCRC32.prototype = {
     }
 
     init();
-    
+
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
             var status = AutoPatchWorked.status;
@@ -261,7 +260,7 @@ FastCRC32.prototype = {
             matched_siteinfo.some(function (s) { return AutoPatchWork(s); });
         }
     }, false);
-    
+
     /** 
      * APW initialisation, config reading and fail registration.
       * @param {Object} info Contains APW paramenters.
@@ -322,7 +321,7 @@ FastCRC32.prototype = {
         }
 
         var location_href = location.href,
-            preloaded_pages = [],
+            downloaded_pages = [],
             scroll = false;
 
         status.next_link = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask || null);
@@ -353,7 +352,7 @@ FastCRC32.prototype = {
 
         var isNotService = !s2b(siteinfo.SERVICE),
             next = get_next_link(document);
-            
+
         if (status.button_elem) {
             var elem;
             try {
@@ -364,12 +363,12 @@ FastCRC32.prototype = {
             } catch (bug) { return; }
             if (!elem) return;
         }
-            
+
         if (!get_node_href(next) && isNotService && !status.button_elem) {
             if (s2b(siteinfo.MICROFORMAT)) return;
             return log('next link ' + status.next_link + ' not found.');
         }
-        
+
         var page_elements = get_main_content(document);
         if ((!page_elements || !page_elements.length) && isNotService && !status.button_elem) {
             if (s2b(siteinfo.MICROFORMAT)) return;
@@ -418,14 +417,14 @@ FastCRC32.prototype = {
             if (status.in_iframe)
                 request = request_iframe; 
         }
-            
+
         if (!status.button_elem) {
-            var first_element = status.first_element = page_elements[0],
-                last_element = status.last_element = page_elements.pop(),
-                insert_point = status.insert_point = last_element.nextSibling,
-                append_point = status.append_point = last_element.parentNode;
+            status.first_element = page_elements[0];
+            status.last_element = page_elements.pop();
+            status.content_last = status.last_element.nextSibling;
+            status.content_parent = status.last_element.parentNode;
         }
-        
+
         var htmlDoc, url,
             requested_urls = {},
             loaded_crcs = {},
@@ -445,7 +444,7 @@ FastCRC32.prototype = {
         window.addEventListener('AutoPatchWork.state', state, false);
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
-      
+
         /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
             pageloaded();
@@ -456,10 +455,10 @@ FastCRC32.prototype = {
         function pageloaded() {
             // pause to do things before next page load and flood prevention
             setTimeout( function(){ status.loading = false; }, 500);
-        
+
             var b = document.getElementById('autopatchwork_bar');
             if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
-            
+
             /*///////////////////
             dispatch_notify_event({
                 extension: 'autopatchwork',
@@ -535,7 +534,7 @@ FastCRC32.prototype = {
             restoreText();
             window.addEventListener('beforeunload', savePosition, false);
         }
-        
+
         // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
         dispatch_event('AutoPatchWork.initialized', status);
         if (!options.DEFAULT_STATE) state_off();
@@ -547,7 +546,7 @@ FastCRC32.prototype = {
             get_main_content: get_main_content,
             status: status
         };
-        
+
         return true;
         /** 
          * Reinitialize APW handler: removes listeners and restarts class
@@ -590,7 +589,6 @@ FastCRC32.prototype = {
                 forceIframe: (status.in_iframe || false)
             });
 
-
         }
         /** 
          * Error event handler.
@@ -625,7 +623,7 @@ FastCRC32.prototype = {
             window.removeEventListener('resize', check_scroll, false);
 
             if (status.change_address) {
-                while (preloaded_pages.length) change_address(preloaded_pages.shift());
+                while (downloaded_pages.length) change_address(downloaded_pages.shift());
 
                 var elems = document.querySelectorAll('[data-apw-offview]');
                 for (var i = 0; i < elems.length; i++) elems[i].removeAttribute('data-apw-offview');
@@ -676,12 +674,12 @@ FastCRC32.prototype = {
         function get_viewport_height() {
             var height = window.innerHeight; // Safari, Opera
             var mode = document.compatMode;
-            
+
             if ((mode || (browser !== BROWSER_OPERA && browser !== BROWSER_SAFARI))) { // IE, Gecko
                 height = (mode == 'CSS1Compat') ? document.documentElement.clientHeight : // Standards
                 document.body.clientHeight; // Quirks
             }
-            
+
             return height;
         }
         /** 
@@ -696,7 +694,7 @@ FastCRC32.prototype = {
                         clearTimeout(timer);
                         do_scroll();
                     }
-                }, 250);
+                }, 300);
             }
             processed = true;
         }
@@ -710,21 +708,21 @@ FastCRC32.prototype = {
                 viewporth = get_viewport_height()/2;
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
                 elems = document.querySelectorAll('[data-apw-offview]');
-                    
+
                 if (elems.length) {
                     for (var i = 0; i < elems.length; i++) {
                         elem = elems[i];
                         top = elem.offsetTop;
                         height = elem.clientHeight;
-        
+
                         //if (scrolltop > (top + height) || scrolltop + viewporth < top) {} // to do something on hide; unused now
                         //else 
                         if (scrolltop + viewporth > top && scrolltop < top + height) {
                             elem.removeAttribute('data-apw-offview');
-                            // we always have first loaded page on the other end of the fifo
-                            if (preloaded_pages.length) change_address(preloaded_pages.shift());
+                            // we always have first loaded page on the other end of the array
+                            if (downloaded_pages.length) change_address(downloaded_pages.shift());
                         } else {
-                            //is the nodelist always gets ordered with depth-first pre-order traversal?
+                            //is the nodelist always gets ordered with depth-first pre-order?
                             //break;
                         }
                     }
@@ -755,7 +753,7 @@ FastCRC32.prototype = {
                 } else {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
-                
+
                 return;
             }
 
@@ -864,7 +862,7 @@ FastCRC32.prototype = {
                 log('Invalid next link requested: ' + url);
                 return dispatch_event('AutoPatchWork.terminated', { message: 'Invalid next link requested' });
             }
-            
+
             if (typeof event.norequest !== 'undefined' && event.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
@@ -880,8 +878,6 @@ FastCRC32.prototype = {
                 log('Next page ' + url + ' is already requested');
                 return dispatch_event('AutoPatchWork.error', { message: 'Next page is already requested' });
             }
-            
-            setTimeout(function(){
 
             var req = 'GET',
                 x = new XMLHttpRequest();
@@ -906,8 +902,6 @@ FastCRC32.prototype = {
             } catch (bug) {
                 return dispatch_event('AutoPatchWork.error', { message: 'Network access error' });
             }
-            
-            },0);
         }
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
@@ -920,20 +914,20 @@ FastCRC32.prototype = {
                 // we shouldn't be here
                 return dispatch_event('AutoPatchWork.error', { message: 'Invalid next link requested' });
             }
-            
+
             if (typeof event.norequest !== 'undefined' && event.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>auto</title></head><body></body></html>', url),
                     url: url
                 });
             }
-           
+
             if (!requested_urls[url]) {
                 requested_urls[url] = true;
             } else {
                 return dispatch_event('AutoPatchWork.error', { message: 'next page is already requested' });
             }
-           
+
             var iframe = document.createElement('iframe');
             //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
@@ -942,7 +936,7 @@ FastCRC32.prototype = {
                 var doc = iframe.contentDocument;
                 if (dump_request) console.log(doc.innerHTML);
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
-                iframe.parentNode && iframe.parentNode.removeChild(iframe);
+                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
             };
             iframe.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed. Status:' + x.status });
@@ -991,11 +985,11 @@ FastCRC32.prototype = {
         function load(evt) {
             if (!evt.htmlDoc)
                 return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
-            
+
             loaded_url = evt.url;
             htmlDoc = evt.htmlDoc;
             delete evt.htmlDoc;
-           
+
             if (!options.FORCE_TARGET_WINDOW)
                 saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
             dispatch_event('AutoPatchWork.append');
@@ -1014,20 +1008,21 @@ FastCRC32.prototype = {
          * */
         function append(evt) {
             if (!status.loading || !htmlDoc) return;
-            
+
             setTimeout(function(){
 
-            var i, insert_point = status.insert_point,
-                append_point = status.append_point;
-            
+            var i, content_last = status.content_last,
+                content_parent = status.content_parent,
+                change_location = status.change_address;
+
             status.page_number++;
             document.apwpagenumber++;
-            if (status.change_address) preloaded_pages.push(loaded_url);
-            
+            if (change_location) downloaded_pages.push(loaded_url);
+
             var nodes = get_main_content(htmlDoc),
                 //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
-                
+
             // filter scripts
             if (!status.scripts_allowed) {
                 for (i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++) {
@@ -1060,13 +1055,13 @@ FastCRC32.prototype = {
                 dispatch_event('AutoPatchWork.error', { message: 'page content not found.' });
                 return;
             }
-            
+
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
             // is a high probability of non-paging content changes like random ad names
             if (options.CRC_CHECKING && nodes.length === 1) {
-                var insert_node_crc = checksum.crc(nodes[0].innerHTML);
-                if (!loaded_crcs[insert_node_crc]) loaded_crcs[insert_node_crc] = true;
+                var inserted_node_crc = checksum.crc(nodes[0].innerHTML);
+                if (!loaded_crcs[inserted_node_crc]) loaded_crcs[inserted_node_crc] = true;
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
             }
 
@@ -1074,8 +1069,8 @@ FastCRC32.prototype = {
                 // Checking where to add new content. 
                 // In case of table we'll add inside it, otherwise after.
                 var root, node;
-                if (/^tbody$/i.test(append_point.localName)) {
-                    var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', append_point, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                if (/^tbody$/i.test(content_parent.localName)) {
+                    var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', content_parent, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                     var colums = 0;
                     for (i = 0, l = colNodes.snapshotLength; i < l; i++) {
                         var col = colNodes.snapshotItem(i).getAttribute('colspan');
@@ -1085,13 +1080,13 @@ FastCRC32.prototype = {
                     root = document.createElement('tr');
                     node.setAttribute('colspan', colums);
                     root.appendChild(node);
-                } else if (/^(?:ol|ul)$/i.test(append_point.localName)) {
+                } else if (/^(?:ol|ul)$/i.test(content_parent.localName)) {
                     root = node = document.createElement('li');
                 } else {
                     root = node = document.createElement('div');
                 }
 
-                // Adding page separator.
+                // Adding the page separator.
                 node.className = 'autopagerize_page_separator_blocks';
                 //node.setAttribute('data-apw-page', document.apwpagenumber);
                 var h4 = node.appendChild(document.createElement('h4'));
@@ -1102,29 +1097,29 @@ FastCRC32.prototype = {
                 a.className = 'autopagerize_link';
                 a.href = loaded_url;
                 a.setAttribute('number', document.apwpagenumber);
-                if (title !== '') a.setAttribute('title', title);
-    
-                append_point.insertBefore(root, insert_point);
+                if (title.length) a.setAttribute('title', title);
+
+                content_parent.insertBefore(root, content_last);
             }
-            
-            // Firing node change event on each target node
-            for (var insert_node, i = 0; i < nodes.length; i++) {
-                insert_node = append_point.insertBefore(document.importNode(nodes[i], true), insert_point);
-                //if (status.scripts_allowed) eval_scripts(insert_node);
-                if (insert_node && typeof insert_node.setAttribute == 'function') {
+
+            // Firing node change event on each added node
+            for (var inserted_node, i = 0; i < nodes.length; i++) {
+                inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
+                //if (status.scripts_allowed) eval_scripts(inserted_node);
+                if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
                     // service data for external page processing
-                    insert_node['data-apw-url'] = loaded_url;
+                    inserted_node['data-apw-url'] = loaded_url;
                     if (i === 0) {
-                        insert_node.setAttribute('data-apw-page', document.apwpagenumber);
-                        if (status.change_address) insert_node.setAttribute('data-apw-offview', 'true');
+                        inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
+                        if (change_location) inserted_node.setAttribute('data-apw-offview', 'true');
                     }
                 }
                 var mutation = {
-                    targetNode: insert_node,
+                    targetNode: inserted_node,
                     eventName: 'AutoPatchWork.DOMNodeInserted',
                     bubbles: true,
                     cancelable: false,
-                    relatedNode: append_point,
+                    relatedNode: content_parent,
                     prevValue: null,
                     newValue: loaded_url,
                     attrName: 'url',
@@ -1132,7 +1127,7 @@ FastCRC32.prototype = {
                 };
                 dispatch_mutation_event(mutation);
             };
-            
+
             nodes = null;
             dispatch_event('AutoPatchWork.pageloaded');
 
@@ -1285,7 +1280,7 @@ FastCRC32.prototype = {
         }
         /* Calculates remaining height when scrolling page. */
         function calc_remain_height() {
-            var rect = null, bottom = null, _point = insert_point;
+            var rect = null, bottom = null, _point = status.content_last;
             while (_point) {
                 if (typeof _point.getBoundingClientRect === 'function') {
                     rect = _point.getBoundingClientRect();
@@ -1297,8 +1292,8 @@ FastCRC32.prototype = {
             }
             if (rect) {
                 bottom = rect.top + window.pageYOffset;
-            } else if (append_point && typeof append_point.getBoundingClientRect === 'function') {
-                rect = append_point.getBoundingClientRect();
+            } else if (status.content_parent && typeof status.content_parent.getBoundingClientRect === 'function') {
+                rect = status.content_parent.getBoundingClientRect();
                 bottom = rect.top + rect.height + window.pageYOffset;
             }
             if (!bottom) {
