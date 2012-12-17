@@ -224,9 +224,7 @@ FastCRC32.prototype = {
     } // switch(browser)
 
     var bar, img, matched_siteinfo,
-        rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement,
-        isXHTML = document.documentElement.nodeName !== 'HTML' && 
-                  document.createElement('p').nodeName !== document.createElement('P').nodeName;
+        rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
     document.apwpagenumber = 1;
 
     // Begin listening for init messages and request configuration if got one
@@ -309,16 +307,6 @@ FastCRC32.prototype = {
      * */
     function AutoPatchWork(siteinfo) {
         if (window.AutoPatchWorked) return true;
-        if (isXHTML) {
-            status.resolver = function () {
-                return document.documentElement.namespaceURI;
-            };
-            get_next_link = x_get_next_link;
-            get_main_content = x_get_main_content;
-            createHTML = createXHTML;
-            siteinfo.nextLink = addDefaultPrefix(siteinfo.nextLink);
-            siteinfo.pageElement = addDefaultPrefix(siteinfo.pageElement);
-        }
 
         var location_href = location.href,
             downloaded_pages = [],
@@ -421,8 +409,18 @@ FastCRC32.prototype = {
         if (!status.button_elem) {
             status.first_element = page_elements[0];
             status.last_element = page_elements.pop();
-            status.content_last = status.last_element.nextSibling;
             status.content_parent = status.last_element.parentNode;
+            var insert_before = siteinfo.insertBefore || null;
+            if (insert_before) {
+                if (insert_before[0] === '/' || insert_before.substr(0,2) === 'id')
+                    status.content_last = document.evaluate(insert_before, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                else
+                    status.content_last = document.querySelector(insert_before);
+                status.content_parent = status.content_last.parentNode;
+            } else {
+                status.content_last = status.last_element.nextSibling;
+                status.content_parent = status.last_element.parentNode;
+            }
         }
 
         var htmlDoc, url,
@@ -1138,14 +1136,6 @@ FastCRC32.prototype = {
             },0);
         }
         /** 
-         * Creates XHTML document object from a string.
-         * @param {String} str String with XHTML-formatted text.
-         * @return {XMLDocument} DOM-document.
-         * */
-        function createXHTML(str) {
-            return new DOMParser().parseFromString(str, 'application/xhtml+xml');
-        }
-        /** 
          * Creates HTML document object from a string.
          * @param {String} source String with HTML-formatted text.
          * @param {String} url String with URL of original page.
@@ -1207,23 +1197,6 @@ FastCRC32.prototype = {
             return null;
         }
         /** 
-         * Evaluates XPath to find node containing next page link in XHTML.
-         * @param {Node} doc Node to perform XPath search on.
-         * @return {Node} Matched node.
-         * */
-        function x_get_next_link(doc) {
-            if (!doc || !status.next_link) return null;
-            if (status.next_link[0] === '/' || status.next_link.substr(0,2) === 'id') {
-                return doc.evaluate(status.next_link, doc, status.resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.next_link.substr(0,4) === 'http') {
-                // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.next_link.split('|');
-                return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
-            } else {
-                return doc.querySelector(status.next_link);
-            }
-        }
-        /** 
          * Evaluates XPath to find nodes containing main page content.
          * @param {Node} doc Node to perform XPath search on.
          * @return {NodeList} Matched nodes.
@@ -1237,27 +1210,6 @@ FastCRC32.prototype = {
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
             } else{
-                r = doc.querySelectorAll(status.page_elem);
-                l = r.length;
-                res = (l && new Array(l)) || [];
-                for (i = 0; i < l; i++) res[i] = r[i];
-            }
-            return element_filter(res);
-        }
-        /** 
-         * Evaluates XPath to find nodes containing main page content in XHTML.
-         * @param {Node} doc Node to perform XPath search on.
-         * @return {NodeList} Matched nodes.
-         * */
-        function x_get_main_content(doc) {
-            if (!doc || !status.page_elem) return null;
-            var i, r, l, res;
-            if (status.page_elem[0] === '/' || status.page_elem.substr(0,2) === 'id') {
-                r = doc.evaluate(status.page_elem, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                l = r.snapshotLength;
-                res = (l && new Array(l)) || [];
-                for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-            } else {
                 r = doc.querySelectorAll(status.page_elem);
                 l = r.length;
                 res = (l && new Array(l)) || [];
@@ -1300,42 +1252,6 @@ FastCRC32.prototype = {
                 bottom = Math.round(rootNode.scrollHeight * 0.8);
             }
             return rootNode.scrollHeight - bottom + options.BASE_REMAIN_HEIGHT;
-        }
-        /** 
-         * Adds default prefix to XPath
-         * @param {String} xpath XPath to add prefix to.
-         * @param {String} prefix Prefix to add.
-         * */
-        function addDefaultPrefix(xpath, prefix) {
-            var tokenPattern = /([A-Za-z_\u00c0-\ufffd][\w\-.\u00b7-\ufffd]*|\*)\s*(::?|\()?|(".*?"|'.*?'|\d+(?:\.\d*)?|\.(?:\.|\d+)?|[\)\]])|(\/\/?|!=|[<>]=?|[\(\[|,=+-])|([@$])/g;
-            var TERM = 1,
-                OPERATOR = 2,
-                MODIFIER = 3;
-            var tokenType = OPERATOR;
-            prefix += ':';
-            /** 
-             * Replaces XPath tokens.
-             * @param {String} token 
-             * @param {String} identifier 
-             * @param {String} suffix 
-             * @param {String} term 
-             * @param {String} operator 
-             * @param {String} modifier
-             * */
-            function replacer(token, identifier, suffix, term, operator, modifier) {
-                if (suffix) {
-                    tokenType = (suffix == ':' || (suffix == '::' && (identifier == 'attribute' || identifier == 'namespace'))) ? MODIFIER : OPERATOR;
-                } else if (identifier) {
-                    if (tokenType == OPERATOR && identifier != '*') {
-                        token = prefix + token;
-                    }
-                    tokenType = (tokenType == TERM) ? OPERATOR : TERM;
-                } else {
-                    tokenType = term ? TERM : operator ? OPERATOR : MODIFIER;
-                }
-                return token;
-            }
-            return xpath.replace(tokenPattern, replacer);
         }
     }
 })(this, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);
