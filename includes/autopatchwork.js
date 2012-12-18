@@ -323,7 +323,7 @@ FastCRC32.prototype = {
         //status.ajax_enabled = s2b(siteinfo.useAjax);
         status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
-        status.accelerate = typeof siteinfo.accelereate !== 'undefined' ? s2b(siteinfo.accelereate) : options.INSERT_ACCELERATION;
+        status.accelerate = typeof siteinfo.accelerate !== 'undefined' ? s2b(siteinfo.accelerate) : options.INSERT_ACCELERATION;
 
         if (status.next_link && status.next_link.substr(0,4) === 'http') {
             var arr = status.next_link.split('|'),
@@ -1160,40 +1160,9 @@ FastCRC32.prototype = {
          * @return {HTMLDocument} DOM-document.
          * */
         function createHTML(source, url) {
-            // http://gist.github.com/198443
-            var doc = document.implementation.createHTMLDocument ? 
-                        document.implementation.createHTMLDocument('HTMLParser') : 
-                        document.implementation.createDocument(null, 'html', null);
-            if (doc.documentElement) {
-                doc.documentElement.innerHTML = source;
-            } else {
-                var range = document.createRange();
-                range.selectNodeContents(document.documentElement);
-                var fragment = range.createContextualFragment(source);
-                var headChildNames = {
-                    title: true,
-                    meta: true,
-                    link: true,
-                    script: true,
-                    style: true,
-                    /*object: true,*/
-                    base: true /*,
-                    isindex: true,*/
-                };
-                var child,
-                    head = doc.querySelector('head') || doc.createElement('head'),
-                    body = doc.querySelector('body') || doc.createElement('body');
-                while ((child = fragment.firstChild)) {
-                    if ((child.nodeType === Node.ELEMENT_NODE && 
-                          !(child.nodeName.toLowerCase() in headChildNames)) || 
-                          (child.nodeType === Node.TEXT_NODE && /\S/.test(child.nodeValue))
-                        ) break;
-                    head.appendChild(child);
-                }
-                body.appendChild(fragment);
-                doc.documentElement.appendChild(head);
-                doc.documentElement.appendChild(body);
-            }
+            // Chrome 4, Opera 10, Firefox 4, Internet Explorer 9, Safari 4 have createHTMLDocument
+            var doc = document.implementation.createHTMLDocument('HTMLParser');
+            doc.documentElement.innerHTML = source;
             return doc;
         }
         /** 
