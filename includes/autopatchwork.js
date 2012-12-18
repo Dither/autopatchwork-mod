@@ -83,7 +83,7 @@ FastCRC32.prototype = {
         ajax_enabled: false,
         scripts_allowed: false,
         separator_disabled: false,
-        in_iframe: false,
+        use_iframe_req: false,
         change_address: false,
         page_number: 1,
         next_link: null,
@@ -95,7 +95,8 @@ FastCRC32.prototype = {
         content_last: null,
         content_parent: null,
         bottom: null,
-        remain_height: null
+        remain_height: null,
+        accelerate: false
     };
 
     /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
@@ -106,7 +107,6 @@ FastCRC32.prototype = {
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
-
     /** 
      * Logging function.
      * @param {Array|String} arguments Data to put to debug output.
@@ -119,7 +119,6 @@ FastCRC32.prototype = {
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
-
     /** 
      * Checks variable and explictly converts string to corresponding boolean.
      * Possible data values are: undefined, null, unknown text or number (treated as false here),
@@ -168,7 +167,7 @@ FastCRC32.prototype = {
     }
 
     // Cute AJAX loader gif.
-    if (!window.imgAPWLoader) window.imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
+    var imgAPWLoader = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
 
     if (browser === BROWSER_OPERA && !APW.loaded) {
         var args = arguments;
@@ -320,8 +319,9 @@ FastCRC32.prototype = {
         //status.retry_count = (siteinfo.retryCount || 1);
         status.scripts_allowed = s2b(siteinfo.allowScripts);
         //status.ajax_enabled = s2b(siteinfo.useAjax);
-        status.in_iframe = s2b(siteinfo.forceIframe);
+        status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
+        status.accelerate = siteinfo.accelereate || false;
 
         if (status.next_link && status.next_link.substr(0,4) === 'http') {
             var arr = status.next_link.split('|'),
@@ -338,27 +338,22 @@ FastCRC32.prototype = {
 
         if (!s2b(siteinfo.MICROFORMAT)) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
-        var isNotService = !s2b(siteinfo.SERVICE),
+        var not_service = !s2b(siteinfo.SERVICE),
             next = get_next_link(document);
 
         if (status.button_elem) {
-            var elem;
             try {
-                if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id')
-                    elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                else
-                    elem = document.querySelector(status.button_elem);
+                if (!get_node(document, status.button_elem)) return;
             } catch (bug) { return; }
-            if (!elem) return;
         }
 
-        if (!get_node_href(next) && isNotService && !status.button_elem) {
+        if (!get_href(next) && not_service && !status.button_elem) {
             if (s2b(siteinfo.MICROFORMAT)) return;
             return log('next link ' + status.next_link + ' not found.');
         }
 
         var page_elements = get_main_content(document);
-        if ((!page_elements || !page_elements.length) && isNotService && !status.button_elem) {
+        if ((!page_elements || !page_elements.length) && not_service && !status.button_elem) {
             if (s2b(siteinfo.MICROFORMAT)) return;
             return log('page content like ' + status.page_elem  + ' not found.');
         }
@@ -377,7 +372,7 @@ FastCRC32.prototype = {
         // DON'T MODIFY! Use external scripts API to handle them instead.
         if (/^http:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
             request = request_iframe;
-            status.in_iframe = true;
+            status.use_iframe_req = true;
         }
         else if ('www.tumblr.com' === location.host) {
             status.scripts_allowed = true;
@@ -402,23 +397,25 @@ FastCRC32.prototype = {
                 if ((next.host && next.host !== location.host) || 
                     (next.protocol && next.protocol !== location.protocol)) 
                         request = request_iframe;
-            if (status.in_iframe)
+            if (status.use_iframe_req)
                 request = request_iframe; 
         }
 
         if (!status.button_elem) {
             status.first_element = page_elements[0];
             status.last_element = page_elements.pop();
-            status.content_parent = status.last_element.parentNode;
+            page_elements = null;
             var insert_before = siteinfo.insertBefore || null;
             if (insert_before) {
-                if (insert_before[0] === '/' || insert_before.substr(0,2) === 'id')
-                    status.content_last = document.evaluate(insert_before, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                else
-                    status.content_last = document.querySelector(insert_before);
-                status.content_parent = status.content_last.parentNode;
+                try {
+                    status.content_last = get_node(document, insert_before);
+                    status.content_parent = status.content_last.parentNode;
+                } catch (bug) {
+                    status.content_last = status.last_element.nextSibling;
+                    status.content_parent = status.last_element.parentNode;
+                }
             } else {
-                status.content_last = status.last_element.nextSibling;
+                status.content_last = status.last_element.nextSibling; // btw, this will fail(?) if there are no elements aftr last... like </last></parent>
                 status.content_parent = status.last_element.parentNode;
             }
         }
@@ -443,12 +440,12 @@ FastCRC32.prototype = {
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
 
-        /* Removes intermediate IFRAME from the current page. */
+        /* Removes intermediate IFRAME from the current page. 
         function pageloaded_iframe() {
             pageloaded();
             var i = document.getElementById('autopatchwork-request-iframe');
             if (i && i.parentNode) i.parentNode.removeChild(i);
-        }
+        }*/
         /* Sets status bar to ready state. */
         function pageloaded() {
             // pause to do things before next page load and flood prevention
@@ -466,7 +463,7 @@ FastCRC32.prototype = {
             ///////////////////*/
         }
 
-        window.addEventListener('AutoPatchWork.pageloaded', status.in_iframe ? pageloaded_iframe : pageloaded, false);
+        window.addEventListener('AutoPatchWork.pageloaded', status.use_iframe_req ? pageloaded_iframe : pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -503,7 +500,7 @@ FastCRC32.prototype = {
             }
             img = document.createElement('img');
             img.id = 'autopatchwork_loader';
-            img.src = window.imgAPWLoader;
+            img.src = imgAPWLoader;
             bar.appendChild(img);
 
             document.body.appendChild(bar);
@@ -566,7 +563,7 @@ FastCRC32.prototype = {
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
             window.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             window.removeEventListener('AutoPatchWork.state', state, false);
-            if (status.in_iframe) {
+            if (status.use_iframe_req) {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
             } else {
                 window.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
@@ -584,7 +581,7 @@ FastCRC32.prototype = {
             AutoPatchWork({
                 nextLink: status.next_link,
                 pageElement: status.page_elem,
-                forceIframe: (status.in_iframe || false)
+                forceIframe: (status.use_iframe_req || false)
             });
 
         }
@@ -734,8 +731,7 @@ FastCRC32.prototype = {
                 //scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
 
                 try {
-                    if (status.button_elem[0] === '/' || status.button_elem.substr(0,2) === 'id') elem = document.evaluate(status.button_elem, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    else elem = document.querySelector(status.button_elem);
+                    elem = get_node(document, status.button_elem);
                 } catch (bug) {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
@@ -851,7 +847,7 @@ FastCRC32.prototype = {
         /* Requests next page via XMLHttpRequest method. */
         function request(event) {
             status.loading = true;
-            var url = state.nextURL = get_node_href(event.link);
+            var url = state.nextURL = get_href(event.link);
             delete event.link;
 
             //log('requesting ' + url);
@@ -904,7 +900,7 @@ FastCRC32.prototype = {
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
             status.loading = true;
-            var url = state.nextURL = get_node_href(event.link);
+            var url = state.nextURL = get_href(event.link);
             delete event.link;
 
             //log('requesting ' + url);
@@ -946,7 +942,7 @@ FastCRC32.prototype = {
          * Returns link node reference.
          * @param {Node} node The input node.
          * */
-        function get_node_href(node) {
+        function get_href(node) {
             if (!node) return null;
             if (typeof node.getAttribute == 'function') {
                 if (node.getAttribute('href')) return node.getAttribute('href');
@@ -1009,7 +1005,8 @@ FastCRC32.prototype = {
 
             setTimeout(function(){
 
-            var i, content_last = status.content_last,
+            var inserted_node, i,
+                content_last = status.content_last,
                 content_parent = status.content_parent,
                 change_location = status.change_address;
 
@@ -1023,9 +1020,9 @@ FastCRC32.prototype = {
 
             // filter scripts
             if (!status.scripts_allowed) {
-                for (i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++) {
-                    if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
-                }
+                for (i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
+                    if (st[i].parentNode)
+                        st[i].parentNode.removeChild(st[i]);
             }
 
             next = get_next_link(htmlDoc);
@@ -1064,8 +1061,7 @@ FastCRC32.prototype = {
             }
 
             if (!status.separator_disabled) {
-                // Checking where to add new content. 
-                // In case of table we'll add inside it, otherwise after.
+                // Checking where to add divider. In case of a table/list we'll add inside it, otherwise after.
                 var root, node;
                 if (/^tbody$/i.test(content_parent.localName)) {
                     var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', content_parent, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -1100,31 +1096,51 @@ FastCRC32.prototype = {
                 content_parent.insertBefore(root, content_last);
             }
 
-            // Firing node change event on each added node
-            for (var inserted_node, i = 0; i < nodes.length; i++) {
-                inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
-                //if (status.scripts_allowed) eval_scripts(inserted_node);
-                if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
-                    // service data for external page processing
-                    inserted_node['data-apw-url'] = loaded_url;
-                    if (i === 0) {
-                        inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
-                        if (change_location) inserted_node.setAttribute('data-apw-offview', 'true');
+            if (status.accelerate) {
+                var fragment = document.createDocumentFragment();
+                // Merge nodes to fragment to avoid slowdowns but drop AutoPatchWork.DOMNodeInserted support
+                for (i = 0; i < nodes.length; i++) {
+                    inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
+    
+                    if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
+                        // service data for external page processing
+                        inserted_node['data-apw-url'] = loaded_url;
+                        if (i === 0) {
+                            inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
+                            if (change_location)
+                                inserted_node.setAttribute('data-apw-offview', 'true');
+                        }
                     }
                 }
-                var mutation = {
-                    targetNode: inserted_node,
-                    eventName: 'AutoPatchWork.DOMNodeInserted',
-                    bubbles: true,
-                    cancelable: false,
-                    relatedNode: content_parent,
-                    prevValue: null,
-                    newValue: loaded_url,
-                    attrName: 'url',
-                    attrChange: 2 // MutationEvent.ADDITION
+                content_parent.insertBefore(document.importNode(fragment, true), content_last);
+            } else {
+                // Adding nodes and firing node change event on each of them
+                for (i = 0; i < nodes.length; i++) {
+                    inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
+                    //if (status.scripts_allowed) eval_scripts(inserted_node);
+                    if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
+                        // service data for external page processing
+                        inserted_node['data-apw-url'] = loaded_url;
+                        if (i === 0) {
+                            inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
+                            if (change_location)
+                                inserted_node.setAttribute('data-apw-offview', 'true');
+                        }
+                    }
+                    var mutation = {
+                        targetNode: inserted_node,
+                        eventName: 'AutoPatchWork.DOMNodeInserted',
+                        bubbles: true,
+                        cancelable: false,
+                        relatedNode: content_parent,
+                        prevValue: null,
+                        newValue: loaded_url,
+                        attrName: 'url',
+                        attrChange: 2 // MutationEvent.ADDITION
+                    };
+                    dispatch_mutation_event(mutation);
                 };
-                dispatch_mutation_event(mutation);
-            };
+            }
 
             nodes = null;
             dispatch_event('AutoPatchWork.pageloaded');
@@ -1183,6 +1199,18 @@ FastCRC32.prototype = {
          * @param {Node} doc Node to perform XPath search on.
          * @return {Node} Matched node.
          * */
+        function get_node(doc, path) {
+            if (path[0] === '/' || status.button_elem.substr(0,2) === 'id')
+                return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            else
+                return doc.querySelector(path);
+            return null;
+        }
+        /** 
+         * Evaluates expression to find node containing next page link.
+         * @param {Node} doc Node to perform search on.
+         * @return {Node} Matched node.
+         * */
         function get_next_link(doc) {
             if (!doc || !status.next_link) return null;
             if (status.next_link[0] === '/' || status.next_link.substr(0,2) === 'id') {
@@ -1197,8 +1225,8 @@ FastCRC32.prototype = {
             return null;
         }
         /** 
-         * Evaluates XPath to find nodes containing main page content.
-         * @param {Node} doc Node to perform XPath search on.
+         * Evaluates expression to find nodes containing main page content.
+         * @param {Node} doc Node to perform search on.
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
