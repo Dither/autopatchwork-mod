@@ -41,8 +41,9 @@ window.AutoPatchWorkBG = {
         disable_iframe: false,
         change_address: false,
         debug_mode: false,
-        crc_check: false,
-        bar_status: true
+        check_crc: false,
+        bar_status: true,
+        enable_acceleration: false
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;

@@ -72,6 +72,7 @@ FastCRC32.prototype = {
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
         CRC_CHECKING: false,
+        INSERT_ACCELERATION: false,
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
         PAGES_TO_KEEP: 3,
@@ -271,6 +272,7 @@ FastCRC32.prototype = {
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
             options.CHANGE_ADDRESS = info.config.change_address;
             options.BAR_STATUS = info.config.bar_status;
+            options.INSERT_ACCELERATION = info.config.enable_acceleration,
             options.css = info.css;
             debug = info.config.debug_mode;
         }
@@ -321,7 +323,7 @@ FastCRC32.prototype = {
         //status.ajax_enabled = s2b(siteinfo.useAjax);
         status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
-        status.accelerate = siteinfo.accelereate || false;
+        status.accelerate = siteinfo.accelereate || options.INSERT_ACCELERATION;
 
         if (status.next_link && status.next_link.substr(0,4) === 'http') {
             var arr = status.next_link.split('|'),
@@ -440,12 +442,12 @@ FastCRC32.prototype = {
         window.addEventListener('AutoPatchWork.terminated', terminated, false);
         window.addEventListener('AutoPatchWork.toggle', toggle, false);
 
-        /* Removes intermediate IFRAME from the current page. 
+        /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
             pageloaded();
             var i = document.getElementById('autopatchwork-request-iframe');
             if (i && i.parentNode) i.parentNode.removeChild(i);
-        }*/
+        }
         /* Sets status bar to ready state. */
         function pageloaded() {
             // pause to do things before next page load and flood prevention

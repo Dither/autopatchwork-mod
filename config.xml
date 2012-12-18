@@ -15,6 +15,8 @@
   <preference name="disabled_sites" value="" />
   <preference name="disabled_sites" value="" />
   <preference name="siteinfo_wedata" value="" />
+  <preference name="check_crc" value="" />
+  <preference name="enable_acceleration" value="" />
   <!--<update-description href="https://raw.github.com/Dither/AutoPatchWorkOpera/master/update.xml" />-->
   <license href="http://www.opensource.org/licenses/mit-license.php">Licensed under the Open Source Initiative OSI - The MIT License (MIT);
 you may not use this file except in compliance with the License.
