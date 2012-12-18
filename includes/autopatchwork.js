@@ -323,7 +323,7 @@ FastCRC32.prototype = {
         //status.ajax_enabled = s2b(siteinfo.useAjax);
         status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
-        status.accelerate = siteinfo.accelereate || options.INSERT_ACCELERATION;
+        status.accelerate = typeof siteinfo.accelereate !== 'undefined' ? s2b(siteinfo.accelereate) : options.INSERT_ACCELERATION;
 
         if (status.next_link && status.next_link.substr(0,4) === 'http') {
             var arr = status.next_link.split('|'),
