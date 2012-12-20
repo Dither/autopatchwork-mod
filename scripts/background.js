@@ -31,7 +31,7 @@ else */browser = BROWSER_OPERA;
 
 var H = location.href.replace('index.html', '');
 
-// it seems extension's data-storage initialized only after load event for sure
+// it seems extension's data-storage initialized for sure only after load event
 if (browser === BROWSER_OPERA) window.addEventListener("load", pageLoaded, false);
 else pageLoaded();
 

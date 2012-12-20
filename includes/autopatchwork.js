@@ -59,7 +59,7 @@ FastCRC32.prototype = {
 */
 
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
-    "use strict"; // enable strict mode within this function
+    //"use strict";  enable strict mode within this function
     if (window.name === 'autopatchwork-request-iframe') return;
     var checksum = new FastCRC32;
 
@@ -395,9 +395,13 @@ FastCRC32.prototype = {
         }       
         else {
             if (typeof next !== 'undefined' && next)
-                if ((next.host && next.host !== location.host) || 
-                    (next.protocol && next.protocol !== location.protocol)) 
-                        request = request_iframe;
+                if ((next.host && next.host.length && next.host !== location.host) || 
+                    (next.protocol && next.protocol.length && !~next.protocol.indexOf('javascript') &&
+                     next.protocol !== location.protocol)
+                ){
+                        status.use_iframe_req = true;
+                        log('next page has different adresss: using iframe requests');
+                }
             if (status.use_iframe_req)
                 request = request_iframe; 
         }
@@ -1004,8 +1008,6 @@ FastCRC32.prototype = {
         function append(evt) {
             if (!status.loading || !htmlDoc) return;
 
-            setTimeout(function(){
-
             var inserted_node, i,
                 content_last = status.content_last,
                 content_parent = status.content_parent,
@@ -1051,6 +1053,8 @@ FastCRC32.prototype = {
                 dispatch_event('AutoPatchWork.error', { message: 'page content not found.' });
                 return;
             }
+            
+            setTimeout(function(){
 
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
@@ -1097,7 +1101,7 @@ FastCRC32.prototype = {
                 content_parent.insertBefore(root, content_last);
             }
 
-            if (status.accelerate) {
+            if (status.accelerate && nodes.length > 2) {
                 var fragment = document.createDocumentFragment();
                 // Merge nodes to fragment to avoid slowdowns but drop AutoPatchWork.DOMNodeInserted support
                 for (i = 0; i < nodes.length; i++) {
