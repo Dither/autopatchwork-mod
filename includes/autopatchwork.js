@@ -59,6 +59,7 @@ FastCRC32.prototype = {
 */
 
 (function APW(self, XPathResult, XMLHttpRequest, Node, history, location, sessionStorage) {
+    "use strict"; // enable strict mode within this function
     if (window.name === 'autopatchwork-request-iframe') return;
     var checksum = new FastCRC32;
 
@@ -139,7 +140,7 @@ FastCRC32.prototype = {
         ev.initEvent(type, true, false);
         if (opt) {
         var ret = [];
-            for(x in opt) if(opt.hasOwnProperty(x)) ret.push(x);
+            for(var x in opt) if(opt.hasOwnProperty(x)) ret.push(x);
             ret.forEach(function (k) {
                 if (!ev[k]) ev[k] = opt[k];
             });
@@ -152,10 +153,8 @@ FastCRC32.prototype = {
      * */
     function dispatch_mutation_event(opt) {
         var mue = document.createEvent('MutationEvent');
-        with (opt) {
-            mue.initMutationEvent(eventName, bubbles, cancelable, relatedNode, prevValue, newValue, attrName, attrChange);
-            targetNode.dispatchEvent(mue);
-        }
+        mue.initMutationEvent(opt.eventName, opt.bubbles, opt.cancelable, opt.relatedNode, opt.prevValue, opt.newValue, opt.attrName, opt.attrChange);
+        opt.targetNode.dispatchEvent(mue);
     }
     /**
      * Dispatches custom notification event on the document.
@@ -239,7 +238,7 @@ FastCRC32.prototype = {
         sendRequest({ url: location.href, isFrame: window.top !== window.self }, begin_init, 'AutoPatchWorkInit' );
     }
 
-    init();
+    dispatch_event('AutoPatchWork.init');
 
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
@@ -422,7 +421,7 @@ FastCRC32.prototype = {
             }
         }
 
-        var htmlDoc, url,
+        var htmlDoc, loaded_url,
             requested_urls = {},
             loaded_crcs = {},
             location_pushed = false,
@@ -491,7 +490,7 @@ FastCRC32.prototype = {
                 bar.onmouseover = null;
             };
             /* Toggles status bar ready state. */
-            function _toggle() {
+            var _toggle = function() {
                 if (bar.className === 'autopager_on') {
                     bar.className = 'autopager_off';
                     state_off();
@@ -700,7 +699,7 @@ FastCRC32.prototype = {
          * and dispatches event for a new page request.
          * */
         function do_scroll() {
-            var viewporth, scrolltop, top, height, elem = null;
+            var viewporth, scrolltop, top, height, elems, elem = null;
             if (status.change_address && !status.button_elem) {
                 viewporth = get_viewport_height()/2;
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
@@ -1022,7 +1021,7 @@ FastCRC32.prototype = {
 
             // filter scripts
             if (!status.scripts_allowed) {
-                for (i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
+                for (var i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
                     if (st[i].parentNode)
                         st[i].parentNode.removeChild(st[i]);
             }
@@ -1149,8 +1148,8 @@ FastCRC32.prototype = {
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
 
-            //if (status.state) 
-            //    setTimeout(function () { check_scroll(); }, 1000);
+            if (rootNode.offsetHeight <= window.innerHeight)
+                setTimeout(function () { check_scroll(); }, 400);
             },0);
         }
         /** 

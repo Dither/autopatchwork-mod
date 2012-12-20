@@ -30,6 +30,12 @@ else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
 else */browser = BROWSER_OPERA;
 
 var H = location.href.replace('index.html', '');
+
+// it seems extension's data-storage initialized only after load event for sure
+if (browser === BROWSER_OPERA) window.addEventListener("load", pageLoaded, false);
+else pageLoaded();
+
+function pageLoaded() {
 window.AutoPatchWorkBG = {
     state: true,
     css: '',
@@ -450,3 +456,4 @@ function openOrFocusTab(uri) {
             break;
     }
 }
+} // pageLoaded
