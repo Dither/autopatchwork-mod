@@ -8,7 +8,7 @@ Object.keys || (Object.keys = function(k) {
 var self = this;
 var siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
 var URL_SITEINFO = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
-var MICROFORMATs = [{
+var MICROFORMATs = [];/*[{
     MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//a[@rel="next"] | //link[@rel="next"]',
@@ -19,7 +19,7 @@ var MICROFORMATs = [{
     url: '^https?://.',
     nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
-}];
+}];*/
 var browser, 
     BROWSER_CHROME = 1,
     BROWSER_SAFARI = 2,
@@ -31,11 +31,6 @@ else */browser = BROWSER_OPERA;
 
 var H = location.href.replace('index.html', '');
 
-// it seems extension's data-storage initialized for sure only after load event
-if (browser === BROWSER_OPERA) window.addEventListener("load", pageLoaded, false);
-else pageLoaded();
-
-function pageLoaded() {
 window.AutoPatchWorkBG = {
     state: true,
     css: '',
@@ -120,25 +115,25 @@ if(browser === BROWSER_SAFARI) {
 }
 
 if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
-else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+//else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
 
 if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
-else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+//else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
 
 if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
-else storagebase.site_stats = JSON.stringify(site_stats);
+//else storagebase.site_stats = JSON.stringify(site_stats);
 
 if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
-else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
+//else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
 
 if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
-else storagebase.custom_info = JSON.stringify(custom_info);
+//else storagebase.custom_info = JSON.stringify(custom_info);
 
 if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
-else AutoPatchWorkBG.init_css();
+//else AutoPatchWorkBG.init_css();
 
 if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
-else AutoPatchWorkBG.reset_custom_patterns();
+//else AutoPatchWorkBG.reset_custom_patterns();
 
 var version = '', Manifest, IconData = {};
 
@@ -456,4 +451,3 @@ function openOrFocusTab(uri) {
             break;
     }
 }
-} // pageLoaded

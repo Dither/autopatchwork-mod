@@ -399,8 +399,8 @@ FastCRC32.prototype = {
                     (next.protocol && next.protocol.length && !~next.protocol.indexOf('javascript') &&
                      next.protocol !== location.protocol)
                 ){
-                        status.use_iframe_req = true;
-                        log('next page has different adresss: using iframe requests');
+                    status.use_iframe_req = true;
+                    log('next page has different adresss: using iframe requests');
                 }
             if (status.use_iframe_req)
                 request = request_iframe; 
@@ -409,7 +409,7 @@ FastCRC32.prototype = {
         if (!status.button_elem) {
             status.first_element = page_elements[0];
             status.last_element = page_elements.pop();
-            page_elements = null;
+            //page_elements = null;
             var insert_before = siteinfo.insertBefore || null;
             if (insert_before) {
                 try {
@@ -1016,20 +1016,7 @@ FastCRC32.prototype = {
             status.page_number++;
             document.apwpagenumber++;
             if (change_location) downloaded_pages.push(loaded_url);
-
-            var nodes = get_main_content(htmlDoc),
-                //first = nodes[0],
-                title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
-
-            // filter scripts
-            if (!status.scripts_allowed) {
-                for (var i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
-                    if (st[i].parentNode)
-                        st[i].parentNode.removeChild(st[i]);
-            }
-
-            next = get_next_link(htmlDoc);
-
+            
             // filter elements
             if (status.remove_elem) {
                 var r, l;
@@ -1047,6 +1034,19 @@ FastCRC32.prototype = {
                             r[i].parentNode.removeChild(r[i]);
                 }
             }
+
+            // filter scripts
+            if (!status.scripts_allowed) {
+                for (var i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
+                    if (st[i].parentNode)
+                        st[i].parentNode.removeChild(st[i]);
+            }
+
+            var nodes = get_main_content(htmlDoc),
+                //first = nodes[0],
+                title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
+                
+            next = get_next_link(htmlDoc);
 
             htmlDoc = null;
             if (!nodes || !nodes.length) {
