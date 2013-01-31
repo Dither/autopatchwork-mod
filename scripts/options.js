@@ -281,6 +281,27 @@ document.addEventListener('DOMContentLoaded',function(){
         }, 0);
     }, false);
     
+    // Backup tab
+    var backup_field = document.getElementById('backup_field');
+    // It's too big to load from the beginning
+    document.getElementById('menu-backup').onclick = function() {
+        backup_field.value = JSON.stringify(storagebase) || '';
+    }
+    var save_backup = document.getElementById('save_backup');
+    save_backup.addEventListener('click', function() {
+        var backup = backup_field.value;
+        for (var item in backup)
+            if (backup.hasOwnProperty(item))
+                storagebase.setItem(item, backup[item]);
+    }, false);
+    var reset_backup = document.getElementById('reset_backup');
+    reset_backup.addEventListener('click', function() {
+        //init here; is 1sec OK?
+        setTimeout(function() {
+            backup_field.value = JSON.stringify(storagebase);
+        }, 1000);
+    }, false);
+    
     // Blacklists
     var filter_list = document.getElementById('filter_list');
     var filter_text = document.getElementById('filter_text');
@@ -348,9 +369,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var inner_container = document.getElementById('inner-container');
     var container = document.getElementById('base');
     inner_container.style.width = sections.length * (WIDTH + 20) + 'px';
-    //inner_container.style.height = HEIGHT + 'px';
     container.style.height = 'auto'; //HEIGHT + 'px';
-    //container.style.marginTop = '-2px';
     sections.forEach(function(section, _i) {
         section.style.visibility = 'hidden';
         section.style.height = '100px';

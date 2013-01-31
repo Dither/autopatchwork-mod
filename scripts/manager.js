@@ -96,7 +96,7 @@ var isReady = false;
         html.setAttribute('lang', window.navigator.language);
         html.setAttribute('xml:lang', window.navigator.language);
         
-        document.getElementById('loader').src = window.imgAPWLoader;
+        document.getElementById('loader').src = "data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA";
         document.getElementById('loader').style.display = 'none';       
         
         window.addEventListener('AutoPatchWork.append', function (e) {
@@ -507,7 +507,14 @@ var isReady = false;
 
         function UpdateSiteInfo(callback) {
             var url = 'http://ss-o.net/json/wedataAutoPagerize.json',
-                xhr = new XMLHttpRequest();
+                xhr = new XMLHttpRequest(),
+                progressbar = document.querySelector('#progressbar'),
+                progress = document.querySelector('#progress'),
+                progress_max = 250;
+            
+            progressbar.style.display = 'block';
+            progress.style.width = '0' + 'px';
+
             xhr.onreadystatechange = function (evt) {  
               if (xhr.readyState === 4 /*XMLHttpRequest.DONE*/) {
                 if (xhr.status === 200) {
@@ -519,11 +526,18 @@ var isReady = false;
                       return;
                   }
                   callback(d);
+                  progress.style.width = progress_max + 'px';
+                  setTimeout(function(){ progressbar.style.display = 'none'; },600)
                 } else {  
                   console.log("XMLHttpRequest error: ", xhr.statusText);  
                 }  
               }  
-            }; 
+            };
+
+            xhr.onprogress = function(evt) {
+                var percent = parseInt(progress_max * evt.loaded / evt.total);
+                progress.style.width = percent + 'px';
+            };
             xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
             xhr.send(null);
         }

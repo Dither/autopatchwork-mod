@@ -189,7 +189,7 @@ optgroup > option{
     margin:10px 0 20px 50px;
 }
 
-#css_text, #custom_patterns, #config_text{
+#css_text, #custom_patterns, #config_text, #backup_field{
     height:400px;
     width:98%;
     max-width: 98%;

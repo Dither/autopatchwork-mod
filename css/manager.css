@@ -191,7 +191,7 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
 }
 
 #siteinfo_search_input {
-    width:90%;
+    width:93%;
     border:2px solid #ff9933;
     border-radius:3px;
     -webkit-border-radius:3px;
@@ -256,3 +256,60 @@ body, ul, ol, dl, li, dd, dt, p, div, h1, h2, h3, h4, h5, h6 {
 #database_resource_url:lang(ru) {content: 'База'}
 #number_of_successful:lang(ru) {content: 'Зап.'}
 #number_of_failed:lang(ru) {content: 'Ошиб.'}
+
+/* Progress bar */
+#progressbar {
+	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAICAIAAAEIE9hWAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAGlJREFUGFeFUEEOgDAI4/+vZCC+w7IuBKdGDlBKadjknCHHjCwRwZyNmTHLGAOIWTB1d/Yd5woKDOlXWFAohFfHabVp/6zYxIyO06rkPAmZ41f+tlDstsBLya9feoqKV9XOr9f1BTJf/AUYkVWb6QvqpgAAAABJRU5ErkJggg==);
+    width:250px;
+    height:38px;
+    position:absolute;
+    top:50%;
+    left:50%;
+    margin-top:-19px;
+    margin-left:-125px;
+    border-radius:8px;
+    border-top:2px solid #DDD;
+    border-left:2px solid #DDD;
+    border-bottom:2px solid #BBB;
+    border-right:2px solid #BBB;
+    padding:3px;
+    overflow:hidden;
+    text-align:center;
+    line-height:38px;
+    font-size:14px;
+    font-weight:bold;
+    color:#666;
+    z-index:1001;
+}
+#progress {
+	-webkit-transition: all 0.3s ease;
+	-moz-transition: all 0.3s ease;
+	-ms-transition: all 0.3s ease;
+	-o-transition: all 0.3s ease;
+	transition: all 0.3s ease;
+	height:38px;
+	width:0px;
+	background-color: #0080FF;
+	border-radius:6px;
+	background: #6db3f2;
+	background: -moz-linear-gradient(top,  #6db3f2 0%, #54a3ee 50%, #3690f0 51%, #1e69de 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6db3f2), color-stop(50%,#54a3ee), color-stop(51%,#3690f0), color-stop(100%,#1e69de)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #6db3f2 0%,#54a3ee 50%,#3690f0 51%,#1e69de 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #6db3f2 0%,#54a3ee 50%,#3690f0 51%,#1e69de 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #6db3f2 0%,#54a3ee 50%,#3690f0 51%,#1e69de 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #6db3f2 0%,#54a3ee 50%,#3690f0 51%,#1e69de 100%); /* W3C */
+    position:absolute;
+    overflow:hidden;
+    z-index:1002;  
+}
+#done {
+	text-align:center;
+    line-height:38px;
+    font-size:14px;
+    font-weight:bold;
+    color:#EEE;
+    height:38px;
+	width:250px;
+	text-shadow: 0px -1px 0px rgba(0,0,0,0.2);
+    z-index:1003;
+}
