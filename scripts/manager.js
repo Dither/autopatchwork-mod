@@ -371,11 +371,11 @@ var RECORDS_PER_PAGE = 100,
                 }
 
                 disabled_btn.onchange = function (e) {
-                    current_siteinfo.disabled = !current_siteinfo.disabled;
-                    if (!custom_info[id]) {
-                        custom_info[id] = {};
+                    if (typeof custom_info[id] == 'undefined') {
+                        custom_info[id] = { disabled:false };
                     }
-                    custom_info[id].disabled = current_siteinfo.disabled;
+                    custom_info[id].disabled = !custom_info[id].disabled;
+                    current_siteinfo.disabled = custom_info[id].disabled;
                     storagebase.custom_info = JSON.stringify(custom_info);
                     current_siteinfo.disabled ? line.setAttribute('data-disabled', 'disabled' ) : line.removeAttribute('data-disabled');
                 };
@@ -404,7 +404,7 @@ var RECORDS_PER_PAGE = 100,
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
                                     data.keys().forEach(function (si_key) {
-                                        var inf = (current_siteinfo && current_siteinfo[si_key]) ? current_siteinfo[si_key] : data[si_key];
+                                        var inf = (typeof custom_info[id] !== 'undefined' && custom_info[id][si_key]) ? custom_info[id][si_key] : data[si_key];
                                         if (inf) {
                                             var dt2 = document.createElement('dt');
                                             var dd2 = document.createElement('dd');
@@ -423,19 +423,26 @@ var RECORDS_PER_PAGE = 100,
                                                 node2.onchange = function () {
                                                     //console.log(current_siteinfo,current_siteinfo[si_key],node2.value);
                                                     current_siteinfo[si_key] = node2.value;
-                                                    if (!custom_info[id]) { custom_info[id] = {}; }
+                                                    if (typeof custom_info[id] === 'undefined') { custom_info[id] = {}; }
                                                     if (current_siteinfo[si_key] === info.data[si_key]) {
                                                         delete custom_info[id][si_key];
-                                                        var ci = custom_info[id];
-                                                        if (ci.keys().some(function (k) {
-                                                            if (k === 'disabled') return false;
-                                                            return ci[k] !== info.data[k];
-                                                        })) {} else {
-                                                            line.removeAttribute('data-modified');
-                                                        }
                                                     } else {
-                                                        custom_info[id][si_key] = node2.value;
+                                                        if (node2.value.replace(/\s/g,'').length) {
+                                                            custom_info[id][si_key] = node2.value;
+                                                            
+                                                        } else {
+                                                            delete custom_info[id][si_key];
+                                                        }
+                                                        
+                                                    }
+                                                    var ci = custom_info[id];
+                                                    if (ci.keys().some(function (k) {
+                                                        if (k === 'disabled') return false;
+                                                        return ci[k] !== info.data[k];
+                                                    })) {
                                                         line.setAttribute('data-modified', 'modified');
+                                                    } else {
+                                                        line.removeAttribute('data-modified');
                                                     }
                                                     storagebase.custom_info = JSON.stringify(custom_info);
                                                 };

@@ -1220,7 +1220,7 @@ FastCRC32.prototype = {
             return element_filter(res);
         }
         /** 
-         * Keeps elements only on the same level the first one in list.
+         * Keeps only elements on the same level.
          * @param {NodeList} nodes The nodelist to filter.
          * @return {NodeList} Filtered list.
          * */
@@ -1232,7 +1232,7 @@ FastCRC32.prototype = {
                 else return false;
             });
         }
-        /* Calculates remaining height when scrolling page. */
+        /* Calculates height delta between end of page and botoom of last content block. */
         function calc_remain_height() {
             var rect = null, bottom = null, _point = status.content_last;
             while (_point) {

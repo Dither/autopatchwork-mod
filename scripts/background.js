@@ -7,7 +7,7 @@ Object.keys || (Object.keys = function(k) {
 
 var self = this;
 var siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
-var URL_SITEINFO = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
+var JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
 var MICROFORMATs = [];/*[{
     MICROFORMAT: true,
     url: '^https?://.',
@@ -252,7 +252,7 @@ function downloadDatabase(callback, error_back) {
         }
     };
     try {
-       xhr.open('GET', URL_SITEINFO, true);
+       xhr.open('GET', JSON_SITEINFO_DB_MIN, true);
        xhr.send(null);
    } catch (bug) { 
        console.log(bug.message || bug);
