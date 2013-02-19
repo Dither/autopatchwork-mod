@@ -359,7 +359,7 @@ FastCRC32.prototype = {
             return log('page content like ' + status.page_elem  + ' not found.');
         }
 
-        if (history.replaceState) {
+        if (history.replaceState && !/google/.test(location.host)) {
             var _createHTML = createHTML;
             createHTML = function createHTML_history() {
                 var current = location.href;
@@ -553,9 +553,11 @@ FastCRC32.prototype = {
          * @param {Event} evt Event data.
          * */
         function reset(evt) {
-            Object.keys(evt.siteinfo).forEach(function (k) {
-                status[k] = evt.siteinfo[k];
-            });
+            if (evt.siteinfo) {
+                Object.keys(evt.siteinfo).forEach(function (k) {
+                    status[k] = evt.siteinfo[k];
+                });
+            }
             document.apwpagenumber = 1;
             window.removeEventListener('scroll', check_scroll, false);
             window.removeEventListener('resize', check_scroll, false);
@@ -1060,7 +1062,7 @@ FastCRC32.prototype = {
             // they can have some function also can't check responseText (earlier) as there
             // is a high probability of non-paging content changes like random ad names
             if (options.CRC_CHECKING && nodes.length === 1) {
-                var inserted_node_crc = checksum.crc(nodes[0].innerHTML);
+                var inserted_node_crc = checksum.crc(nodes[0].parentNode.innerHTML);
                 if (!loaded_crcs[inserted_node_crc]) loaded_crcs[inserted_node_crc] = true;
                 else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
             }
