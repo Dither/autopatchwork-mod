@@ -1004,6 +1004,13 @@ FastCRC32.prototype = {
             history.replaceState('', '', to_url);
         }
         /** 
+         * Dectenct if string is XPath format.
+         * @param {String} test String to detect.
+         * */
+        function is_xpath(test) {
+            return (~test.indexOf('/') || test.substr(0,2) === 'id' || test[0] === '(');
+        }
+        /** 
          * Event handler for appending new pages.
          * @param {Event} evt Event data.
          * */
@@ -1022,7 +1029,7 @@ FastCRC32.prototype = {
             // filter elements
             if (status.remove_elem) {
                 var r, l;
-                if (status.remove_elem[0] === '/' || status.remove_elem.substr(0,2) === 'id') {
+                if (is_xpath(status.remove_elem)) {
                     r = htmlDoc.evaluate(status.remove_elem, htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                     l = r.snapshotLength;
                     for (i = 0; i < l; i++)
@@ -1176,7 +1183,7 @@ FastCRC32.prototype = {
          * @return {Node} Matched node.
          * */
         function get_node(doc, path) {
-            if (path[0] === '/' || status.button_elem.substr(0,2) === 'id')
+            if (is_xpath(path))
                 return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             else
                 return doc.querySelector(path);
@@ -1189,7 +1196,7 @@ FastCRC32.prototype = {
          * */
         function get_next_link(doc) {
             if (!doc || !status.next_link) return null;
-            if (status.next_link[0] === '/' || status.next_link.substr(0,2) === 'id') {
+            if (is_xpath(status.next_link)) {
                 return doc.evaluate(status.next_link, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             } else if (status.next_link.substr(0,4) === 'http') {
                 // format link-up-to-page-number|step[|link-after-page-number]
@@ -1208,7 +1215,7 @@ FastCRC32.prototype = {
         function get_main_content(doc) {
             if (!doc || !status.page_elem) return null;
             var i, r, l, res;
-            if (status.page_elem[0] === '/' || status.page_elem.substr(0,2) === 'id') {
+            if (is_xpath(status.page_elem)) {
                 r = doc.evaluate(status.page_elem, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
