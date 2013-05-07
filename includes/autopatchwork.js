@@ -7,10 +7,6 @@
 // @exclude *.js
 // @exclude *.txt
 // @exclude *.pdf
-// @exclude *.fb2
-// @exclude *.jpg
-// @exclude *.jpeg
-// @exclude *.png
 // @exclude *.apng
 // @exclude *.gif
 // @exclude *.swf
@@ -1008,6 +1004,7 @@ FastCRC32.prototype = {
          * @param {String} test String to detect.
          * */
         function is_xpath(test) {
+            if (test.indexOf('http') === 0 && ~test.indexOf('|')) return false;
             return (~test.indexOf('/') || test.substr(0,2) === 'id' || test[0] === '(');
         }
         /** 
@@ -1063,7 +1060,7 @@ FastCRC32.prototype = {
                 return;
             }
             
-            setTimeout(function(){
+            //setTimeout(function(){
 
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
@@ -1161,9 +1158,8 @@ FastCRC32.prototype = {
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
 
-            if (rootNode.offsetHeight <= window.innerHeight)
-                setTimeout(function () { check_scroll(); }, 400);
-            },0);
+            if (rootNode.offsetHeight <= window.innerHeight) check_scroll();
+            //},0);
         }
         /** 
          * Creates HTML document object from a string.
