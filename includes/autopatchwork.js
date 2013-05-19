@@ -1022,6 +1022,7 @@ FastCRC32.prototype = {
             status.page_number++;
             document.apwpagenumber++;
             if (change_location) downloaded_pages.push(loaded_url);
+            next = get_next_link(htmlDoc);
             
             // filter elements
             if (status.remove_elem) {
@@ -1049,11 +1050,8 @@ FastCRC32.prototype = {
             }
 
             var nodes = get_main_content(htmlDoc),
-                //first = nodes[0],
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
                 
-            next = get_next_link(htmlDoc);
-
             htmlDoc = null;
             if (!nodes || !nodes.length) {
                 dispatch_event('AutoPatchWork.error', { message: 'page content not found.' });
