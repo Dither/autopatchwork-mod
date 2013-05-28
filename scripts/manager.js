@@ -44,9 +44,9 @@ var RECORDS_PER_PAGE = 100,
         site_stats = JSON.parse(storagebase.site_stats),
         site_fail_stats = JSON.parse(storagebase.site_fail_stats);
         
-    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+    if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
     else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
-    else */browser = BROWSER_OPERA;
+    else browser = BROWSER_OPERA;
     
     function log() {
         if (!debug) return;

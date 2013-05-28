@@ -97,9 +97,9 @@ FastCRC32.prototype = {
         accelerate: false
     };
 
-    /*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+    if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
     else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
-    else */browser = BROWSER_OPERA;
+    else browser = BROWSER_OPERA;
 
     function APWException(message) {
         this.message = message;
@@ -259,6 +259,7 @@ FastCRC32.prototype = {
       * @param {Object} info Contains APW paramenters.
      * */
     function begin_init(info) {
+        if (typeof info == 'undefined') return dispatch_event('AutoPatchWork.ready');
         matched_siteinfo = info.siteinfo;
         if (info.config) {
             options.CRC_CHECKING =  info.config.check_crc;

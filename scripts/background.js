@@ -25,9 +25,9 @@ var browser,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-/*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
 else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
-else */browser = BROWSER_OPERA;
+else browser = BROWSER_OPERA;
 
 var H = location.href.replace('index.html', '');
 
@@ -115,25 +115,25 @@ if(browser === BROWSER_SAFARI) {
 }
 
 if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
-//else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
 
 if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
-//else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
 
 if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
-//else storagebase.site_stats = JSON.stringify(site_stats);
+else storagebase.site_stats = JSON.stringify(site_stats);
 
 if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
-//else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
+else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
 
 if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
-//else storagebase.custom_info = JSON.stringify(custom_info);
+else storagebase.custom_info = JSON.stringify(custom_info);
 
 if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
-//else AutoPatchWorkBG.init_css();
+else AutoPatchWorkBG.init_css();
 
 if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
-//else AutoPatchWorkBG.reset_custom_patterns();
+else AutoPatchWorkBG.reset_custom_patterns();
 
 var version = '', Manifest, IconData = {};
 

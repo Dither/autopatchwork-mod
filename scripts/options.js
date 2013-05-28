@@ -16,9 +16,9 @@ var browser,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-/*if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
+if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
 else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
-else */browser = BROWSER_OPERA;
+else browser = BROWSER_OPERA;
 
 // main
 document.addEventListener('DOMContentLoaded',function(){
