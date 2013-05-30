@@ -114,27 +114,6 @@ if(browser === BROWSER_SAFARI) {
     }, false);
 }
 
-if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
-else storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
-
-if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
-else storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
-
-if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
-else storagebase.site_stats = JSON.stringify(site_stats);
-
-if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
-else storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
-
-if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
-else storagebase.custom_info = JSON.stringify(custom_info);
-
-if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
-else AutoPatchWorkBG.init_css();
-
-if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
-else AutoPatchWorkBG.reset_custom_patterns();
-
 var version = '', Manifest, IconData = {};
 
 function getManifest(callback) {
@@ -258,6 +237,26 @@ function downloadDatabase(callback, error_back) {
        console.log(bug.message || bug);
    }
 }
+
+function resetSettings() {
+    storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+    storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+    storagebase.site_stats = JSON.stringify(site_stats);
+    storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
+    storagebase.custom_info = JSON.stringify(custom_info);
+    AutoPatchWorkBG.init_css();
+    AutoPatchWorkBG.reset_custom_patterns();
+}
+
+if (!storagebase.AutoPatchWorkConfig) resetSettings();
+
+if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
+if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
+if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
+if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
+if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
+if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
+if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
 
 getManifest(function(_manifest) { Manifest = _manifest; version = _manifest.version; });
 initDatabase();

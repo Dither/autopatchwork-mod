@@ -289,14 +289,16 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     var save_backup = document.getElementById('save_backup');
     save_backup.addEventListener('click', function() {
-        var backup = backup_field.value;
+        var backup = JSON.parse(backup_field.value);
+        storagebase.clear();
         for (var item in backup)
             if (backup.hasOwnProperty(item))
                 storagebase.setItem(item, backup[item]);
     }, false);
     var reset_backup = document.getElementById('reset_backup');
     reset_backup.addEventListener('click', function() {
-        //init here; is 1sec OK?
+        storagebase.clear();
+        //init here; callback on completion
         setTimeout(function() {
             backup_field.value = JSON.stringify(storagebase);
         }, 1000);

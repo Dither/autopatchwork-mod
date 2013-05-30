@@ -220,7 +220,7 @@ section.content > div.sub{
 
 section label, fieldset legend {
     font-size: 16px;
-    margin-left: 0px;
+    vertical-align:middle;
 }
 
 input[type=radio] {
@@ -274,6 +274,9 @@ section button:disabled {
 section input {
     background: #fff;
     color: #1e3853;
+    padding: 0;
+    margin: 0;
+    vertical-align:middle;
 }
 
 section input[type=text] {
@@ -296,13 +299,20 @@ section input[type=radio] {
 
 section input[type=checkbox], fieldset input[type=radio] {
     -o-transition: 0.25s;
+    -webkit-appearance: none;
     background: #fff;
     border-radius: 3px;
     border: 1px solid rgba(80,80,130,0.5);
     box-shadow: 0 1px 1px rgba(121,153,166,0.75), inset 0 1px rgba(255,255,255,0.25), inset 0 0 1px rgba(255,255,255,0.75);
     height: 20px;
-    padding: 5px;
+    padding-left: 5px;
     width: 21px;
+}
+
+section input[type="checkbox"]:checked:before {
+font-weight: bold;
+content: '\2713';
+-webkit-margin-start: 0px;
 }
 
 section input[type=radio]:active, fieldset input[type=checkbox]:active {
