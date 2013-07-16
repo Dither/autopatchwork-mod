@@ -239,6 +239,9 @@ function downloadDatabase(callback, error_back) {
 }
 
 function resetSettings() {
+    if ((typeof storagebase === 'undefined') && (typeof storagebase.setItem !== 'function')) {
+        return setTimeout(function() { resetSettings(); }, 200);
+    }
     storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
     storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
     storagebase.site_stats = JSON.stringify(site_stats);

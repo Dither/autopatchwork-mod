@@ -3,20 +3,22 @@
     Version: 02/02/2012
 */
 
-.autopagerize_link{
+.autopagerize_link, .autopagerize_link:hover {
     text-decoration: none !important;
 }
 
-.autopagerize_link:before{
-    content:"page " attr(number);
+.autopagerize_link:before {
+    content: "page " attr(number);
 }
 
 .autopagerize_page_separator_blocks {
+    clear:both;
     text-align:center !important;
     padding-top:5px !important;
     padding-bottom:7px !important;
     list-style: none outside none !important;
-    clear:both;
+    line-height: normal !important;
+    text-decoration: none !important;
 }
 
 .autopagerize_page_separator {
