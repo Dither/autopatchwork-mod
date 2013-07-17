@@ -271,8 +271,8 @@ window.onload = function() {
         group: 'AutoPatchWork',
         actions: [{ name: 'AutoPatchWork.toggle' }, { name: 'AutoPatchWork.request' }]
     };
-    self.chrome && chrome.extension.sendRequest(CHROME_GESTURES, action);
-    self.chrome && chrome.extension.sendRequest(CHROME_KEYCONFIG, action);
+    //self.chrome && chrome.extension.sendRequest(CHROME_GESTURES, action);
+    //self.chrome && chrome.extension.sendRequest(CHROME_KEYCONFIG, action);
 };
 
 var toggleCode = '(' + (function() {

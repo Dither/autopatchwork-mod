@@ -177,8 +177,8 @@
     switch (browser) {
         case BROWSER_CHROME:
             sendRequest = function (data, callback) {
-                if (callback) chrome.extension.sendMessage(data, callback);
-                else chrome.extension.sendMessage(data);
+                if (callback) chrome.extension.sendRequest(data, callback);
+                else chrome.extension.sendRequest(data);
             };
             break;
         case BROWSER_SAFARI:
