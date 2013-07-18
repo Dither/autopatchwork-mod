@@ -19,8 +19,8 @@
       "128": "icons/Icon-128.png"
    },
    "description": "Automatically loads the next page and inserts into current one.",
-   "name": "AutoPatchWork",
-   "permissions": [ "notifications", "unlimited_storage", "tabs", "management", "webNavigation", "webRequest", "webRequestBlocking", "\u003Call_urls\u003E" ],
+   "name": "AutoPatchWorkOpera",
+   "permissions": [ "notifications", "unlimited_storage", "tabs", "management" ],
    "optional_permissions": [ "contentSettings", "storage" ],
    "options_page": "options.html",
    "version": "1.9.7"

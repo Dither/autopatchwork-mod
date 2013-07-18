@@ -1,5 +1,5 @@
  <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" version="1.9.6" id="http://my.opera.com/DitherSky/blog/mod-autopatchwork">
+<widget xmlns="http://www.w3.org/ns/widgets" version="1.9.7" id="http://my.opera.com/DitherSky/blog/mod-autopatchwork">
   <name>AutoPatchWorkOpera</name>
   <description xml:lang="en">Automatically loads the next page and inserts into current one.</description>
   <description xml:lang="ru">Автоматически подгружает следующую страничку при просмотре.</description>

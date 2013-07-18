@@ -1094,7 +1094,7 @@
                 span.className = 'autopagerize_page_info';
                 var a = span.appendChild(document.createElement('a'));
                 a.className = 'autopagerize_link';
-                a.href = (loaded_url && loaded_url.indexOf('http') === 0) ? loaded_url : 'javascript:void(0)';
+                a.href = loaded_url && (loaded_url.indexOf('http') === 0 || ~loaded_url.indexOf('/'))  ? loaded_url : 'javascript:void(0)';
                 a.setAttribute('number', document.apwpagenumber);
                 if (title.length) a.setAttribute('title', title);
 

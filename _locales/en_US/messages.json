@@ -12,16 +12,16 @@
     "message":"Autostart extension"
   },
   "open_newtab":{
-    "message":"Open new tabs from page links"
+    "message":"Open new tabs from added pages links"
   },
   "replace_state":{
     "message":"Replace location url when appending page contents"
   },
   "noiframe":{
-    "message":"Disable IFRAME loading mode"
+    "message":"Disable extension in frames"
   },
   "remain_height":{
-    "message":"Scroll height until load"
+    "message":"Scroll height before next page"
   },
   "debugmode":{
     "message":"Debug output"
