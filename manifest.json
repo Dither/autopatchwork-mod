@@ -20,8 +20,8 @@
    },
    "description": "Automatically loads the next page and inserts into current one.",
    "name": "AutoPatchWorkOpera",
-   "permissions": [ "notifications", "unlimited_storage", "tabs", "management" ],
-   "optional_permissions": [ "contentSettings", "storage" ],
+   "permissions": [ "unlimited_storage", "tabs", "management" ],
+   "optional_permissions": [ "storage" ],
    "options_page": "options.html",
-   "version": "1.9.7"
+   "version": "1.9.8"
 }
