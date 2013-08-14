@@ -7,6 +7,15 @@ when scrolling to the end of it.
 
 AutoPatchWork extension derived from AutoPagerize ( http://autopagerize.net ).
 
+Screenshots
+-------
+
+Config page:  
+![config tab](http://files.myopera.com/DitherSky/blog/preferences.PNG)
+
+Pager in action:  
+![page result](http://files.myopera.com/DitherSky/blog/demo_separator.png)
+
 License
 -------
 

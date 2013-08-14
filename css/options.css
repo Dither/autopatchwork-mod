@@ -8,7 +8,7 @@ html * {
 }
 
 body {
-    background: rgba(255,255,255,0.5) -o-linear-gradient(rgba(255,255,255,0.5),rgba(212,212,212,0.5)) repeat-x;
+    background: rgba(255,255,255,0.5) linear-gradient(rgba(255,255,255,0.5),rgba(212,212,212,0.5)) repeat-x;
     text-align: left;
     word-wrap: break-word;
     padding: 5px;
@@ -117,8 +117,6 @@ dt.disabled .key,li.disabled .key{
     -moz-box-shadow: #CCC 0 0 .25em;
     -webkit-border-radius: 3px;
     -webkit-box-shadow: #CCC 0 0 .25em;
-    -o-transition: all 0.5s;
-    transition: all 0.5s; 
     background: #FFF;
     border-radius: 4px;
     border: 1px solid #CCC;

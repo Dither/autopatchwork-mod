@@ -14,6 +14,7 @@
 // @exclude *://192.168.*
 // @exclude *://0.0.0.0*
 // @exclude *dragonfly.opera.com*
+// @run-at document-start
 // ==/UserScript==
 
 /* 
@@ -131,15 +132,7 @@
      * @param {Array} opt Array of event's parameters.
      * */
     function dispatch_event(type, opt) {
-        var ev = document.createEvent('Event');
-        ev.initEvent(type, true, false);
-        if (opt) {
-        var ret = [];
-            for(var x in opt) if(opt.hasOwnProperty(x)) ret.push(x);
-            ret.forEach(function (k) {
-                if (!ev[k]) ev[k] = opt[k];
-            });
-        }
+        var ev = new window.CustomEvent(type, { 'detail': opt });
         document.dispatchEvent(ev);
     }
     /** 
@@ -156,8 +149,7 @@
      * @param {Object} opt Object of event's message data.
      * */
     function dispatch_notify_event(opt) {
-        var noe = document.createEvent('CustomEvent');
-        noe.initCustomEvent('Notify.It', false, false, opt);
+        var noe = new window.CustomEvent('Notify.It', { 'detail': opt });
         document.dispatchEvent(noe);
     }
 
@@ -222,9 +214,9 @@
     document.apwpagenumber = 1;
 
     // Begin listening for init messages and request configuration if got one
-    window.addEventListener('AutoPatchWork.init', init, false);
+    document.addEventListener('AutoPatchWork.init', init, false);
     // Begin listening and processing SITEINFO messages; send reset event if got one while active
-    window.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
+    document.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
 
     /** 
      * APW configuration sync with the background process handler
@@ -242,11 +234,8 @@
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             if (status.first_element !== first_element) {
                 //forceIframe = true; // probably bugged method
-                var ev = document.createEvent('Event');
-                ev.initEvent('AutoPatchWork.reset', true, true);
                 AutoPatchWorked.siteinfo.forceIframe = true;
-                ev.siteinfo = AutoPatchWorked.siteinfo;
-                document.dispatchEvent(ev);
+                dispatch_event('AutoPatchWork.reset', {'siteinfo': AutoPatchWorked.siteinfo});
             }
         } else if (matched_siteinfo) {
             matched_siteinfo.some(function (s) { return AutoPatchWork(s); });
@@ -285,19 +274,14 @@
     }
     /** 
      * Event handler for receiving SITEINFO.
-     * @param {Event} evt Event data.
+     * @param {Event} event Event data.
      * */
-    function siteinfo(evt) {
-        if (evt.siteinfo) {
+    function siteinfo(event) {
+        if (event.detail && event.detail.siteinfo) {
             if (!window.AutoPatchWorked) {
-                AutoPatchWork(evt.siteinfo);
+                AutoPatchWork(event.detail.siteinfo);
             } else {
-                var ev = document.createEvent('Event');
-                ev.initEvent('AutoPatchWork.reset', true, true);
-                for (var k in evt.siteinfo) {
-                    ev[k] = evt.siteinfo[k];
-                }
-                document.dispatchEvent(ev);
+                dispatch_event('AutoPatchWork.reset', {'siteinfo': event.detail.siteinfo});
             }
         }
     }
@@ -436,14 +420,14 @@
 
         window.addEventListener('scroll', check_scroll, false);
         window.addEventListener('resize', check_scroll, false);
-        window.addEventListener('AutoPatchWork.request', request, false);
-        window.addEventListener('AutoPatchWork.load', load, false);
-        window.addEventListener('AutoPatchWork.append', append, false);
-        window.addEventListener('AutoPatchWork.error', error_event, false);
-        window.addEventListener('AutoPatchWork.reset', reset, false);
-        window.addEventListener('AutoPatchWork.state', state, false);
-        window.addEventListener('AutoPatchWork.terminated', terminated, false);
-        window.addEventListener('AutoPatchWork.toggle', toggle, false);
+        document.addEventListener('AutoPatchWork.request', request, false);
+        document.addEventListener('AutoPatchWork.load', load, false);
+        document.addEventListener('AutoPatchWork.append', append, false);
+        document.addEventListener('AutoPatchWork.error', error_event, false);
+        document.addEventListener('AutoPatchWork.reset', reset, false);
+        document.addEventListener('AutoPatchWork.state', state, false);
+        document.addEventListener('AutoPatchWork.terminated', terminated, false);
+        document.addEventListener('AutoPatchWork.toggle', toggle, false);
 
         /* Removes intermediate IFRAME from the current page. */
         function pageloaded_iframe() {
@@ -468,7 +452,7 @@
             ///////////////////*/
         }
 
-        window.addEventListener('AutoPatchWork.pageloaded', status.use_iframe_req ? pageloaded_iframe : pageloaded, false);
+        document.addEventListener('AutoPatchWork.pageloaded', status.use_iframe_req ? pageloaded_iframe : pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -528,9 +512,9 @@
 
         // Replace all target attributes to user defined on all appended pages.
         if (options.FORCE_TARGET_WINDOW) {
-            window.addEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
+            document.addEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
         } else {
-            window.addEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
+            document.addEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             restoreText();
             window.addEventListener('beforeunload', savePosition, false);
         }
@@ -544,36 +528,37 @@
             siteinfo: siteinfo,
             get_next_link: get_next_link,
             get_main_content: get_main_content,
-            status: status
+            status: status,
+			dispatch_event: dispatch_event			
         };
 
         return true;
         /** 
          * Reinitialize APW handler: removes listeners and restarts class
-         * @param {Event} evt Event data.
+         * @param {Event} event Event data.
          * */
-        function reset(evt) {
-            if (evt.siteinfo) {
-                Object.keys(evt.siteinfo).forEach(function (k) {
-                    status[k] = evt.siteinfo[k];
+        function reset(event) {
+            if (event.detail && event.detail.siteinfo) {
+                Object.keys(event.detail.siteinfo).forEach(function (k) {
+                    status[k] = event.detail.siteinfo[k];
                 });
             }
             document.apwpagenumber = 1;
             window.removeEventListener('scroll', check_scroll, false);
             window.removeEventListener('resize', check_scroll, false);
-            window.removeEventListener('AutoPatchWork.init', init, false);
-            window.removeEventListener('AutoPatchWork.request', request, false);
-            window.removeEventListener('AutoPatchWork.load', load, false);
-            window.removeEventListener('AutoPatchWork.append', append, false);
-            window.removeEventListener('AutoPatchWork.error', error_event, false);
-            window.removeEventListener('AutoPatchWork.reset', reset, false);
-            window.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
-            window.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
-            window.removeEventListener('AutoPatchWork.state', state, false);
+            document.removeEventListener('AutoPatchWork.init', init, false);
+            document.removeEventListener('AutoPatchWork.request', request, false);
+            document.removeEventListener('AutoPatchWork.load', load, false);
+            document.removeEventListener('AutoPatchWork.append', append, false);
+            document.removeEventListener('AutoPatchWork.error', error_event, false);
+            document.removeEventListener('AutoPatchWork.reset', reset, false);
+            document.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
+            document.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
+            document.removeEventListener('AutoPatchWork.state', state, false);
             if (status.use_iframe_req) {
-                window.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
+                document.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
             } else {
-                window.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+                document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
             }
             window.removeEventListener('beforeunload', savePosition, false);
             if (status.bottom && status.bottom.parentNode) {
@@ -594,23 +579,23 @@
         }
         /** 
          * Error event handler.
-         * @param {Event} evt Event data. *
+         * @param {Event} event Event data. *
          */
-        function error_event(evt) {
+        function error_event(event) {
             ///////////////////
               dispatch_notify_event({
                 extension: 'autopatchwork',
-                text: evt.message
+                text: (event.detail ? event.detail.message : '')
              });
              ///////////////////
-            error(evt.message);
+            error(event.detail.message);
         }
         /** 
          * Changes statusbar state according to the event.
-         * @param {Event} evt Event data. 
+         * @param {Event} event Event data. 
          * */
-        function state(evt) {
-            s2b(evt.status) ? state_on() : state_off();
+        function state(event) {
+            s2b(event.detail && event.detail.status) ? state_on() : state_off();
         }
         /** 
          * Toggles statusbar state. */
@@ -638,16 +623,16 @@
         /** 
          * Termination event handler. 
          * Stops scroll processing and removes statusbar.
-         * @param {Event} evt Event data. 
+         * @param {Event} event Event data. 
          * */
-        function terminated(evt) {
+        function terminated(event) {
             status.state = false;
             status.loading = false;
             cleanup();
             ///////////////////
             dispatch_notify_event({
                 extension: 'autopatchwork',
-                text: evt.message
+                text: event.detail ? event.detail.message : ''
             });
             ///////////////////
             bar && (bar.className = 'autopager_terminated');
@@ -760,11 +745,11 @@
         }
         /** 
          * Rewrite event handler. Replaces link's target attribute.
-         * @param {Event} evt Event data.
+         * @param {Event} event Event data.
          * */
-        function target_rewrite(evt) {
-            if (evt && evt.target) {
-                var as = evt.target.getElementsByTagName('a');
+        function target_rewrite(event) {
+            if (event && event.target) {
+                var as = event.target.getElementsByTagName('a');
                 for (var i = 0, l = as.length; i < l; i++) {
                     var a = as[i],
                         _a = a.getAttribute('href');
@@ -776,11 +761,11 @@
         }
         /** 
          * Restore event handler. Restores onclick methods.
-         * @param {Event} evt Event data.
+         * @param {Event} event Event data.
          * */
-        function restore_setup(evt) {
-            if (evt && evt.target) {
-                var target = evt.target;
+        function restore_setup(event) {
+            if (event && event.target) {
+                var target = event.target;
                 target.addEventListener('click', function (evt) {
                     var _target = evt.target;
                     do {
@@ -848,10 +833,10 @@
         /* Requests next page via XMLHttpRequest method. */
         function request(event) {
             status.loading = true;
-            var url = state.nextURL = get_href(event.link ? event.link : next);
+            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
 
             //log('requesting ' + url);
-            if (typeof event.norequest !== 'undefined' && event.norequest) {
+            if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>autopatchwork</title></head><body></body></html>', url),
                     url: url || null
@@ -901,9 +886,9 @@
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
             status.loading = true;
-            var url = state.nextURL = get_href(event.link ? event.link : next);
+            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
 
-            if (typeof event.norequest !== 'undefined' && event.norequest) {
+            if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>autopatchwork</title></head><body></body></html>', url),
                     url: url || null
@@ -973,15 +958,15 @@
         }
         /** 
          * Event hadler for parsing new page data.
-         * @param {Event} evt Event data.
+         * @param {Event} event Event data.
          * */
-        function load(evt) {
-            if (!evt.htmlDoc)
+        function load(event) {
+            if (!event.detail || !event.detail.htmlDoc)
                 return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
 
-            loaded_url = evt.url;
-            htmlDoc = evt.htmlDoc;
-            delete evt.htmlDoc;
+            loaded_url = event.detail.url;
+            htmlDoc = event.detail.htmlDoc;
+            delete event.detail.htmlDoc;
 
             if (!options.FORCE_TARGET_WINDOW && loaded_url)
                 saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
@@ -1005,9 +990,9 @@
         }
         /** 
          * Event handler for appending new pages.
-         * @param {Event} evt Event data.
+         * @param {Event} event Event data.
          * */
-        function append(evt) {
+        function append(event) {
             if (!status.loading || !htmlDoc) return;
 
             var inserted_node, i,
