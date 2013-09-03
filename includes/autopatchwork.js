@@ -14,6 +14,7 @@
 // @exclude *://192.168.*
 // @exclude *://0.0.0.0*
 // @exclude *dragonfly.opera.com*
+// @exclude *www.youtube.com/embed*
 // @run-at document-start
 // ==/UserScript==
 
@@ -85,9 +86,14 @@
         change_address: false,
         page_number: 1,
         next_link: null,
+        next_link_selector: null,
+        next_link_mask: null,
         page_elem: null,
+        page_elem_selector: null,
         remove_elem: null,
+        remove_elem_selector: null,
         button_elem: null,
+        button_elem_selector: null,
         retry_count: 1,
         last_element: null,
         content_last: null,
@@ -230,7 +236,7 @@
     window.addEventListener('hashchange', function (e) {
         if (window.AutoPatchWorked && AutoPatchWorked.siteinfo) {
             var status = AutoPatchWorked.status;
-            if (status.button_elem) return;
+            if (status.button_elem || status.button_elem_selector) return;
             var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
             if (status.first_element !== first_element) {
                 //forceIframe = true; // probably bugged method
@@ -296,20 +302,62 @@
             downloaded_pages = [],
             scroll = false;
 
-        status.next_link = (siteinfo.nextLink || siteinfo.nextLinkSelector || siteinfo.nextMask || null);
-        status.page_elem = (siteinfo.pageElement || siteinfo.pageElementSelector || null);
-        status.button_elem = (siteinfo.buttonElement || siteinfo.buttonElementSelector || null);
+        status.next_link = siteinfo.nextLink || null;
+        status.next_link_selector = siteinfo.nextLinkSelector || null;
+        status.next_link_mask = siteinfo.nextMask || null;
+
+        if (status.next_link) {
+            if (status.next_link.indexOf('http') === 0 && ~status.next_link.indexOf('|')) {
+                status.next_link_mask = status.next_link;
+                status.next_link = null;
+            } else try {
+                document.querySelector(status.next_link);
+                status.next_link_selector = status.next_link;
+                status.next_link = null;
+            } catch (bug) {
+                status.next_link_selector = null;
+            }
+        }
+
+        status.page_elem = siteinfo.pageElement || null;
+        status.page_elem_selector = siteinfo.pageElementSelector || null;
+
+        if (status.page_elem) try {
+            document.querySelector(status.page_elem);
+            status.page_elem_selector = status.page_elem;
+            status.page_elem = null;
+        } catch (bug) {
+            status.page_elem_selector = null;
+        }
+
+        status.button_elem = siteinfo.buttonElement || null;
+        status.button_elem_selector = siteinfo.buttonElementSelector || null;
+        if (status.button_elem) try {
+            document.querySelector(status.button_elem);
+            status.button_elem_selector = status.button_elem;
+            status.button_elem = null;
+        } catch (bug) {
+            status.button_elem_selector = null;
+        }
+
         status.remove_elem = siteinfo.removeElement || null;
+        status.remove_elem_selector = siteinfo.removeElementSelector || null;
+        if (status.remove_elem) try {
+            document.querySelector(status.remove_elem);
+            status.remove_elem_selector = status.remove_elem;
+            status.remove_elem = null;
+        } catch (bug) {
+            status.remove_elem_selector = null;
+        }
+
         status.separator_disabled = s2b(siteinfo.disableSeparator);
-        //status.retry_count = (siteinfo.retryCount || 1);
         status.scripts_allowed = s2b(siteinfo.allowScripts);
-        //status.ajax_enabled = s2b(siteinfo.useAjax);
         status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
         status.accelerate = typeof siteinfo.accelerate !== 'undefined' ? s2b(siteinfo.accelerate) : options.INSERT_ACCELERATION;
 
-        if (status.next_link && status.next_link.substr(0,4) === 'http') {
-            var arr = status.next_link.split('|'),
+        if (status.next_link_mask) {
+            var arr = status.next_link_mask.split('|'),
                 matches = /\d{1,}/.exec(window.location.href.replace(arr[0],'').replace(arr[2],'')),
                 pagen = parseInt(arr[1], 10);
             if (isNaN(pagen) || !matches) {
@@ -327,20 +375,20 @@
             next = get_next_link(document);
 
         if (status.button_elem) {
-            try {
-                if (!get_node(document, status.button_elem)) return;
-            } catch (bug) { return; }
+            if (!get_node_xpath(document, status.button_elem)) return;
+        } else if (status.button_elem_selector){
+            if (!get_node(document, status.button_elem_selector)) return;
         }
 
-        if (!get_href(next) && not_service && !status.button_elem) {
+        if (!get_href(next) && not_service && !status.button_elem && !status.button_elem_selector) {
             if (s2b(siteinfo.MICROFORMAT)) return;
-            return log('next link ' + status.next_link + ' not found.');
+            return log('next link ' + (status.next_link || status.next_link_selector || status.next_link_mask)  + ' not found.');
         }
 
         var page_elements = get_main_content(document);
-        if ((!page_elements || !page_elements.length) && not_service && !status.button_elem) {
+        if ((!page_elements || !page_elements.length) && not_service && !status.button_elem && !status.button_elem_selector) {
             if (s2b(siteinfo.MICROFORMAT)) return;
-            return log('page content like ' + status.page_elem  + ' not found.');
+            return log('page content like ' + (status.page_elem || status.page_elem_selector)  + ' not found.');
         }
 
         if (history.replaceState && !/google/.test(location.host)) {
@@ -390,21 +438,32 @@
                 request = request_iframe; 
         }
 
-        if (!status.button_elem) {
+        if (!status.button_elem && !status.button_elem_selector) {
             status.first_element = page_elements[0];
             status.last_element = page_elements.pop();
-            //page_elements = null;
-            var insert_before = siteinfo.insertBefore || null;
-            if (insert_before) {
+
+            var insert_before = siteinfo.insertBefore || null,
+                insert_before_selector = siteinfo.insertBeforeSelector || null;
+
+            if (insert_before) try {
+                document.querySelector(insert_before);
+                insert_before_selector = insert_before;
+                insert_before = null;
+            } catch (bug) {
+                insert_before_selector = null;
+            }
+
+            if (insert_before || insert_before_selector) {
                 try {
-                    status.content_last = get_node(document, insert_before);
+                    if (insert_before) status.content_last = get_node_xpath(document, insert_before);
+                    else status.content_last = get_node(document, insert_before_selector);
                     status.content_parent = status.content_last.parentNode;
                 } catch (bug) {
                     status.content_last = status.last_element.nextSibling;
                     status.content_parent = status.last_element.parentNode;
                 }
             } else {
-                status.content_last = status.last_element.nextSibling; // btw, this will fail(?) if there are no elements aftr last... like </last></parent>
+                status.content_last = status.last_element.nextSibling; // will this fail if there are no elements after last... like </last></parent>
                 status.content_parent = status.last_element.parentNode;
             }
         }
@@ -571,8 +630,8 @@
 
             //FIXME: add new features
             AutoPatchWork({
-                nextLink: status.next_link,
-                pageElement: status.page_elem,
+                nextLink: status.next_link || status.next_link_selector || status.next_link_mask,
+                pageElement: status.page_elem || status.page_elem_selector,
                 forceIframe: (status.use_iframe_req || false)
             });
 
@@ -690,7 +749,7 @@
          * */
         function do_scroll() {
             var viewporth, scrolltop, top, height, elems, elem = null;
-            if (status.change_address && !status.button_elem) {
+            if (status.change_address && !status.button_elem && !status.button_elem_selector) {
                 viewporth = get_viewport_height()/2;
                 scrolltop = (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
                 elems = document.querySelectorAll('[data-apw-offview]');
@@ -717,9 +776,10 @@
 
             if (status.loading || !status.state) return;
 
-            if (status.button_elem) {
+            if (status.button_elem || status.button_elem_selector) {
                 try {
-                    elem = get_node(document, status.button_elem);
+                    if (status.button_elem) elem = get_node_xpath(document, status.button_elem);
+                    else elem = get_node(document, status.button_elem_selector);
                 } catch (bug) {
                     dispatch_event('AutoPatchWork.terminated', { message: 'Error finding next page button' });
                 }
@@ -981,14 +1041,6 @@
             history.replaceState('', '', to_url);
         }
         /** 
-         * Dectenct if string is XPath format.
-         * @param {String} test String to detect.
-         * */
-        function is_xpath(test) {
-            if (test.indexOf('http') === 0 && ~test.indexOf('|')) return false;
-            return (~test.indexOf('/') || test.substr(0,2) === 'id' || test[0] === '(');
-        }
-        /** 
          * Event handler for appending new pages.
          * @param {Event} event Event data.
          * */
@@ -1006,16 +1058,16 @@
             next = get_next_link(htmlDoc);
             
             // filter elements
-            if (status.remove_elem) {
+            if (status.remove_elem || status.remove_elem_selector) {
                 var r, l;
-                if (is_xpath(status.remove_elem)) {
+                if (status.remove_elem) {
                     r = htmlDoc.evaluate(status.remove_elem, htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                     l = r.snapshotLength;
                     for (i = 0; i < l; i++)
                         if (r.snapshotItem(i).parentNode) 
                             r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
                 } else {
-                    r = htmlDoc.querySelectorAll(status.remove_elem);
+                    r = htmlDoc.querySelectorAll(status.remove_elem_selector);
                     l = r.length;
                     for (i = 0; i < l; i++)
                         if (r[i].parentNode)
@@ -1043,11 +1095,11 @@
 
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
-            // is a high probability of non-paging content changes like random ad names
+            // is a higher probability of non-paging content changes like random ad names
             if (options.CRC_CHECKING && nodes.length === 1) {
-                var inserted_node_crc = checksum.crc(nodes[0].parentNode.innerHTML);
+                var inserted_node_crc = checksum.crc(nodes[0].outerHTML);
                 if (!loaded_crcs[inserted_node_crc]) loaded_crcs[inserted_node_crc] = true;
-                else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same crc' });
+                else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same CRC' });
             }
 
             if (!status.separator_disabled) {
@@ -1158,11 +1210,15 @@
          * @return {Node} Matched node.
          * */
         function get_node(doc, path) {
-            if (is_xpath(path))
-                return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            else
-                return doc.querySelector(path);
-            return null;
+            return doc.querySelector(path);
+        }
+        /** 
+         * Evaluates XPath to find node containing next page link.
+         * @param {Node} doc Node to perform XPath search on.
+         * @return {Node} Matched node.
+         * */
+        function get_node_xpath(doc, path) {
+            return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
         /** 
          * Evaluates expression to find node containing next page link.
@@ -1170,15 +1226,15 @@
          * @return {Node} Matched node.
          * */
         function get_next_link(doc) {
-            if (!doc || !status.next_link) return null;
-            if (is_xpath(status.next_link)) {
+            if (!doc || (!status.next_link && !status.next_link_selector && !status.next_link_mask)) return null;
+            if (status.next_link) {
                 return doc.evaluate(status.next_link, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            } else if (status.next_link.substr(0,4) === 'http') {
+            } else if (status.next_link_mask) {
                 // format link-up-to-page-number|step[|link-after-page-number]
-                var arr = status.next_link.split('|');
+                var arr = status.next_link_mask.split('|');
                 return {href: arr[0] + ((status.page_number + 1) * parseInt(arr[1], 10)) + (arr[2] || '')};
             } else {
-                return doc.querySelector(status.next_link);
+                return doc.querySelector(status.next_link_selector);
             }
             return null;
         }
@@ -1188,15 +1244,15 @@
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
-            if (!doc || !status.page_elem) return null;
+            if (!doc || (!status.page_elem && !status.page_elem_selector)) return null;
             var i, r, l, res;
-            if (is_xpath(status.page_elem)) {
+            if (status.page_elem) {
                 r = doc.evaluate(status.page_elem, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 l = r.snapshotLength;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r.snapshotItem(i);
-            } else{
-                r = doc.querySelectorAll(status.page_elem);
+            } else {
+                r = doc.querySelectorAll(status.page_elem_selector);
                 l = r.length;
                 res = (l && new Array(l)) || [];
                 for (i = 0; i < l; i++) res[i] = r[i];
