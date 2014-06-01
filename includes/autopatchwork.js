@@ -18,22 +18,22 @@
 // @run-at document-start
 // ==/UserScript==
 
-/* 
+/*
  * Normal AutoPatchWork event flow:
  *  AutoPatchWork.init (internal) - we are on some site, requesting siteinfo for it.
  *  AutoPatchWork.ready - extension configured and ready to work.
  *  AutoPatchWork.siteinfo - receive SITEINFOs for the current site.
  *  AutoPatchWork.initialized (internal) - initialized APW data.
  *  scroll (internal) - got some scrolling on the page.
- *  AutoPatchWork.request - sending request for the next page. 
+ *  AutoPatchWork.request - sending request for the next page.
  *  AutoPatchWork.load - got new page data and ready to process it.
  *  AutoPatchWork.append - appending page to the current.
  *  AutoPatchWork.DOMNodeInserted - firing Node changing event.
  *  AutoPatchWork.pageloaded - page loaded successfully.
- *  AutoPatchWork.error - page not loaded, error can be generated on every previous stage. 
+ *  AutoPatchWork.error - page not loaded, error can be generated on every previous stage.
  *  AutoPatchWork.terminated - stopping extension.
  *  AutoPatchWork.reset (internal) - resetting extension on changes within location.
- * 
+ *
  * Service events:
  *  resize - on window resize
  *  AutoPatchWork.state - set statusbar state.
@@ -49,7 +49,7 @@
         this.table = [0, 1996959894, 3993919788, 2567524794, 124634137, 1886057615, 3915621685, 2657392035, 249268274, 2044508324, 3772115230, 2547177864, 162941995, 2125561021, 3887607047, 2428444049, 498536548, 1789927666, 4089016648, 2227061214, 450548861, 1843258603, 4107580753, 2211677639, 325883990, 1684777152, 4251122042, 2321926636, 335633487, 1661365465, 4195302755, 2366115317, 997073096, 1281953886, 3579855332, 2724688242, 1006888145, 1258607687, 3524101629, 2768942443, 901097722, 1119000684, 3686517206, 2898065728, 853044451, 1172266101, 3705015759, 2882616665, 651767980, 1373503546, 3369554304, 3218104598, 565507253, 1454621731, 3485111705, 3099436303, 671266974, 1594198024, 3322730930, 2970347812, 795835527, 1483230225, 3244367275, 3060149565, 1994146192, 31158534, 2563907772, 4023717930, 1907459465, 112637215, 2680153253, 3904427059, 2013776290, 251722036, 2517215374, 3775830040, 2137656763, 141376813, 2439277719, 3865271297, 1802195444, 476864866, 2238001368, 4066508878, 1812370925, 453092731, 2181625025, 4111451223, 1706088902, 314042704, 2344532202, 4240017532, 1658658271, 366619977, 2362670323, 4224994405, 1303535960, 984961486, 2747007092, 3569037538, 1256170817, 1037604311, 2765210733, 3554079995, 1131014506, 879679996, 2909243462, 3663771856, 1141124467, 855842277, 2852801631, 3708648649, 1342533948, 654459306, 3188396048, 3373015174, 1466479909, 544179635, 3110523913, 3462522015, 1591671054, 702138776, 2966460450, 3352799412, 1504918807, 783551873, 3082640443, 3233442989, 3988292384, 2596254646, 62317068, 1957810842, 3939845945, 2647816111, 81470997, 1943803523, 3814918930, 2489596804, 225274430, 2053790376, 3826175755, 2466906013, 167816743, 2097651377, 4027552580, 2265490386, 503444072, 1762050814, 4150417245, 2154129355, 426522225, 1852507879, 4275313526, 2312317920, 282753626, 1742555852, 4189708143, 2394877945, 397917763, 1622183637, 3604390888, 2714866558, 953729732, 1340076626, 3518719985, 2797360999, 1068828381, 1219638859, 3624741850, 2936675148, 906185462, 1090812512, 3747672003, 2825379669, 829329135, 1181335161, 3412177804, 3160834842, 628085408, 1382605366, 3423369109, 3138078467, 570562233, 1426400815, 3317316542, 2998733608, 733239954, 1555261956, 3268935591, 3050360625, 752459403, 1541320221, 2607071920, 3965973030, 1969922972, 40735498, 2617837225, 3943577151, 1913087877, 83908371, 2512341634, 3803740692, 2075208622, 213261112, 2463272603, 3855990285, 2094854071, 198958881, 2262029012, 4057260610, 1759359992, 534414190, 2176718541, 4139329115, 1873836001, 414664567, 2282248934, 4279200368, 1711684554, 285281116, 2405801727, 4167216745, 1634467795, 376229701, 2685067896, 3608007406, 1308918612, 956543938, 2808555105, 3495958263, 1231636301, 1047427035, 2932959818, 3654703836, 1088359270, 936918000, 2847714899, 3736837829, 1202900863, 817233897, 3183342108, 3401237130, 1404277552, 615818150, 3134207493, 3453421203, 1423857449, 601450431, 3009837614, 3294710456, 1567103746, 711928724, 3020668471, 3272380065, 1510334235, 755167117];
         return this;
     }
-    
+
     FastCRC32.prototype = {
         crc: function (string) {
             var crc = 0 ^ (-1);
@@ -100,7 +100,8 @@
         content_parent: null,
         bottom: null,
         remain_height: null,
-        accelerate: false
+        accelerate: false,
+        service: false
     };
 
     if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
@@ -111,7 +112,7 @@
         this.message = message;
         this.name = "[AutoPatchWork]";
     }
-    /** 
+    /**
      * Logging function.
      * @param {Array|String} arguments Data to put to debug output.
      * */
@@ -123,7 +124,7 @@
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
-    /** 
+    /**
      * Checks variable and explictly converts string to corresponding boolean.
      * Possible data values are: undefined, null, unknown text or number (treated as false here),
      *                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
@@ -132,7 +133,7 @@
      * */
     function s2b(s) { return ((typeof s !== 'undefined') && s && (s === true || s === 'true' || s === 'on' || s == 1)) ? true : false; }
 
-    /** 
+    /**
      * Dispatches standard event on the document.
      * @param {String} type Event name string.
      * @param {Array} opt Array of event's parameters.
@@ -141,7 +142,7 @@
         var ev = new window.CustomEvent(type, { 'detail': opt });
         document.dispatchEvent(ev);
     }
-    /** 
+    /**
      * Dispatches modification event on the target node.
      * @param {Array} opt Array of event's parameters.
      * */
@@ -224,7 +225,7 @@
     // Begin listening and processing SITEINFO messages; send reset event if got one while active
     document.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
 
-    /** 
+    /**
      * APW configuration sync with the background process handler
      * */
     function init() {
@@ -249,10 +250,10 @@
     }, false);
 
 
-    //function hashChanged (e) { setTimeout(reInit, 100, e);  }; 
+    //function hashChanged (e) { setTimeout(reInit, 100, e);  };
     //window.addEventListener('hashchange', hashChanged, false);
 
-    /** 
+    /**
      * APW initialisation, config reading and fail registration.
       * @param {Object} info Contains APW paramenters.
      * */
@@ -278,7 +279,7 @@
         (ready === false) && sendRequest({ failed_siteinfo: fails });
         return dispatch_event('AutoPatchWork.ready');
     }
-    /** 
+    /**
      * Event handler for receiving SITEINFO.
      * @param {Event} event Event data.
      * */
@@ -291,7 +292,7 @@
             }
         }
     }
-    /** 
+    /**
      * AutoPatchWork main.
      * @param {Object} SITEINFO structure for the current site.
      * */
@@ -355,6 +356,7 @@
         status.use_iframe_req = s2b(siteinfo.forceIframe);
         status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? s2b(siteinfo.forceAddressChange) : options.CHANGE_ADDRESS;
         status.accelerate = typeof siteinfo.accelerate !== 'undefined' ? s2b(siteinfo.accelerate) : options.INSERT_ACCELERATION;
+        status.service = s2b(siteinfo.SERVICE);
 
         if (status.next_link_mask) {
             var arr = status.next_link_mask.split('|'),
@@ -409,7 +411,7 @@
         }
         else if ('www.tumblr.com' === location.host) {
             status.scripts_allowed = true;
-        } 
+        }
         else if ('matome.naver.jp' === location.host) {
             /*var _get_next = get_next_link;
             get_next_link = function (doc) {
@@ -424,10 +426,10 @@
                 return next;
             };
             next = get_next_link(document);*/
-        }       
+        }
         else {
             if (typeof next !== 'undefined' && next)
-                if ((next.host && next.host.length && next.host !== location.host) || 
+                if ((next.host && next.host.length && next.host !== location.host) ||
                     (next.protocol && next.protocol.length && !~next.protocol.indexOf('javascript') &&
                      next.protocol !== location.protocol)
                 ){
@@ -435,7 +437,7 @@
                     log('next page has different adresss: using iframe requests');
                 }
             if (status.use_iframe_req)
-                request = request_iframe; 
+                request = request_iframe;
         }
 
         if (!status.button_elem && !status.button_elem_selector) {
@@ -588,11 +590,11 @@
             get_next_link: get_next_link,
             get_main_content: get_main_content,
             status: status,
-			dispatch_event: dispatch_event			
+			dispatch_event: dispatch_event
         };
 
         return true;
-        /** 
+        /**
          * Reinitialize APW handler: removes listeners and restarts class
          * @param {Event} event Event data.
          * */
@@ -636,7 +638,7 @@
             });
 
         }
-        /** 
+        /**
          * Error event handler.
          * @param {Event} event Event data. *
          */
@@ -649,19 +651,19 @@
              ///////////////////
             error(event.detail.message);
         }
-        /** 
+        /**
          * Changes statusbar state according to the event.
-         * @param {Event} event Event data. 
+         * @param {Event} event Event data.
          * */
         function state(event) {
             s2b(event.detail && event.detail.status) ? state_on() : state_off();
         }
-        /** 
+        /**
          * Toggles statusbar state. */
         function toggle() {
             status.state ? state_off() : state_on();
         }
-        /** 
+        /**
          * Cleanup after stopping;
          *  */
         function cleanup() {
@@ -679,10 +681,10 @@
                 status.bottom.parentNode.removeChild(status.bottom);
             }
         }
-        /** 
-         * Termination event handler. 
+        /**
+         * Termination event handler.
          * Stops scroll processing and removes statusbar.
-         * @param {Event} event Event data. 
+         * @param {Event} event Event data.
          * */
         function terminated(event) {
             status.state = false;
@@ -701,8 +703,8 @@
             }, 3000);
 
         }
-        /** 
-         * Error handler. 
+        /**
+         * Error handler.
          * Stops scroll processing prints error, sets error statusbar.
          * */
         function error(message) {
@@ -713,7 +715,7 @@
             log(message);
             return false;
         }
-        /** 
+        /**
          * Gets current height of viewport.
          * @return {Number} Height of viewport
          * */
@@ -728,12 +730,12 @@
 
             return height;
         }
-        /** 
+        /**
          * Filters scroll processing requests.
          * */
         var processed = false, timer = 0;
         function check_scroll() {
-            if(!processed) {       
+            if(!processed) {
                 timer = setInterval(function() {
                     if (!processed) return;
                     processed = false;
@@ -743,8 +745,8 @@
             }
             processed = true;
         }
-        /** 
-         * Checks if document is scrolled enough to begin loading next page 
+        /**
+         * Checks if document is scrolled enough to begin loading next page
          * and dispatches event for a new page request.
          * */
         function do_scroll() {
@@ -761,7 +763,7 @@
                         height = elem.clientHeight;
 
                         //if (scrolltop > (top + height) || scrolltop + viewporth < top) {} // to do something on hide; unused now
-                        //else 
+                        //else
                         if (scrolltop + viewporth > top && scrolltop < top + height) {
                             elem.removeAttribute('data-apw-offview');
                             // we always have first loaded page on the other end of the array
@@ -803,7 +805,7 @@
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
         }
-        /** 
+        /**
          * Rewrite event handler. Replaces link's target attribute.
          * @param {Event} event Event data.
          * */
@@ -819,7 +821,7 @@
                 }
             }
         }
-        /** 
+        /**
          * Restore event handler. Restores onclick methods.
          * @param {Event} event Event data.
          * */
@@ -852,7 +854,7 @@
         function check_restore() {
             return !!sessionStorage['AutoPatchWork.restore.' + location_href];
         }
-        /** 
+        /**
          * Saves text in a given context.
          * @param {String} url Pages URL.
          * @param {String} page Target page.
@@ -895,6 +897,7 @@
             status.loading = true;
             var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
 
+            if (status.service) return;
             //log('requesting ' + url);
             if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
@@ -948,6 +951,7 @@
             status.loading = true;
             var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
 
+            if (status.service) return;
             if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>autopatchwork</title></head><body></body></html>', url),
@@ -982,7 +986,7 @@
             iframe.src = url;
             document.body.appendChild(iframe);
         }
-        /** 
+        /**
          * Returns link node reference.
          * @param {Node} node The input node.
          * */
@@ -995,7 +999,7 @@
             }
             return node.href || node.action || node.value;
         }
-        /** 
+        /**
          * [test] Evaluates included scripts.
          * @param {Node} node Node to run scripts of.
          * */
@@ -1016,7 +1020,7 @@
                 } catch (bug) {}
             }
         }
-        /** 
+        /**
          * Event hadler for parsing new page data.
          * @param {Event} event Event data.
          * */
@@ -1032,7 +1036,7 @@
                 saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
             dispatch_event('AutoPatchWork.append');
         }
-        /** 
+        /**
          * Event handler for browser location rewriting on each new page.
          * @param {String} to_url New url to set.
          * */
@@ -1040,7 +1044,7 @@
             history.pushState('', '', location.href);
             history.replaceState('', '', to_url);
         }
-        /** 
+        /**
          * Event handler for appending new pages.
          * @param {Event} event Event data.
          * */
@@ -1056,7 +1060,7 @@
             document.apwpagenumber++;
             if (change_location && loaded_url) downloaded_pages.push(loaded_url);
             next = get_next_link(htmlDoc);
-            
+
             // filter elements
             if (status.remove_elem || status.remove_elem_selector) {
                 var r, l;
@@ -1064,7 +1068,7 @@
                     r = htmlDoc.evaluate(status.remove_elem, htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                     l = r.snapshotLength;
                     for (i = 0; i < l; i++)
-                        if (r.snapshotItem(i).parentNode) 
+                        if (r.snapshotItem(i).parentNode)
                             r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
                 } else {
                     r = htmlDoc.querySelectorAll(status.remove_elem_selector);
@@ -1084,13 +1088,13 @@
 
             var nodes = get_main_content(htmlDoc),
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
-                
+
             htmlDoc = null;
             if (!nodes || !nodes.length) {
                 dispatch_event('AutoPatchWork.error', { message: 'page content not found.' });
                 return;
             }
-            
+
             //setTimeout(function(){
 
             // we can't check for repeating nodes in the same document because
@@ -1143,7 +1147,7 @@
                 // Merge nodes to fragment to avoid slowdowns but drop AutoPatchWork.DOMNodeInserted support
                 for (i = 0; i < nodes.length; i++) {
                     inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
-    
+
                     if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
                         // service data for external page processing
                         inserted_node['data-apw-url'] = loaded_url;
@@ -1192,7 +1196,7 @@
             if (rootNode.offsetHeight <= window.innerHeight) check_scroll();
             //},0);
         }
-        /** 
+        /**
          * Creates HTML document object from a string.
          * @param {String} source String with HTML-formatted text.
          * @param {String} url String with URL of original page.
@@ -1204,7 +1208,7 @@
             doc.documentElement.innerHTML = source;
             return doc;
         }
-        /** 
+        /**
          * Evaluates XPath to find node containing next page link.
          * @param {Node} doc Node to perform XPath search on.
          * @return {Node} Matched node.
@@ -1212,7 +1216,7 @@
         function get_node(doc, path) {
             return doc.querySelector(path);
         }
-        /** 
+        /**
          * Evaluates XPath to find node containing next page link.
          * @param {Node} doc Node to perform XPath search on.
          * @return {Node} Matched node.
@@ -1220,7 +1224,7 @@
         function get_node_xpath(doc, path) {
             return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
-        /** 
+        /**
          * Evaluates expression to find node containing next page link.
          * @param {Node} doc Node to perform search on.
          * @return {Node} Matched node.
@@ -1238,7 +1242,7 @@
             }
             return null;
         }
-        /** 
+        /**
          * Evaluates expression to find nodes containing main page content.
          * @param {Node} doc Node to perform search on.
          * @return {NodeList} Matched nodes.
@@ -1259,7 +1263,7 @@
             }
             return element_filter(res);
         }
-        /** 
+        /**
          * Keeps only elements on the same level.
          * @param {NodeList} nodes The nodelist to filter.
          * @return {NodeList} Filtered list.
@@ -1282,7 +1286,7 @@
                     else rect = null;
                 } else break;
                 if (_point.nextSibling) _point = _point.nextSibling;
-                else break; 
+                else break;
             }
             if (rect) {
                 bottom = rect.top + window.pageYOffset;
