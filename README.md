@@ -1,20 +1,20 @@
-AutoPatchWork for Opera
+AutoPatchWork Mod
 ==========
 
 It is fork of AutoPatchWork extension ( https://github.com/os0x/AutoPatchWork ).  
 This extension automatically loads next page and inserts it into current one
 when scrolling to the end of it. 
 
-AutoPatchWork extension derived from AutoPagerize ( http://autopagerize.net ).
+Original AutoPatchWork extension derived from AutoPagerize ( http://autopagerize.net ).
 
 Screenshots
 -------
 
 Config page:  
-![config tab](http://files.myopera.com/DitherSky/blog/preferences.PNG)
+![config tab](https://dithersky.files.wordpress.com/2014/08/preferences.png)
 
 Pager in action:  
-![page result](http://files.myopera.com/DitherSky/blog/demo_separator.png)
+![page result](https://dithersky.files.wordpress.com/2014/08/demo_separator.png)
 
 License
 -------

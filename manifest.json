@@ -19,7 +19,7 @@
       "128": "icons/Icon-128.png"
    },
    "description": "Automatically loads the next page and inserts into current one.",
-   "name": "AutoPatchWorkOpera",
+   "name": "AutoPatchWorkMod",
    "permissions": [ "unlimited_storage", "tabs", "management" ],
    "optional_permissions": [ "storage" ],
    "options_page": "options.html",

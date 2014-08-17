@@ -87,10 +87,11 @@
     padding: 0 !important;
     margin: 0 !important;
     position: fixed !important;
-    width: 16px !important;
-    height: 11px !important;
-    right: 22px !important;
-    bottom: 3px !important;
+    height: 20px !important;
+    width: 60px !important;
+    bottom: 0 !important;
+    rigth: 0 !important;
+    background-color: transparent !important;
 }
 
 #autopatchwork_bar.autopager_loading img{
