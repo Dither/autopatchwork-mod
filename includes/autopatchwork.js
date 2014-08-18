@@ -95,6 +95,9 @@
         button_elem: null,
         button_elem_selector: null,
         retry_count: 1,
+        load_delay: 500,
+        load_count: 0,
+        load_start_time: 0,
         last_element: null,
         content_last: null,
         content_parent: null,
@@ -474,10 +477,10 @@
             session_object = {};
 
         requested_urls[location.href] = true;
-        status.remain_height || (status.remain_height = calc_remain_height());
+        status.remain_height || (status.remain_height = calc_remaining_height());
 
-        window.addEventListener('scroll', check_scroll, false);
-        window.addEventListener('resize', check_scroll, false);
+        window.addEventListener('scroll', on_scroll, false);
+        window.addEventListener('resize', on_scroll, false);
         document.addEventListener('AutoPatchWork.request', request, false);
         document.addEventListener('AutoPatchWork.load', load, false);
         document.addEventListener('AutoPatchWork.append', append, false);
@@ -486,31 +489,7 @@
         document.addEventListener('AutoPatchWork.state', state, false);
         document.addEventListener('AutoPatchWork.terminated', terminated, false);
         document.addEventListener('AutoPatchWork.toggle', toggle, false);
-
-        /* Removes intermediate IFRAME from the current page. */
-        function pageloaded_iframe() {
-            pageloaded();
-            var i = document.getElementById('autopatchwork-request-iframe');
-            if (i && i.parentNode) i.parentNode.removeChild(i);
-        }
-        /* Sets status bar to ready state. */
-        function pageloaded() {
-            // pause to do things before next page load and flood prevention
-            setTimeout( function(){ status.loading = false; }, 500);
-
-            var b = document.getElementById('autopatchwork_bar');
-            if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
-
-            /*///////////////////
-            dispatch_notify_event({
-                extension: 'autopatchwork',
-                text: 'Page ' + document.apwpagenumber + ' loaded...',
-                width: '200px'
-            });
-            ///////////////////*/
-        }
-
-        document.addEventListener('AutoPatchWork.pageloaded', status.use_iframe_req ? pageloaded_iframe : pageloaded, false);
+        document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -565,8 +544,7 @@
         style.type = 'text/css';
         document.head.appendChild(style);
 
-        var pageHeight = rootNode.offsetHeight;
-        if (window.innerHeight >= pageHeight) check_scroll();
+        verify_scroll();
 
         // Replace all target attributes to user defined on all appended pages.
         if (options.FORCE_TARGET_WINDOW) {
@@ -602,8 +580,8 @@
                 });
             }
             document.apwpagenumber = 1;
-            window.removeEventListener('scroll', check_scroll, false);
-            window.removeEventListener('resize', check_scroll, false);
+            window.removeEventListener('scroll', on_scroll, false);
+            window.removeEventListener('resize', on_scroll, false);
             document.removeEventListener('AutoPatchWork.init', init, false);
             document.removeEventListener('AutoPatchWork.request', request, false);
             document.removeEventListener('AutoPatchWork.load', load, false);
@@ -613,12 +591,9 @@
             document.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
             document.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             document.removeEventListener('AutoPatchWork.state', state, false);
-            if (status.use_iframe_req) {
-                document.removeEventListener('AutoPatchWork.pageloaded', pageloaded_iframe, false);
-            } else {
-                document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
-            }
+            document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
             window.removeEventListener('beforeunload', savePosition, false);
+
             if (status.bottom && status.bottom.parentNode) {
                 status.bottom.parentNode.removeChild(status.bottom);
             }
@@ -664,8 +639,8 @@
          * Cleanup after stopping;
          *  */
         function cleanup() {
-            window.removeEventListener('scroll', check_scroll, false);
-            window.removeEventListener('resize', check_scroll, false);
+            window.removeEventListener('scroll', on_scroll, false);
+            window.removeEventListener('resize', on_scroll, false);
 
             if (status.change_address) {
                 while (downloaded_pages.length) change_address(downloaded_pages.shift());
@@ -717,28 +692,24 @@
          * @return {Number} Height of viewport
          * */
         function get_viewport_height() {
-            var height = window.innerHeight; // Safari, Opera
-            var mode = document.compatMode;
-
-            if ((mode || (browser !== BROWSER_OPERA && browser !== BROWSER_SAFARI))) { // IE, Gecko
-                height = (mode == 'CSS1Compat') ? document.documentElement.clientHeight : // Standards
-                document.body.clientHeight; // Quirks
-            }
-
-            return height;
+                return Math.max(
+                    document.body.scrollHeight, document.documentElement.scrollHeight,
+                    document.body.offsetHeight, document.documentElement.offsetHeight,
+                    document.body.clientHeight, document.documentElement.clientHeight
+                );
         }
         /**
-         * Filters scroll processing requests.
+         * Reduces scroll processing request count.
          * */
         var processed = false, timer = 0;
-        function check_scroll() {
+        function on_scroll() {
             if(!processed) {
                 timer = setInterval(function() {
                     if (!processed) return;
                     processed = false;
                     clearTimeout(timer);
-                    do_scroll();
-                }, 300);
+                    verify_scroll();
+                }, 500);
             }
             processed = true;
         }
@@ -746,7 +717,7 @@
          * Checks if document is scrolled enough to begin loading next page
          * and dispatches event for a new page request.
          * */
-        function do_scroll() {
+        function verify_scroll() {
             var viewporth, scrolltop, top, height, elems, elem = null;
             if (status.change_address && !status.button_elem && !status.button_elem_selector) {
                 viewporth = get_viewport_height()/2;
@@ -935,6 +906,7 @@
             //    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             //    x.setRequestHeader("X-Requested-With", "XMLHttpRequest");
             //}
+            status.load_start_time = new Date().getTime();
             x.open(req, url, true);
             x.overrideMimeType('text/html; charset=' + document.characterSet);
             try {
@@ -968,19 +940,27 @@
             }
 
             var iframe = document.createElement('iframe');
-            //iframe.style.display = 'none';
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'autopatchwork-request-iframe';
+            iframe.sandbox = 'allow-same-origin';
+            /* Removes intermediate IFRAME from the current page. */
+            function remove_iframe() {
+                var i = document.getElementById('autopatchwork-request-iframe');
+                if (i && i.parentNode) i.parentNode.removeChild(i);
+            }
             iframe.onload = function () {
                 var doc = iframe.contentDocument;
+                if (!doc) return iframe.onerror();
                 if (dump_request) console.log(doc.innerHTML);
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
-                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                remove_iframe();
             };
             iframe.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed. Status:' + x.status });
+                remove_iframe();
             };
             iframe.src = url;
+            status.load_start_time = new Date().getTime();
             document.body.appendChild(iframe);
         }
         /**
@@ -1000,9 +980,9 @@
          * [test] Evaluates included scripts.
          * @param {Node} node Node to run scripts of.
          * */
-        function eval_scripts(node){
+        function eval_scripts(node) {
             if (!node) return;
-            for (var i = 0, strExec = '', st = node.querySelectorAll('SCRIPT'); i < st.length; i++) {
+            for (var i = 0, strExec = '', st = node.querySelectorAll('script'); i < st.length; i++) {
                 strExec = st[i].text;
                 if (st[i].parentNode) st[i].parentNode.removeChild(st[i]);
                 else st[i].text = '';
@@ -1092,8 +1072,6 @@
                 return;
             }
 
-            //setTimeout(function(){
-
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
             // is a higher probability of non-paging content changes like random ad names
@@ -1170,7 +1148,8 @@
                                 inserted_node.setAttribute('data-apw-offview', 'true');
                         }
                     }
-                    var mutation = {
+
+                    dispatch_mutation_event({
                         targetNode: inserted_node,
                         eventName: 'AutoPatchWork.DOMNodeInserted',
                         bubbles: true,
@@ -1180,19 +1159,45 @@
                         newValue: loaded_url,
                         attrName: 'url',
                         attrChange: 2 // MutationEvent.ADDITION
-                    };
-                    dispatch_mutation_event(mutation);
+                    });
                 };
             }
 
             nodes = null;
-            dispatch_event('AutoPatchWork.pageloaded');
+            status.load_count++;
+            setTimeout(function(){dispatch_event('AutoPatchWork.pageloaded');}, get_load_delay());
+        }
+        /* Calculates delay before next page loading. */
+        function get_load_delay() {
+            var current_delay =  500 + Math.abs((new Date().getTime()) - status.load_start_time),
+                  smooth = status.load_count < 11 ? 1 - (1/ status.load_count) : -1.0;
+
+            if (smooth >= 0 && Math.abs(current_delay - status.load_delay) < 5000) {
+                status.load_delay = Math.ceil((current_delay * smooth + status.load_delay * (1.0 - smooth))/100)*100;
+                log('Next delay will be: ' + status.load_delay + '; real delay: ' + current_delay);
+            }
+
+            return status.load_delay;
+        }
+        /* Sets status bar to ready state. */
+        function pageloaded() {
+            status.loading = false;
+
+            var b = document.getElementById('autopatchwork_bar');
+            if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
+
+            /*///////////////////
+            dispatch_notify_event({
+                extension: 'autopatchwork',
+                text: 'Page ' + document.apwpagenumber + ' loaded...',
+                width: '200px'
+            });
+            ///////////////////*/
 
             if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
-
-            if (rootNode.offsetHeight <= window.innerHeight) check_scroll();
-            //},0);
+            verify_scroll();
         }
+
         /**
          * Creates HTML document object from a string.
          * @param {String} source String with HTML-formatted text.
@@ -1274,7 +1279,7 @@
             });
         }
         /* Calculates height delta between end of page and botoom of last content block. */
-        function calc_remain_height() {
+        function calc_remaining_height() {
             var rect = null, bottom = null, _point = status.content_last;
             while (_point) {
                 if (typeof _point.getBoundingClientRect === 'function') {

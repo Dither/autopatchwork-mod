@@ -38,7 +38,7 @@ window.AutoPatchWorkBG = {
     config: {
         auto_start: true,
         target_blank: true,
-        remain_height: 400,
+        remain_height: 500,
         disable_iframe: false,
         change_address: false,
         debug_mode: false,
