@@ -672,7 +672,7 @@
             setTimeout(function () {
                 bar && bar.parentNode && bar.parentNode.removeChild(bar);
                 bar = null;
-            }, 3000);
+            }, 5000);
 
         }
         /**
@@ -684,6 +684,10 @@
             status.loading = false;
             cleanup();
             bar && (bar.className = 'autopager_error');
+            setTimeout(function () {
+                bar && bar.parentNode && bar.parentNode.removeChild(bar);
+                bar = null;
+            }, 5000);
             log(message);
             return false;
         }
@@ -1172,7 +1176,7 @@
             var current_delay =  500 + Math.abs((new Date().getTime()) - status.load_start_time),
                   smooth = status.load_count < 11 ? 1 - (1/ status.load_count) : -1.0;
 
-            if (smooth >= 0 && Math.abs(current_delay - status.load_delay) < 5000) {
+            if (smooth >= 0 && Math.abs(current_delay - status.load_delay) < 2000 && current_delay < 3000) {
                 status.load_delay = Math.ceil((current_delay * smooth + status.load_delay * (1.0 - smooth))/100)*100;
                 log('Next delay will be: ' + status.load_delay + '; real delay: ' + current_delay);
             }
