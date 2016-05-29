@@ -37,14 +37,19 @@
         <div id='inner-container'>
             <section id='general' class='content'>
                 <div class='buttons'>
+                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>
+                        SITEINFO manager
+                    </button>
+                </div>
+                <div class='buttons'>
                     <button id='update_siteinfo' class='MSG_update_siteinfo'>
                         Update SITEINFO
                     </button>
                     <span id='update_siteinfo_output'></span>
                 </div>
                 <div class='buttons'>
-                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>
-                        SITEINFO manager
+                    <button id='reload_db' class='MSG_reload_db'>
+                        Reload SITEINFO
                     </button>
                 </div>
                 <div>
@@ -61,19 +66,19 @@
                 </div>
                 <div>
                     <input type='checkbox' id='check_crc'>
-                    <label for='check_crc' class='MSG_check_crc'>Check pages for duplicates by CRC (can break compatibility)</label>
+                    <label for='check_crc' class='MSG_check_crc'>Check pages for duplicates by CRC</label>
                 </div>
                 <div>
                     <input type='checkbox' id='enable_acceleration'>
-                    <label for='enable_acceleration' class='MSG_enable_acceleration'>Accelerate multi-element inserts (can break compatibility)</label>
+                    <label for='enable_acceleration' class='MSG_enable_acceleration'>Accelerate multi-element inserts</label>
                 </div>
                 <div>
                     <input type='checkbox' id='change_address'>
-                    <label for='change_address' class='MSG_change_address'>Replace location URL when appending</label>
+                    <label for='change_address' class='MSG_change_address'>Update location URL and title on appending</label>
                 </div>
                 <div>
                     <input type='checkbox' id='bar_status'>
-                    <label for='bar_status' class='MSG_bottom_bar'>Enable inpage status bar (possible slowdowns)</label>
+                    <label for='bar_status' class='MSG_bottom_bar'>Enable inpage status bar</label>
                 </div>
                 <div>
                     <span class='mins'>0</span>
@@ -81,7 +86,7 @@
                     <span class='maxs'>3000</span>
                 </div>
                 <div class='outputs'>
-                    <label for='remain_height' class='MSG_remain_height'>Scroll height before next page</label>
+                    <label for='remain_height' class='MSG_remain_height'>Pixels before next page</label>
                     <span class='outputs' id='remain_height_value'></span>
                 </div>
                 <div>

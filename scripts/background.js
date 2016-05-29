@@ -6,7 +6,7 @@ Object.keys || (Object.keys = function(k) {
 });
 
 var self = this;
-var siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
+var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
 var JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
 var MICROFORMATs = [];/*[{
     MICROFORMAT: true,
@@ -29,6 +29,19 @@ if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
 else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
 else browser = BROWSER_OPERA;
 
+/**
+ * Logging function.
+ * @param {Array|String} arguments Data to put to debug output.
+ * */
+function log() {
+    if (!debug) return;
+    if (browser === BROWSER_OPERA) {
+        window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+    } else if (window.console) {
+        window.console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+    }
+}
+
 var H = location.href.replace('index.html', '');
 
 window.AutoPatchWorkBG = {
@@ -48,7 +61,9 @@ window.AutoPatchWorkBG = {
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
-        AutoPatchWorkBG.custompatterns = JSON.parse(patterns);
+        initDatabase();
+    },
+    reload_database: function() {
         initDatabase();
     },
     reset_custom_patterns: function() {
@@ -138,71 +153,71 @@ function getWedataId(inf) {
     return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '') : '0', 10);
 }
 
-
 function applyCustomFields(info) {
     siteinfo.forEach(function(i) {
         var id = i['wedata.net.id'];
+        if (!id) return;
         var ci = custom_info[id];
-        if(ci) { Object.keys(ci).forEach(function(k) { i[k] = ci[k]; }); }
+        if (ci) { Object.keys(ci).forEach(function(k) { i[k] = ci[k]; }); }
     });
 }
 
 function initDatabase() {
-    // Sometimes the base gets corrupt when incorrectly exiting Opera.
-    try { 
-        if(!Store.has('siteinfo_wedata')) throw 'database expired';
+    if (storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
+    if (storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+    try {    // Sometimes the DB gets corrupted when incorrectly exiting Opera
+        if(!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
         var data = Store.get('siteinfo_wedata');
-        siteinfo = AutoPatchWorkBG.custompatterns.concat(data.siteinfo);
+        siteinfo = data.siteinfo;
         timestamp = new Date(data.timestamp);
         applyCustomFields();
+        siteinfo = AutoPatchWorkBG.custompatterns.concat(siteinfo);
     } catch (bug) {
         downloadDatabase();
     }
 }
 
 function createDatabase(info) {
-    var keys = ['nextLink', 'pageElement', 'url', 'insertBefore'];
+    var tmp_log = 'There were following parsing errors in wedata DB:\n', keys = ['nextLink', 'pageElement', 'url', 'insertBefore'];
     siteinfo = [];
     info.forEach(function(i) {
         var d = i.data || i, r = {};
-        keys.forEach(function(k) { if(d[k]) r[k] = d[k]; });
+        if (0 && d && typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) { //TODO: the DB is already Stylish-filtered
+            var t = d['Stylish'];
+            t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
+            t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
+            r['cssPatch'] = t;
+        }
+        keys.forEach(function(k) {
+            if(d[k])
+                r[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
+        });
+        r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
         try { new RegExp(r.url); } catch (bug) { 
-        	console.log('[AutoPatchWork] Invalid RegExp ' + r.url + ': ' +  (bug.message || bug)); 
+        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n'; 
         	return;
         }
         try { document.evaluate(r.nextLink, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug) { 
-        	console.log('[AutoPatchWork] Invalid XPath '  + r.nextLink + ': ' +  (bug.message || bug)); 
+        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid next XPath '  + r.nextLink + ': ' +  (bug.message || bug) + '\n'; 
         	return;
         }
         try { document.evaluate(r.pageElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug)  { 
-        	console.log('[AutoPatchWork] Invalid XPath '  + r.pageElement + ': ' + (bug.message || bug)); 
+        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n'; 
         	return;
         }
-        r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
         siteinfo.push(r);
     });
+    log(tmp_log);
     siteinfo.sort(function(a, b) { return (b.url.length - a.url.length); });
     siteinfo.push.apply(siteinfo, MICROFORMATs);
-    siteinfo.push({
-        "url": "^http://matome\\.naver\\.jp/",
-        "nextLink": "id(\"_pageNavigation\")//a[contains(@class, \"mdPagination01Next\")]",
-        "pageElement": "//div[contains(@class, \"blMain00Body\")]/*",
-        //exampleUrl:  'http://matome.naver.jp/odai/2124461146762161898',
-        "wedata.net.id": "matome.naver"
-    });
-    window.opera && siteinfo.push({
-        url: '^http://www\\.google\\.(?:[^.]+\\.)?[^./]+/images\\?.',
-        nextLink: 'id("nav")//td[@class="cur"]/following-sibling::td/a',
-        pageElement: '//table[tbody/tr/td/a[contains(@href, "/imgres")]]'
-        //,exampleUrl:
-        // 'http://images.google.com/images?gbv=2&hl=ja&q=%E3%83%9A%E3%83%BC%E3%82%B8'
-    });
+
     timestamp = new Date;
     Store.set('siteinfo_wedata', {
             siteinfo: siteinfo,
             timestamp: timestamp.toLocaleString()
         },{ day: 60 });
     applyCustomFields();
+    siteinfo = AutoPatchWorkBG.custompatterns.concat(siteinfo);
 }
 
 function downloadDatabase(callback, error_back) {
@@ -213,11 +228,11 @@ function downloadDatabase(callback, error_back) {
         try {
             info = JSON.parse(xhr.responseText);
             createDatabase(info);
-            if( typeof callback === 'function') {
+            if (typeof callback === 'function') {
                 callback();
             }
         } catch (bug) {
-            if( typeof error_back === 'function') {
+            if (typeof error_back === 'function') {
                 error_back(bug);
                 return;
             } else {
@@ -234,7 +249,7 @@ function downloadDatabase(callback, error_back) {
        xhr.open('GET', JSON_SITEINFO_DB_MIN, true);
        xhr.send(null);
    } catch (bug) { 
-       console.log(bug.message || bug);
+       log(bug.message || bug);
    }
 }
 
@@ -254,12 +269,13 @@ function resetSettings() {
 if (!storagebase.AutoPatchWorkConfig) resetSettings();
 
 if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
-if(storagebase.AutoPatchWorkConfig) AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
+if(storagebase.AutoPatchWorkConfig) {
+    AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
+    debug = AutoPatchWorkBG.config.debug_mode;
+}
 if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
 if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
-if(storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
 if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
-if(storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
 
 getManifest(function(_manifest) { Manifest = _manifest; version = _manifest.version; });
 initDatabase();
@@ -276,8 +292,7 @@ window.onload = function() {
 };
 
 var toggleCode = '(' + (function() {
-    var ev = document.createEvent('Event');
-    ev.initEvent('AutoPatchWork.toggle', true, false);
+    var ev = new window.CustomEvent('AutoPatchWork.toggle');
     document.dispatchEvent(ev);
 }).toString() + ')();';
 
@@ -391,7 +406,8 @@ function handleMessage(request, sender, sendResponse) {
     }
     
     if(request.manage) {
-        openOrFocusTab('siteinfo_manager.html');
+        if (request.hash) openOrFocusTab('siteinfo_manager.html#siteinfo_search_input='+request.hash);
+        else openOrFocusTab('siteinfo_manager.html');
         return;
     }
     
@@ -412,7 +428,7 @@ function handleMessage(request, sender, sendResponse) {
         s = siteinfo[i];
         try {
             if(!s.disabled && (new RegExp(siteinfo[i].url)).test(url)) infos.push(siteinfo[i]);
-        } catch (bug) { console.log((bug.message || bug) + ' ' + siteinfo[i].url); }
+        } catch (bug) { log((bug.message || bug) + ' ' + siteinfo[i].url); }
     }
 
     sendResponse({ siteinfo: infos, config: AutoPatchWorkBG.config, css: AutoPatchWorkBG.css });

@@ -14,7 +14,7 @@
         <h1 class='MSG_manager'>AutoPatchWork SITEINFO Manager</h1>
         <p>
             <label for='siteinfo_search_input' class='MSG_siteinfo_search_input'>Search:</label>
-            <input type='search' id='siteinfo_search_input'>
+            <input type='search' id='siteinfo_search_input' />
             <img width='16' height='11' id='loader' alt='loader' class='loader' src='data:image/gif;base64,R0lGODlhEAALAPQAAP///wAAANra2tDQ0Orq6gYGBgAAAC4uLoKCgmBgYLq6uiIiIkpKSoqKimRkZL6+viYmJgQEBE5OTubm5tjY2PT09Dg4ONzc3PLy8ra2tqCgoMrKyu7u7gAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCwAAACwAAAAAEAALAAAFLSAgjmRpnqSgCuLKAq5AEIM4zDVw03ve27ifDgfkEYe04kDIDC5zrtYKRa2WQgAh+QQJCwAAACwAAAAAEAALAAAFJGBhGAVgnqhpHIeRvsDawqns0qeN5+y967tYLyicBYE7EYkYAgAh+QQJCwAAACwAAAAAEAALAAAFNiAgjothLOOIJAkiGgxjpGKiKMkbz7SN6zIawJcDwIK9W/HISxGBzdHTuBNOmcJVCyoUlk7CEAAh+QQJCwAAACwAAAAAEAALAAAFNSAgjqQIRRFUAo3jNGIkSdHqPI8Tz3V55zuaDacDyIQ+YrBH+hWPzJFzOQQaeavWi7oqnVIhACH5BAkLAAAALAAAAAAQAAsAAAUyICCOZGme1rJY5kRRk7hI0mJSVUXJtF3iOl7tltsBZsNfUegjAY3I5sgFY55KqdX1GgIAIfkECQsAAAAsAAAAABAACwAABTcgII5kaZ4kcV2EqLJipmnZhWGXaOOitm2aXQ4g7P2Ct2ER4AMul00kj5g0Al8tADY2y6C+4FIIACH5BAkLAAAALAAAAAAQAAsAAAUvICCOZGme5ERRk6iy7qpyHCVStA3gNa/7txxwlwv2isSacYUc+l4tADQGQ1mvpBAAIfkECQsAAAAsAAAAABAACwAABS8gII5kaZ7kRFGTqLLuqnIcJVK0DeA1r/u3HHCXC/aKxJpxhRz6Xi0ANAZDWa+kEAA7AAAAAAAAAAAA' />
         </p>
         <ul id='siteinfo_nav'></ul>
@@ -22,8 +22,8 @@
     <table id='siteinfo_table'>
         <thead>
             <tr id='siteinfo_head'>
-                <th colspan='2'><button id='disable'>disable</button></th>
-                <th>
+                <th colspan=6 style='width:160px;'><button id='number'><span class='onoff'>disable</span>  <span class='disable_separator'>noseparator</span> <span class='address_change'>address</span> <span class='scripts_enable'>scripts</span>  <span class='force_iframe'>iframe</span></button></th>
+                <th style='width:680px;'>
                     <button id='name'>name</button>
                 </th>
                 <th>
@@ -36,22 +36,19 @@
                     <button id='created_by'>creator</button>
                 </th>
                 <th>
-                    <button id='resource_url'>element url</button>
+                    <button id='resource_url'>db url</button>
                 </th>
                 <th>
-                    <button id='database_resource_url'>database url</button>
+                    <button id='number_of_successful'>hit #</button>
                 </th>
                 <th>
-                    <button id='number_of_successful'>succeded #</button>
-                </th>
-                <th>
-                    <button id='number_of_failed'>failed #</button>
+                    <button id='number_of_failed'>miss #</button>
                 </th>
             </tr>
         </thead>
         <tbody />
     </table>
-    <table style='display:none;'><tbody id='tmpl_siteinfo_body'><tr><td class='index'></td><td class='onoff'><input type='checkbox' class='onoff'></td><td class='name'><button /></td><td class='created_at'></td><td class='updated_at'></td><td class='created_by'></td><td class='resource_url'></td><td class='database_resource_url'></td><td class='number_of_successful'></td><td class='number_of_failed'></td></tr></tbody></table>
+    <table style='display:none;'><tbody id='tmpl_siteinfo_body'><tr><td class='index'></td><td class='onoff'><input type='checkbox' class='onoff'></td><td class='disable_separator'><input type='checkbox' class='disable_separator'></td><td class='address_change'><input type='checkbox' class='address_change'></td><td class='scripts_enable'><input type='checkbox' class='scripts_enable'></td><td class='force_iframe'><input type='checkbox' class='force_iframe'></td><td class='name'><button /></td><td class='created_at'></td><td class='updated_at'></td><td class='created_by'></td><td class='resource_url'></td><td class='number_of_successful'></td><td class='number_of_failed'></td></tr></tbody></table>
     <div id='siteinfo_view'></div>
     <div id='progressbar' style='display:none'>  	
 		<div id='progress'>

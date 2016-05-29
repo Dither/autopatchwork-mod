@@ -206,6 +206,13 @@ document.addEventListener('DOMContentLoaded',function(){
         });
     }, false);
 
+    var reload_db = document.getElementById('reload_db');
+    reload_db.addEventListener('click', function(e) {
+        reload_db.disabled = true;
+        bgProcess.initDatabase();
+        reload_db.disabled = false;
+    }, false);
+
     $X('//input[@type="radio"]').forEach(function(box) {
         var id = box.id;
         var name = box.name;

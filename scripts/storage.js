@@ -1,4 +1,4 @@
-var storagebase = window.opera ? widget.preferences : localStorage;
+var storagebase = typeof window.opera !== 'undefined' ? widget.preferences : localStorage;
 (function () {
 if (this.Store) return;
 // Storage module that supports expiring
@@ -49,7 +49,6 @@ var Storage = this.Store = {
     }
 };
 Storage.duration = duration;
-// http://gist.github.com/46403
 function duration (dat) {
     var ret = 0, map = {
         sec:1, min:60, hour:3600, day:86400, week:604800, month:2592000, year:31536000
