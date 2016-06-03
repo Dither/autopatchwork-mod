@@ -16,8 +16,8 @@ var browser,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
-else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
+else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
 else browser = BROWSER_OPERA;
 
 // main
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded',function(){
         default:
     }
 
-    var WIDTH = 800;
+    var WIDTH = 700;
     var HEIGHT = Math.max(window.innerHeight - 100, 500);
 
     var i18n = browser === BROWSER_CHROME  ? chrome.i18n : this.safari ? {

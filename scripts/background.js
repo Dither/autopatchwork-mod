@@ -25,8 +25,8 @@ var browser,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
-else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
+else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
 else browser = BROWSER_OPERA;
 
 /**
@@ -287,8 +287,8 @@ window.onload = function() {
         group: 'AutoPatchWork',
         actions: [{ name: 'AutoPatchWork.toggle' }, { name: 'AutoPatchWork.request' }]
     };
-    //self.chrome && chrome.extension.sendRequest(CHROME_GESTURES, action);
-    //self.chrome && chrome.extension.sendRequest(CHROME_KEYCONFIG, action);
+    //self.chrome && chrome.runtime.sendMessage(CHROME_GESTURES, action);
+    //self.chrome && chrome.runtime.sendMessage(CHROME_KEYCONFIG, action);
 };
 
 var toggleCode = '(' + (function() {
@@ -298,7 +298,7 @@ var toggleCode = '(' + (function() {
 
 switch(browser) {
     case BROWSER_CHROME:
-            chrome.extension.onRequest.addListener(handleMessage);
+            chrome.runtime.onMessage.addListener(handleMessage);
             break;
     case BROWSER_SAFARI:
         safari.application.addEventListener("message", function(evt) {

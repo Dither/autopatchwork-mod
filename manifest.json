@@ -22,6 +22,8 @@
    "name": "AutoPatchWorkMod",
    "permissions": [ "unlimited_storage", "tabs", "management" ],
    "optional_permissions": [ "storage" ],
-   "options_page": "options.html",
+   "options_ui": {
+      "page": "options.html"
+   },
    "version": "1.9.8"
 }

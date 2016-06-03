@@ -1,9 +1,10 @@
 /*
     Name: AutoPatchWork separator style
-    Version: 02.02.2015
+    Version: 02.04.2016
 */
 
 .autopagerize_link, .autopagerize_link:hover {
+    background: #fff none repeat scroll 0% 0% !important;
     text-decoration: none !important;
 }
 
@@ -13,37 +14,42 @@
 
 .autopagerize_page_separator_blocks {
     clear: both;
-    text-align: center !important;
-    padding-top: 5px !important;
-    padding-bottom: 7px !important;
+    height: 30px !important;
+    margin: 10px 0 10px !important;
+    padding: 0 !important;
+    text-align: center !important;   
     list-style: none outside none !important;
     line-height: 14px !important;
     text-decoration: none !important;
+    background: transparent !important;
+
 }
 
 .autopagerize_page_separator {
+    height: 9px !important;
+    line-height: 9px !important;
+    margin: 0 0 9px !important;
+    padding: 0 !important;
     border-bottom-color: #dae1e8 !important;
     border-bottom-style: solid !important;
     border-bottom-width: 1px !important;
     box-decoration-break: slice !important;
-    color: #45688e !important;
     display: block !important;
-    height: 6px !important;
-    text-overflow: none !important;
+    font-size: 18px !important;
+    text-overflow: clip !important;
     width: 100%;
-    margin: 0 0 8px !important;
-    padding: 3px 0 !important;
     overflow: visible !important;
 }
 
 .autopagerize_page_info {
+    margin: 0 !important;
+    padding: 0 7px 2px !important;
     font-size: 14px !important;
+    line-height: 14px !important;;
     background: #fff none repeat scroll 0% 0% !important;
     background-clip: border-box !important;
     background-origin: padding-box !important;
     background-size: auto !important;
-    margin: 0 !important;
-    padding: 0 7px 2px !important;
 }
 
 /*
@@ -58,8 +64,8 @@
     bottom: 0 !important;
     color: rgba(0,0,0,0) !important;
     position: fixed !important;
-    left: 0 !important;
-    text-align: left;
+    right: 0 !important;
+    text-align: right;
     width: 60px;
     z-index: 10000 !important;
 }
@@ -90,7 +96,7 @@
     height: 20px !important;
     width: 60px !important;
     bottom: 0 !important;
-    left: 0 !important;
+    right: 0 !important;
     background-color: transparent !important;
 }
 

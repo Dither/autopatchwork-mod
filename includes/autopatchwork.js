@@ -110,8 +110,8 @@
         service: false
     };
 
-    if(~window.navigator.userAgent.indexOf('Chrome')) browser = BROWSER_CHROME;
-    else if(~window.navigator.userAgent.indexOf('Apple')) browser = BROWSER_SAFARI;
+    if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
+    else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
     else browser = BROWSER_OPERA;
 
     function APWException(message) {
@@ -192,8 +192,8 @@
     switch (browser) {
         case BROWSER_CHROME:
             sendRequest = function (data, callback) {
-                if (callback) chrome.extension.sendRequest(data, callback);
-                else chrome.extension.sendRequest(data);
+                if (callback) chrome.runtime.sendMessage(data, callback);
+                else chrome.runtime.sendMessage(data);
             };
             break;
         case BROWSER_SAFARI:
