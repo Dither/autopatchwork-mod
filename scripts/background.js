@@ -47,11 +47,11 @@ var H = location.href.replace('index.html', '');
 window.AutoPatchWorkBG = {
     state: true,
     css: '',
-    custompatterns: [],
+    custom_patterns: [],
     config: {
         auto_start: true,
         target_blank: true,
-        remain_height: 500,
+        remaining_height: 500,
         disable_iframe: false,
         change_address: false,
         debug_mode: false,
@@ -67,7 +67,7 @@ window.AutoPatchWorkBG = {
         initDatabase();
     },
     reset_custom_patterns: function() {
-        AutoPatchWorkBG.custompatterns = [];
+        AutoPatchWorkBG.custom_patterns = [];
         storagebase.AutoPatchWorkPatterns = '';
     },
     init_css: function(css) {
@@ -164,14 +164,14 @@ function applyCustomFields(info) {
 
 function initDatabase() {
     if (storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
-    if (storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custompatterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
-    try {    // Sometimes the DB gets corrupted when incorrectly exiting Opera
+    if (storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custom_patterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+    try {
         if(!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
         var data = Store.get('siteinfo_wedata');
         siteinfo = data.siteinfo;
         timestamp = new Date(data.timestamp);
         applyCustomFields();
-        siteinfo = AutoPatchWorkBG.custompatterns.concat(siteinfo);
+        siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
     } catch (bug) {
         downloadDatabase();
     }
@@ -217,7 +217,7 @@ function createDatabase(info) {
             timestamp: timestamp.toLocaleString()
         },{ day: 60 });
     applyCustomFields();
-    siteinfo = AutoPatchWorkBG.custompatterns.concat(siteinfo);
+    siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
 }
 
 function downloadDatabase(callback, error_back) {
@@ -427,7 +427,10 @@ function handleMessage(request, sender, sendResponse) {
     for(var i = 0, len = siteinfo.length, s; i < len; i++) {
         s = siteinfo[i];
         try {
-            if(!s.disabled && (new RegExp(siteinfo[i].url)).test(url)) infos.push(siteinfo[i]);
+            if(!s.disabled && (new RegExp(siteinfo[i].url)).test(url)) {
+                delete s.length;
+                infos.push(s);
+            }
         } catch (bug) { log((bug.message || bug) + ' ' + siteinfo[i].url); }
     }
 
@@ -465,7 +468,7 @@ function openOrFocusTab(uri) {
             })) { safari.application.activeBrowserWindow.openTab().url = H + uri; }
             break;
         case BROWSER_OPERA:
-            opera.extension.tabs.create({ url: uri, focused: true }); // Yay for Opera! ^_^
+            opera.extension.tabs.create({ url: uri, focused: true });
             break;
     }
 }

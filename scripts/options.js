@@ -83,59 +83,8 @@ document.addEventListener('DOMContentLoaded',function(){
         case BROWSER_OPERA:
             bgProcess = opera.extension.bgProcess;
             if (typeof bgProcess == 'object') AutoPatchWork = bgProcess.AutoPatchWorkBG;
-            else {
-            /*if(!opt) {
-                opera.extension.onmessage = function(evt) {
-                    if(evt.data.name === 'option_init') {
-                        option_init(evt.data.data);
-                    } else if(evt.data.name === 'updated_siteinfo') {
-                        bgProcess.callback();
-                    }
-                };
-                opera.extension.postMessage({ name: 'option_init' });
-                return;
-            } else {
-                AutoPatchWork = opt;
-                ['init_css', 'save_custom_patterns', 'reset_custom_patterns', 'add_disabled_site', 'delete_disabled_site'].forEach(function(action) {
-                    AutoPatchWork[action] = function() {
-                        opera.extension.postMessage({
-                            name: 'invoke_action',
-                            data: {
-                                action: action,
-                                args: Array.prototype.slice.call(arguments)
-                            }
-                        });
-                    };
-                });
-                AutoPatchWork.update = function() {
-                    opera.extension.postMessage({
-                        name: 'invoke_action',
-                        data: {
-                            action: 'update',
-                            config: AutoPatchWork.config
-                        }
-                    });
-                };
-                AutoPatchWork.save_disabled_site = function() {
-                    opera.extension.postMessage({
-                        name: 'invoke_action',
-                        data: {
-                            action: 'save_disabled_site',
-                            disabled_sites: AutoPatchWork.disabled_sites
-                        }
-                    });
-                };
-                bgProcess = {
-                    downloadDatabase: function(callback) {
-                        bgProcess.callback = callback;
-                        opera.extension.postMessage({
-                            name: 'invoke_action',
-                            data: { action: 'download_database' }
-                        });
-                    }
-                };
-            }*/
-            }
+            else
+                throw new APWException('Browser version is too old.');
             break;
         default:
     }

@@ -20,7 +20,7 @@
   "noiframe":{
     "message":"Disable extension in frames"
   },
-  "remain_height":{
+  "remaining_height":{
     "message":"Scroll height before next page"
   },
   "debugmode":{

@@ -20,7 +20,7 @@
   "noiframe":{
     "message":"フレーム内では起動させない"
   },
-  "remain_height":{
+  "remaining_height":{
     "message":"読み込みを開始する位置"
   },
   "debugmode":{

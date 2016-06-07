@@ -61,11 +61,12 @@
     };
 
     var browser, checksum = new FastCRC32, debug = false, dump_request = false,
-        BROWSER_CHROME = 1,
-        BROWSER_SAFARI = 2,
-        BROWSER_OPERA = 3;
+          BROWSER_CHROME = 1,
+          BROWSER_SAFARI = 2,
+          BROWSER_OPERA = 3;
+
     var options = {
-        BASE_REMAIN_HEIGHT: 1000,
+        BASE_REMAINING_HEIGHT: 1000,
         BASE_INTERPAGE_DELAY: 500,
         FORCE_TARGET_WINDOW: true,
         DEFAULT_STATE: true,
@@ -74,9 +75,9 @@
         INSERT_ACCELERATION: false,
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
-        PAGES_TO_KEEP: 3,
-        apw_css: ''
+        APW_CSS: ''
     };
+
     var status = {
         state: true,
         loading: false,
@@ -105,8 +106,9 @@
         content_last: null,
         content_parent: null,
         bottom: null,
-        remain_height: null,
+        remaining_height: null,
         accelerate: false,
+        parse_images: false,
         service: false
     };
 
@@ -124,10 +126,10 @@
      * */
     function log() {
         if (!debug) return;
-        if (browser === BROWSER_OPERA) {
-            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-        } else if (window.console) {
+        if (window.console) {
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
+        } else if (browser === BROWSER_OPERA) {
+            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
 
@@ -144,8 +146,8 @@
     }
 
     /**
-     * Checks variable and explictly converts string to corresponding boolean.
-     * Possible data values are: undefined, null, unknown text or number (treated as false here),
+     * Checks variable and explictly converts string to the corresponding boolean.
+     * Possible data values are: undefined, null, unknown text or a number (treated as false here except 1),
      *                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
      * @param {Boolean|String|Number|undefined|null} s Data to check.
      * @return {Boolean} Boolean result.
@@ -233,7 +235,7 @@
     } // switch(browser)
 
     var bar, img, matched_siteinfo,
-        rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
+          rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
     document.apwpagenumber = 1;
 
     // Begin listening for init messages and request configuration if got one
@@ -278,13 +280,13 @@
         matched_siteinfo = info.siteinfo;
         if (info.config) {
             options.CRC_CHECKING =  info.config.check_crc;
-            options.BASE_REMAIN_HEIGHT = info.config.remain_height;
+            options.BASE_REMAINING_HEIGHT = info.config.remaining_height;
             options.DEFAULT_STATE = info.config.auto_start;
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
             options.CHANGE_ADDRESS = info.config.change_address;
             options.BAR_STATUS = info.config.bar_status;
             options.INSERT_ACCELERATION = info.config.enable_acceleration,
-            options.apw_css = info.css;
+            options.APW_CSS = info.css;
             debug = info.config.debug_mode;
         }
         if (!info.siteinfo || !info.siteinfo.length) return dispatch_event('AutoPatchWork.ready');
@@ -416,16 +418,6 @@
             return log('Page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.');
         }
 
-        if (history.replaceState && !/google/.test(location.host)) {
-            var _createHTML = createHTML;
-            createHTML = function createHTML_history() {
-                var current = location.href;
-                if (state.nextURL) history.replaceState('', '', state.nextURL);
-                var doc = _createHTML.apply(this, arguments);
-                if (state.nextURL) history.replaceState('', '', current);
-                return doc;
-            };
-        }
         // Individual site fixes.
         // DON'T MODIFY! Use external scripts API to handle them instead.
         if (/^https?:\/\/(www|images)\.google\.(?:[^.]+\.)?[^.\/]+\/images\?./.test(location.href)) {
@@ -489,7 +481,7 @@
                     status.content_parent = status.last_element.parentNode;
                 }
             } else {
-                status.content_last = status.last_element.nextSibling; // will this fail if there are no elements after last... like </last></parent>
+                status.content_last = status.last_element.nextSibling; // null if there are no elements after
                 status.content_parent = status.last_element.parentNode;
             }
         }
@@ -501,7 +493,7 @@
             session_object = {};
 
         requested_urls[location.href] = true;
-        status.remain_height || (status.remain_height = calc_remaining_height());
+        status.remaining_height || (status.remaining_height = calc_remaining_height());
 
         window.addEventListener('scroll', on_scroll, false);
         window.addEventListener('resize', on_scroll, false);
@@ -562,17 +554,13 @@
             status.bar = bar;
         }
 
-        add_css(options.apw_css);
+        add_css(options.APW_CSS);
         if (status.css_patch) add_css(status.css_patch);
         verify_scroll();
 
         // Replace all target attributes to user defined on all appended pages.
         if (options.FORCE_TARGET_WINDOW) {
             document.addEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
-        } else {
-            document.addEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
-            restoreText();
-            window.addEventListener('beforeunload', savePosition, false);
         }
 
         // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
@@ -608,8 +596,6 @@
             document.removeEventListener('AutoPatchWork.append', append, false);
             document.removeEventListener('AutoPatchWork.error', error_event, false);
             document.removeEventListener('AutoPatchWork.reset', reset, false);
-            document.removeEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
-            document.removeEventListener('AutoPatchWork.DOMNodeInserted', restore_setup, false);
             document.removeEventListener('AutoPatchWork.state', state, false);
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
             window.removeEventListener('beforeunload', savePosition, false);
@@ -766,7 +752,7 @@
                     dispatch_event('AutoPatchWork.terminated', { message: 'can\'t find next page button' });
                 }
                 if (elem) { // && status.busy_string && !~elem.innerHTML.indexOf(status.busy_string)) {
-                    if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
+                    if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remaining_height) {
                         status.loading = true;
                         elem.click();
                         // should timeout be a variable depending on page loading speed or as SITEINFO field?
@@ -778,7 +764,7 @@
                 return;
             }
 
-            if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remain_height) {
+            if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remaining_height) {
                 if (bar) bar.className = 'autopager_loading';
                 status.loading = true;
                 dispatch_event('AutoPatchWork.request', {link: next});
@@ -800,67 +786,7 @@
                 }
             }
         }
-        /**
-         * Restore event handler. Restores onclick methods.
-         * @param {Event} event Event data.
-         * */
-        function restore_setup(event) {
-            if (event && event.target) {
-                var target = event.target;
-                target.addEventListener('click', function (evt) {
-                    var _target = evt.target;
-                    do {
-                        if (_target.href) {
-                            sessionStorage['AutoPatchWork.restore.' + location_href] = 1;
-                            break;
-                        } else if (target === _target) {
-                            break;
-                        }
-                        _target = _target.parentNode;
-                    } while (_target);
-                }, false);
-            }
-        }
-        /* Saves current scroll position. */
-        function savePosition() {
-            sessionStorage['AutoPatchWork.scroll.' + location_href] = window.pageYOffset;
-        }
-        /* Restores current scroll position. */
-        function restorePosition() {
-            window.scrollTo(window.pageXOffset, parseInt(sessionStorage['AutoPatchWork.scroll.' + location_href], 10));
-        }
-        /* Checks if we can restore onclick methods. */
-        function check_restore() {
-            return !!sessionStorage['AutoPatchWork.restore.' + location_href];
-        }
-        /**
-         * Saves text in a given context.
-         * @param {String} url Pages URL.
-         * @param {String} page Target page.
-         * @param {String} text Text to be saved.
-         * */
-        function saveText(url, page, text) {
-            session_object[page] = { page: page, text: text };
-            sessionStorage['AutoPatchWork.text.' + location_href] = JSON.stringify(session_object);
-        }
-        /* Restores text in a given context and clears buffers. */
-        function restoreText() {
-            if (check_restore()) {
-                var cache_str = sessionStorage['AutoPatchWork.text.' + location_href];
-                if (cache_str) {
-                    var cache = JSON.parse(cache_str);
-                    Object.keys(cache).forEach(function (num) {
-                        var page = cache[num];
-                        dispatch_event('AutoPatchWork.load', { response: {responseText: page.text}, url: page.url });
-                    });
-                    restorePosition();
-                }
-            } else {
-                delete sessionStorage['AutoPatchWork.text.' + location_href];
-                delete sessionStorage['AutoPatchWork.scroll.' + location_href];
-            }
-            delete sessionStorage['AutoPatchWork.restore.' + location_href];
-        }
+
         /* Sets statusbar to ready state. */
         function state_on() {
             status.state = true;
@@ -875,10 +801,12 @@
         /* Requests next page via XMLHttpRequest method. */
         function request(event) {
             status.loading = true;
-            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
-
+             // in service == true mode we just use request event as corresponding scroll detection for external script
             if (status.service) return;
+
+            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
             //log('requesting ' + url);
+            // in norequest == true mode we just return empty html on each reuest, external script should fill that
             if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title></title></head><body></body></html>', url),
@@ -928,9 +856,11 @@
         /* Requests next page via IFRAME-load method. */
         function request_iframe(event) {
             status.loading = true;
-            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
 
             if (status.service) return;
+
+            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
+
             if (event.detail && event.detail.norequest) {
                 return dispatch_event('AutoPatchWork.load', {
                     htmlDoc: createHTML('<!DOCTYPE html><html><head><meta charset="utf-8"><title>autopatchwork</title></head><body></body></html>', url),
@@ -1023,8 +953,6 @@
             htmlDoc = event.detail.htmlDoc;
             delete event.detail.htmlDoc;
 
-            if (!options.FORCE_TARGET_WINDOW && loaded_url)
-                saveText(loaded_url, document.apwpagenumber, htmlDoc.outerHTML || htmlDoc.documentElement.outerHTML);
             dispatch_event('AutoPatchWork.append');
         }
         /**
@@ -1036,19 +964,26 @@
             history.replaceState('', '', to_url);
         }
         /**
+         * Returns max scrollheight of a document.
+         * */
+        function document_height() {
+            return Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+        }
+        /**
          * Event handler for appending new pages.
          * @param {Event} event Event data.
          * */
         function append(event) {
             if (!status.loading || !htmlDoc) return;
 
-            var inserted_node, i, tmp_title,
+            var inserted_node, i, j, tmp_title,
                 content_last = status.content_last,
                 content_parent = status.content_parent,
                 change_location = status.change_address;
 
             status.page_number++;
             document.apwpagenumber++;
+
             next = get_next_link(htmlDoc);
 
             // filter elements
@@ -1071,10 +1006,32 @@
 
             // filter scripts
             if (!status.scripts_allowed) {
-                for (var i = 0, st = htmlDoc.querySelectorAll('script'); i < st.length; i++)
-                    if (st[i].parentNode)
-                        st[i].parentNode.removeChild(st[i]);
-            } 
+               for (i = 0, st = htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
+                   if (st[i].parentNode)
+                       st[i].parentNode.removeChild(st[i]);
+            }
+
+            // Replace lazyloading src's to normal and make image paths absolute.
+            // As I didn't encounter lot of sites that need this so the code will be disabled for now
+            // better solution would be using per-site js patches.
+            function parse_images(node) {
+                if (!status.parse_images) return;
+                for (i = 0, img = node.querySelectorAll('img'), len = img.length; i < len; i++) {
+                   for (j = 0, atts = img[i].attributes, n = atts.length, match = null; j < n; j++) {
+                       if (~atts[j].localName.indexOf('data-')) {
+                           match = atts[j].textContent.match(/\.(?:jpe?g|a?png|gif|svg)/g);
+                           if (match && match.length === 1) { // in case of image list variable we ignore it
+                               img[i].src = atts[j].textContent;
+                               break;
+                           }
+                       }
+                   }
+
+                   if (img.src && !img.src.match(/(^https?:\/\/|^data:|^\/)/)) {
+                       img[i].src = next.protocol + '//' + next.hostname + (next.pathname === '/' ? next.pathname + '/' : next.pathname) + img[i].src.replace(/^\//, '');
+                   }
+                }
+            }/**/
 
             var nodes = get_main_content(htmlDoc),
                 title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
@@ -1086,7 +1043,7 @@
 
             // we can't check for repeating nodes in the same document because
             // they can have some function also can't check responseText (earlier) as there
-            // is a higher probability of non-paging content changes like random ad names
+            // is a higher probability of non-paging content changes like random ad id's
             if (options.CRC_CHECKING && nodes.length === 1) {
                 var inserted_node_crc = checksum.crc(nodes[0].outerHTML);
                 if (!loaded_crcs[inserted_node_crc]) loaded_crcs[inserted_node_crc] = true;
@@ -1098,14 +1055,13 @@
                 var root, node;
                 if (/^tbody$/i.test(content_parent.localName)) {
                     var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', content_parent, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                    var colums = 0;
-                    for (i = 0, l = colNodes.snapshotLength; i < l; i++) {
-                        var col = colNodes.snapshotItem(i).getAttribute('colspan');
-                        colums += parseInt(col, 10) || 1;
+                    var columns = 0;
+                    for (var i = 0, l = colNodes.snapshotLength; i < l; i++) {
+                        columns += (parseInt(colNodes.snapshotItem(i).getAttribute('colspan'), 10) || 1);
                     }
                     node = document.createElement('td');
                     root = document.createElement('tr');
-                    node.setAttribute('colspan', colums);
+                    node.setAttribute('colspan', columns);
                     root.appendChild(node);
                 } else if (/^(?:ol|ul)$/i.test(content_parent.localName)) {
                     root = node = document.createElement('li');
@@ -1132,10 +1088,10 @@
                 content_parent.insertBefore(root, content_last);
             }
 
+            var height = document_height();
             if (status.accelerate && nodes.length > 2) {
                 var fragment = document.createDocumentFragment();
-                // Merge nodes to fragment to avoid slowdowns but drop AutoPatchWork.DOMNodeInserted support
-                for (var i = 0, len = nodes.length; i < len; i++) {
+                for (i = 0, len = nodes.length; i < len; i++) {
                     inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
 
                     if (status.scripts_allowed) run_node_scripts(inserted_node);
@@ -1144,27 +1100,31 @@
                         inserted_node['data-apw-url'] = loaded_url;
                         if (i === 0) {
                             inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
-                            if (change_location)
+                            if (change_location && status.separator_disabled)
                                 inserted_node.setAttribute('data-apw-offview', 'true');
                         }
                     }
                 }
-                inserted_node = content_parent.insertBefore(document.importNode(fragment, true), content_last);
-
-                dispatch_mutation_event({
-                    targetNode: inserted_node,
-                    eventName: 'AutoPatchWork.DOMNodeInserted',
-                    bubbles: true,
-                    cancelable: false,
-                    relatedNode: content_parent,
-                    prevValue: null,
-                    newValue: loaded_url,
-                    attrName: 'url',
-                    attrChange: 2 // MutationEvent.ADDITION
-                });
+                var last_prev = (content_last && content_last.previousSibling) ? content_last.previousSibling : content_parent.lastChild;
+                content_parent.insertBefore(document.importNode(fragment, true), content_last);
+                for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
+                    if (n === content_last) break;
+                    parse_images(n);
+                    if (n.nodeType === 1) dispatch_mutation_event({
+                        targetNode: n,
+                        eventName: 'AutoPatchWork.DOMNodeInserted',
+                        bubbles: true,
+                        cancelable: false,
+                        relatedNode: content_parent,
+                        prevValue: null,
+                        newValue: loaded_url,
+                        attrName: 'url',
+                        attrChange: 2 // MutationEvent.ADDITION
+                    });
+                }
             } else {
                 // Adding nodes and firing node change event on each of them
-                for (var i = 0, len = nodes.length; i < len; i++) {
+                for (i = 0, len = nodes.length; i < len; i++) {
                     inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
                     if (status.scripts_allowed) run_node_scripts(inserted_node);
                     if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
@@ -1176,7 +1136,7 @@
                                 inserted_node.setAttribute('data-apw-offview', 'true');
                         }
                     }
-
+                    parse_images(inserted_node);
                     dispatch_mutation_event({
                         targetNode: inserted_node,
                         eventName: 'AutoPatchWork.DOMNodeInserted',
@@ -1190,6 +1150,9 @@
                     });
                 };
             }
+
+            if (height === document_height()) 
+                return dispatch_event('AutoPatchWork.terminated', { message: 'new page has zero height' });
 
             nodes = null;
 
@@ -1334,7 +1297,7 @@
             if (!bottom) {
                 bottom = Math.round(rootNode.scrollHeight * 0.8);
             }
-            return rootNode.scrollHeight - bottom + options.BASE_REMAIN_HEIGHT;
+            return rootNode.scrollHeight - bottom + options.BASE_REMAINING_HEIGHT;
         }
     }
 })(this, window.XPathResult, window.XMLHttpRequest, window.Node, window.history, window.location, window.sessionStorage);

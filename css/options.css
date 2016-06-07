@@ -62,7 +62,7 @@ ul, li, section, div, button{
     overflow: hidden;
     padding: 0 10px;
     text-align: center;
-    width: 720px;
+    width: 700px;
 }
 
 .tabbox .tabs li {
@@ -396,12 +396,12 @@ input[type="range"]{
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Управление SITEINFO'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
-.MSG_check_crc:lang(ru) {content: 'Проверять CRC страниц на повторы (потеря совместимости)'}
-.MSG_enable_acceleration:lang(ru) {content: 'Включить ускорение вставки (потеря совместимости)'}
+.MSG_check_crc:lang(ru) {content: 'Проверять CRC страниц на повторы'}
+.MSG_enable_acceleration:lang(ru) {content: 'Включить ускорение вставки страниц'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
 .MSG_change_address:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
-.MSG_bottom_bar:lang(ru) {content: 'Включить статусбар (может подтормаживать)'}
-.MSG_remain_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
+.MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
+.MSG_remaining_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
 .MSG_exclude_filter:lang(ru) {content: 'Исключение сайтов по фильтру:'}
 /*
@@ -438,7 +438,7 @@ input[type="range"]{
 .MSG_noiframe:lang(ja) {content: 'フレーム内では起動させない'}
 .MSG_change_address:lang(ja) {content: '継ぎ足しした時、URL を継ぎ足した URL で置き換える'}
 .MSG_bottom_bar:lang(ja) {content: 'ページ下部にステータスを表示'}
-.MSG_remain_height:lang(ja) {content: '読み込みを開始する位置:'}
+.MSG_remaining_height:lang(ja) {content: '読み込みを開始する位置:'}
 .MSG_debugmode:lang(ja) {content: 'デバッグモード'}
 .MSG_exclude_filter:lang(ja) {content: '特定URLを除外するためのルール:'}
 /*
