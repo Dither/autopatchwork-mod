@@ -81,7 +81,6 @@
     var status = {
         state: true,
         loading: false,
-        ajax_enabled: false,
         scripts_allowed: false,
         separator_disabled: false,
         use_iframe_req: false,
@@ -98,7 +97,6 @@
         remove_elem_selector: null,
         button_elem: null,
         button_elem_selector: null,
-        retry_count: 1,
         load_delay: 500,
         load_count: 0,
         load_start_time: 0,
@@ -109,7 +107,8 @@
         remaining_height: null,
         accelerate: false,
         parse_images: false,
-        service: false
+        service: false,
+        id: -1
     };
 
     if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
@@ -343,6 +342,8 @@
             }
         }
 
+        status.id = parseInt(siteinfo['wedata.net.id'], 10) || -1;
+
         status.page_elem = siteinfo.pageElement || null;
         status.page_elem_selector = siteinfo.pageElementSelector || null;
 
@@ -530,20 +531,24 @@
                 bar.appendChild(manager);
                 bar.onmouseover = null;
             };
+
             /* Toggles status bar ready state. */
             var _toggle = function() {
                 if (bar.className === 'autopager_on') {
-                    bar.className = 'autopager_off';
                     state_off();
+                    sendRequest({ pause: 'on', id: status.id });
                 } else if (bar.className === 'autopager_off') {
-                    bar.className = 'autopager_on';
                     state_on();
+                    verify_scroll();
+                    sendRequest({ pause: 'off', id: status.id});
                 }
             }
             img = document.createElement('img');
             img.id = 'autopatchwork_loader';
             img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" width="60" height="32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
             bar.appendChild(img);
+
+            if (typeof siteinfo.pause !== 'undefined' &&  siteinfo.pause) state_off();
 
             document.body.appendChild(bar);
             bar.addEventListener('click', function (e) {

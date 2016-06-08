@@ -404,6 +404,26 @@ function handleMessage(request, sender, sendResponse) {
         storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
         return;
     }
+
+    if(request.pause) {
+        var len = siteinfo.length;
+        if (typeof request.id === 'number' && request.id !== -1){
+            if (request.pause === 'off') {
+                for (var i = 0; i < len; i++)
+                    if (siteinfo[i]['wedata.net.id']  === request.id) {
+                        siteinfo[i].pause = false;
+                        break;
+                    }
+            } else if (request.pause === 'on') {
+                for (var i = 0; i < len; i++)
+                    if (siteinfo[i]['wedata.net.id']  === request.id) {
+                        siteinfo[i].pause = true;
+                        break;
+                    }
+            }
+        }
+        return;
+    }
     
     if(request.manage) {
         if (request.hash) openOrFocusTab('siteinfo_manager.html#siteinfo_search_input='+request.hash);
