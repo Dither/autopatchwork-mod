@@ -71,8 +71,8 @@
 }
 
 #autopatchwork_bar.autopager_off{
-    border-bottom: 2px solid rgba(128, 128, 128, 0.1) !important;
-    border-top: 2px solid rgba(128, 128, 128, 0.1) !important;
+    border-bottom: 2px solid rgba(255, 255, 0, 0.4) !important;
+    border-top: 2px solid rgba(255, 255, 0, 0.4) !important;
     margin-top: 9px;
 }
 

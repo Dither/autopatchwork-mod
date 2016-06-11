@@ -323,11 +323,10 @@ var RECORDS_PER_PAGE = 100,
             stop_pager = false;
             dispatch_event('AutoPatchWork.request');
         }
-        var timer_id;
+
         siteinfo_search_input.addEventListener('input', function() {
-            clearTimeout(timer_id);
             stop_pager = true;
-            timer_id = setTimeout(process_search_input, 300);
+            process_search_input();
             //debug && log('view completed in ' + (new Date - v) + 'ms');
         }, false);
 

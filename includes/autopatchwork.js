@@ -1046,9 +1046,8 @@
                 return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.' });
             }
 
-            // we can't check for repeating nodes in the same document because
-            // they can have some function also can't check responseText (earlier) as there
-            // is a higher probability of non-paging content changes like random ad id's
+            // We can't check for repeating nodes in the same document because they can have some function 
+            // also can't check responseText (earlier) as there is a higher probability of non-paging content changes like random ad id's
             if (options.CRC_CHECKING && nodes.length === 1) {
                 var inserted_node_crc = checksum.crc(nodes[0].outerHTML);
                 if (!loaded_crcs[inserted_node_crc]) loaded_crcs[inserted_node_crc] = true;
@@ -1093,7 +1092,7 @@
                 content_parent.insertBefore(root, content_last);
             }
 
-            var height = document_height();
+            //var height = document_height();
             if (status.accelerate && nodes.length > 2) {
                 var fragment = document.createDocumentFragment();
                 for (i = 0, len = nodes.length; i < len; i++) {
@@ -1114,7 +1113,7 @@
                 content_parent.insertBefore(document.importNode(fragment, true), content_last);
                 for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
                     if (n === content_last) break;
-                    parse_images(n);
+                    //parse_images(n);
                     if (n.nodeType === 1) dispatch_mutation_event({
                         targetNode: n,
                         eventName: 'AutoPatchWork.DOMNodeInserted',
@@ -1141,7 +1140,7 @@
                                 inserted_node.setAttribute('data-apw-offview', 'true');
                         }
                     }
-                    parse_images(inserted_node);
+                    //parse_images(inserted_node);
                     dispatch_mutation_event({
                         targetNode: inserted_node,
                         eventName: 'AutoPatchWork.DOMNodeInserted',
@@ -1156,8 +1155,10 @@
                 };
             }
 
-            if (height === document_height()) 
-                return dispatch_event('AutoPatchWork.terminated', { message: 'new page has zero height' });
+            // This is bugged because if page has only one big image (with no direct dimensions mentioned in either style or height attribute) 
+            // and it's not yet loaded it'll be 0 in both scroll and client heights when the check is performed. So either this be disabled or optional.
+            //if (height === document_height())
+            //    return dispatch_event('AutoPatchWork.terminated', { message: 'new page has zero height' });
 
             nodes = null;
 

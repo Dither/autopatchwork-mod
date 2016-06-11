@@ -406,20 +406,19 @@ function handleMessage(request, sender, sendResponse) {
     }
 
     if(request.pause) {
-        var len = siteinfo.length;
-        if (typeof request.id === 'number' && request.id !== -1){
+        if (typeof request.id === 'number' && request.id !== -1) {
+            var len = siteinfo.length;
+            function set_pause (id, val) {
+                for (var i = 0; i < len; i++)
+                    if (siteinfo[i]['wedata.net.id']  === id) {
+                        siteinfo[i].pause = val;
+                        break;
+                    }
+            }
             if (request.pause === 'off') {
-                for (var i = 0; i < len; i++)
-                    if (siteinfo[i]['wedata.net.id']  === request.id) {
-                        siteinfo[i].pause = false;
-                        break;
-                    }
+                set_pause(request.id, false);
             } else if (request.pause === 'on') {
-                for (var i = 0; i < len; i++)
-                    if (siteinfo[i]['wedata.net.id']  === request.id) {
-                        siteinfo[i].pause = true;
-                        break;
-                    }
+                set_pause(request.id, true);
             }
         }
         return;
