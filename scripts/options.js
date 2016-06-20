@@ -162,6 +162,30 @@ document.addEventListener('DOMContentLoaded',function(){
         reload_db.disabled = false;
     }, false);
 
+    document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN;
+    var update_wedata_location = document.getElementById('update_wedata_location');
+    update_wedata_location.addEventListener('click', function(e) {
+        update_wedata_location.disabled = true;
+        var loc = document.getElementById('db_location').value;
+        if (loc && loc.length > 10 && loc !== bgProcess.JSON_SITEINFO_DB_MIN && /^https?:\/\/.+\.json.*/i.test(loc)) {
+            if (bgProcess.checkExists(loc))
+                bgProcess.updateMiniDatabaseURL(loc);
+        }
+        update_wedata_location.disabled = false;
+    }, false);
+
+    document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB;
+    var update_wedata_full_location = document.getElementById('update_wedata_full_location');
+    update_wedata_full_location.addEventListener('click', function(e) {
+        update_wedata_full_location.disabled = true;
+        var loc = document.getElementById('full_db_location').value;
+        if (loc && loc.length > 10 && loc !== bgProcess.JSON_SITEINFO_DB && /^https?:\/\/.+\.json.*/i.test(loc)) {
+            if (bgProcess.checkExists(loc))
+                bgProcess.updateFullDatabaseURL(loc);
+        }
+        update_wedata_full_location.disabled = false;
+    }, false);
+
     $X('//input[@type="radio"]').forEach(function(box) {
         var id = box.id;
         var name = box.name;

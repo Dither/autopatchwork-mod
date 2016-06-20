@@ -7,21 +7,22 @@ Object.keys || (Object.keys = function(k) {
 
 var self = this;
 var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, 
-custom_info = {
-    "400":{"disabled":true,"length":1},
-    "430":{"disabled":true,"length":1},
-    "447":{"disabled":true,"length":1},
-    "649":{"disabled":true,"length":1},
-    "27331":{"disabled":true,"length":1},
-    "27333":{"disabled":true,"length":1},
-    "39059":{"disabled":true,"length":1},
-    "41434":{"disabled":true,"length":1},
-    "55771":{"disabled":true,"length":1},
-    "65332":{"disabled":true,"length":1},
-    "74668":{"disabled":true,"length":1}
-}; /*{}; /* Disable overzealous formats. Re-enable them manually on your own risk. */
-var JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
-var MICROFORMATs = [];/*[{
+    custom_info = {
+        "400":{"disabled":true,"length":1},
+        "430":{"disabled":true,"length":1},
+        "447":{"disabled":true,"length":1},
+        "649":{"disabled":true,"length":1},
+        "27331":{"disabled":true,"length":1},
+        "27333":{"disabled":true,"length":1},
+        "39059":{"disabled":true,"length":1},
+        "41434":{"disabled":true,"length":1},
+        "55771":{"disabled":true,"length":1},
+        "65332":{"disabled":true,"length":1},
+        "74668":{"disabled":true,"length":1}
+    }, /*{}; /* Disable overzealous formats. Re-enable them manually on your own risk. */
+    JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json',
+    JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
+const MICROFORMATs = [];/*[{
     MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//a[@rel="next"] | //link[@rel="next"]',
@@ -177,7 +178,26 @@ function applyCustomFields(info) {
     });
 }
 
+function checkExists(url) {
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status != 404;
+}
+
+function updateMiniDatabaseURL(url) {
+    storagebase.db_location = url;
+    JSON_SITEINFO_DB_MIN = url;
+}
+
+function updateFullDatabaseURL(url) {
+    storagebase.db_full_location = url;
+    JSON_SITEINFO_DB = url;
+}
+
 function initDatabase() {
+    if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
+    if (storagebase.db_full_location) JSON_SITEINFO_DB = storagebase.db_full_location;
     if (storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
     if (storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custom_patterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
     try {
@@ -193,11 +213,11 @@ function initDatabase() {
 }
 
 function createDatabase(info) {
-    var tmp_log = 'There were following parsing errors in wedata DB:\n', keys = ['nextLink', 'pageElement', 'url', 'insertBefore'];
+    var tmp_log = 'There were following errors in SITEINFO DB:\n', keys = ['nextLink', 'pageElement', 'url', 'insertBefore'];
     siteinfo = [];
     info.forEach(function(i) {
         var d = i.data || i, r = {};
-        if (0 && d && typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) { //TODO: the DB is already Stylish-filtered
+        if (0 && d && typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) { // check CSSes
             var t = d['Stylish'];
             t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
             t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
@@ -272,6 +292,8 @@ function resetSettings() {
     if ((typeof storagebase === 'undefined') && (typeof storagebase.setItem !== 'function')) {
         return setTimeout(function() { resetSettings(); }, 200);
     }
+    storagebase.removeItem('db_location');
+    storagebase.removeItem('db_full_location');
     storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
     storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
     storagebase.site_stats = JSON.stringify(site_stats);

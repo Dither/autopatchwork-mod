@@ -7,6 +7,8 @@
   <author href="https://dithersky.wordpress.com">Dither, os0x (original version)</author>
   <icon src="icons/icon-64.png" />
   <access origin="http://ss-o.net" subdomains="true" />
+  <access origin="http://wedata.net" subdomains="true" />
+  <access origin="https://githubusercontent.com" subdomains="true" />
   <preference name="AutoPatchWorkCSS" value="" />
   <preference name="AutoPatchWorkConfig" value="" />
   <preference name="AutoPatchWorkPatterns" value="" />

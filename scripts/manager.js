@@ -108,15 +108,7 @@ var RECORDS_PER_PAGE = 100,
             safari.self.addEventListener('message', function(evt) { siteinfo_manager(evt.message); }, false);
             return;
         case BROWSER_OPERA:
-            if (bgProcess) break;
-            //console.log(self.opera);
-            opera.extension.onmessage = function(evt) {
-                if(evt && evt.data) {
-                    siteinfo_manager(evt.data.data);
-                }
-            };
-            opera.extension.postMessage({ name: 'siteinfo_init' });
-            return;
+            bgProcess = bgProcess || opera.extension.bgProcess;
         case BROWSER_CHROME:
             bgProcess = bgProcess || chrome.extension.getBackgroundPage();
     }
@@ -125,6 +117,7 @@ var RECORDS_PER_PAGE = 100,
         throw new APWException('Can\'t fing background process!');
     }
     
+    JSON_SITEINFO_DB = bgProcess.JSON_SITEINFO_DB || JSON_SITEINFO_DB;
     var getWedataId = bgProcess.getWedataId || // WTF???
                         function getWedataId(inf) {
                             return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
