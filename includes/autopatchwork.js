@@ -69,6 +69,9 @@
         BASE_REMAINING_HEIGHT: 1000,
         BASE_INTERPAGE_DELAY: 500,
         FORCE_TARGET_WINDOW: true,
+        FORCE_ABSOLUTE_HREFS: true,
+        FORCE_ABSOLUTE_IMG_SRCS: false,
+        TRY_CORRECT_LAZY: false,
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
         CRC_CHECKING: false,
@@ -106,7 +109,6 @@
         bottom: null,
         remaining_height: null,
         accelerate: false,
-        parse_images: false,
         service: false,
         id: -1
     };
@@ -278,6 +280,8 @@
         if (typeof info == 'undefined') return dispatch_event('AutoPatchWork.ready');
         matched_siteinfo = info.siteinfo;
         if (info.config) {
+            options.FORCE_ABSOLUTE_HREFS =  info.config.force_abs_hrefs;
+            options.FORCE_ABSOLUTE_IMG_SRCS =  info.config.force_abs_srcs;
             options.CRC_CHECKING =  info.config.check_crc;
             options.BASE_REMAINING_HEIGHT = info.config.remaining_height;
             options.DEFAULT_STATE = info.config.auto_start;
@@ -316,7 +320,7 @@
     function AutoPatchWork(siteinfo) {
         if (window.AutoPatchWorked) return true;
 
-        var location_href = location.href,
+        var base_url,
             downloaded_pages = [],
             page_titles = [],
             scroll = false;
@@ -386,7 +390,7 @@
 
         if (status.next_link_mask) {
             var arr = status.next_link_mask.split('|'),
-                matches = /\d{1,}/.exec(window.location.href.replace(arr[0],'').replace(arr[2],'')),
+                matches = /\d{1,}/.exec(location.href.replace(arr[0],'').replace(arr[2],'')),
                 pagen = parseInt(arr[1], 10);
             if (isNaN(pagen) || !matches) {
                 status.page_number = 1;
@@ -487,7 +491,7 @@
             }
         }
 
-        var htmlDoc, loaded_url,
+        var loaded_url,
             requested_urls = {},
             loaded_crcs = {},
             location_pushed = false,
@@ -524,7 +528,7 @@
                 var manager = document.createElement('button');
                 manager.textContent = 'SIM';
                 manager.onclick = function () {
-                    sendRequest({ manage: true, hash: window.location.hostname.replace(/ww[w\d]+\./i,'')});
+                    sendRequest({ manage: true, hash: location.hostname.replace(/ww[w\d]+\./i,'')});
                 };
                 bar.appendChild(onoff);
                 bar.appendChild(option);
@@ -543,10 +547,13 @@
                     sendRequest({ pause: 'off', id: status.id});
                 }
             }
-            img = document.createElement('img');
-            img.id = 'autopatchwork_loader';
-            img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" width="60" height="32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
-            bar.appendChild(img);
+
+            //if (browser === BROWSER_OPERA) { // test :before + background-image: url(animated SVG) in CSS for other browsers
+                var img = document.createElement('img');
+                img.id = 'autopatchwork_loader';
+                img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" width="60" height="32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
+                bar.appendChild(img);
+            //}
 
             if (typeof siteinfo.pause !== 'undefined' &&  siteinfo.pause) state_off();
 
@@ -561,16 +568,11 @@
 
         add_css(options.APW_CSS);
         if (status.css_patch) add_css(status.css_patch);
-        verify_scroll();
 
-        // Replace all target attributes to user defined on all appended pages.
-        if (options.FORCE_TARGET_WINDOW) {
-            document.addEventListener('AutoPatchWork.DOMNodeInserted', target_rewrite, false);
-        }
+        if (!options.DEFAULT_STATE) state_off();
 
         // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
         dispatch_event('AutoPatchWork.initialized', status);
-        if (!options.DEFAULT_STATE) state_off();
         sendRequest({ message: 'AutoPatchWork.initialized', siteinfo: siteinfo });
         window.AutoPatchWorked = {
             init: AutoPatchWork,
@@ -581,6 +583,7 @@
             dispatch_event: dispatch_event
         };
 
+        verify_scroll();
         return true;
         /**
          * Reinitialize APW handler: removes listeners and restarts class
@@ -775,23 +778,6 @@
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
         }
-        /**
-         * Rewrite event handler. Replaces link's target attribute.
-         * @param {Event} event Event data.
-         * */
-        function target_rewrite(event) {
-            if (event && event.target) {
-                var as = event.target.getElementsByTagName('a');
-                for (var i = 0, l = as.length; i < l; i++) {
-                    var a = as[i],
-                        _a = a.getAttribute('href');
-                    if (_a && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(_a) && !/^#/.test(_a) && !a.target) {
-                        a.setAttribute('target', options.TARGET_WINDOW_NAME);
-                    }
-                }
-            }
-        }
-
         /* Sets statusbar to ready state. */
         function state_on() {
             status.state = true;
@@ -946,6 +932,79 @@
                 run_script(strExec);
             }
         }
+
+        /**
+         * Gets base of any URL.
+         * @param {String} url Location.
+         * */
+        function get_base_url(url) {
+            if (typeof url !== 'string' || !url.length)
+                url = location.href;
+            var link = document.createElement('a');
+            link.href = url;
+            var path_arr = link.pathname.split('/');
+            if (~path_arr.pop().indexOf('.'))
+                return link.protocol + '//' + link.host + path_arr.join('/') + '/';
+            else
+                return link.protocol + '//' + link.host + (link.pathname + '/').replace(/\/+$/,'/')
+        }
+
+        /**
+         * Checks if URL is relative.
+         * @param {String} url Location.
+         * */
+        function is_url_relative(url) {
+            if (typeof url !== 'string' || !url.length || (/^(?:[a-z]+\:)?\/\//i).test(url)) // ignoring protocol change between pages
+                return false;   
+            else if (url[0] !== '/')
+                return true;
+            return false;
+        }
+
+        // - Replace lazyloading src's to normal although better solution would be
+        //   using per-site js patches.
+        // - Make links to images absolute.
+        function parse_images(node) {
+            if (!node || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
+            for (var i = 0, img = (node.tagName && node.tagName.toLowerCase() === 'img')?[node]:node.getElementsByTagName('img'), len = img.length; i < len; i++) {
+                if (options.TRY_CORRECT_LAZY) {
+                    for (var j = 0, atts = img[i].attributes, n = atts.length, match = null; j < n; j++) {
+                       if (~atts[j].localName.toLowerCase().indexOf('data-')) {
+                           match = atts[j].textContent.toLowerCase().match(/\.(?:jpe?g|a?png|gif|svg)/g);
+                           if (match && match.length === 1) { // in case of image list variable we ignore it
+                               img[i].setAttribute('src', atts[j].textContent);
+                               break;
+                           }
+                       }
+                    }
+                }
+
+                if (!options.FORCE_ABSOLUTE_IMG_SRCS) continue;
+                var src = img[i].getAttribute('src');
+                if (src && is_url_relative(src))
+                    img[i].setAttribute('src', base_url + src);
+            }
+        }/**/
+
+        // - Make target attribute as specified.
+        // - Fix next page-relative link HREFs to absolute.
+        function parse_links(node, target) {
+            // we are ignoring links inside links, i.e a>a
+            if (!node || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
+            for (var lnki = 0, lnks = (node.tagName && node.tagName.toLowerCase() === 'a')?[node]:node.getElementsByTagName('a'), lnlen = lnks.length; lnki < lnlen; lnki++) {
+                var href = lnks[lnki].getAttribute('href');
+                if (typeof target !== 'undefined') {
+                    if (href && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(href) && !/^#/.test(href) && !lnks[lnki].target) {
+                        lnks[lnki].setAttribute('target', options.TARGET_WINDOW_NAME);
+                    }
+                }
+
+                if (options.FORCE_ABSOLUTE_HREFS && href && href.length && is_url_relative(href)) {
+                    lnks[lnki].setAttribute('href', base_url + href);
+                }
+            }
+        }
+
         /**
          * Event hadler for parsing new page data.
          * @param {Event} event Event data.
@@ -955,10 +1014,44 @@
                 return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
 
             loaded_url = event.detail.url;
-            htmlDoc = event.detail.htmlDoc;
-            delete event.detail.htmlDoc;
+            base_url = get_base_url(loaded_url);
+            next = get_next_link(event.detail.htmlDoc);
+            parse_links(next);
 
-            dispatch_event('AutoPatchWork.append');
+            // filter undesired elements
+            if (status.remove_elem || status.remove_elem_selector) {
+                var r, l;
+                if (status.remove_elem) {
+                    r = event.detail.htmlDoc.evaluate(status.remove_elem, event.detail.htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    l = r.snapshotLength;
+                    for (i = 0; i < l; i++)
+                        if (r.snapshotItem(i).parentNode)
+                            r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
+                } else {
+                    r = event.detail.htmlDoc.querySelectorAll(status.remove_elem_selector);
+                    l = r.length;
+                    for (var i = 0; i < l; i++)
+                        if (r[i].parentNode)
+                            r[i].parentNode.removeChild(r[i]);
+                }
+            }
+
+            // filter scripts
+            if (!status.scripts_allowed) {
+               for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
+                   if (st[i].parentNode)
+                       st[i].parentNode.removeChild(st[i]);
+            }
+
+            status.page_number++;
+            document.apwpagenumber++;
+
+            dispatch_event('AutoPatchWork.append', { 
+                        nodes: get_main_content(event.detail.htmlDoc),
+                        title: event.detail.htmlDoc.querySelector('title') ? event.detail.htmlDoc.querySelector('title').textContent.trim() : ''
+                    });
+
+            delete event.detail.htmlDoc;
         }
         /**
          * Event handler for browser location rewriting on each new page.
@@ -979,69 +1072,20 @@
          * @param {Event} event Event data.
          * */
         function append(event) {
-            if (!status.loading || !htmlDoc) return;
+            if (!status.loading || !event.detail.nodes) return;
 
-            var inserted_node, i, j, tmp_title,
+            var inserted_node, tmp_title,
                 content_last = status.content_last,
                 content_parent = status.content_parent,
                 change_location = status.change_address;
 
-            status.page_number++;
-            document.apwpagenumber++;
 
-            next = get_next_link(htmlDoc);
+            var nodes = event.detail.nodes,
+                title = event.detail.title;
 
-            // filter elements
-            if (status.remove_elem || status.remove_elem_selector) {
-                var r, l;
-                if (status.remove_elem) {
-                    r = htmlDoc.evaluate(status.remove_elem, htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                    l = r.snapshotLength;
-                    for (i = 0; i < l; i++)
-                        if (r.snapshotItem(i).parentNode)
-                            r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
-                } else {
-                    r = htmlDoc.querySelectorAll(status.remove_elem_selector);
-                    l = r.length;
-                    for (i = 0; i < l; i++)
-                        if (r[i].parentNode)
-                            r[i].parentNode.removeChild(r[i]);
-                }
-            }
+            delete event.detail.nodes;
+            delete event.detail.title;
 
-            // filter scripts
-            if (!status.scripts_allowed) {
-               for (i = 0, st = htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
-                   if (st[i].parentNode)
-                       st[i].parentNode.removeChild(st[i]);
-            }
-
-            // Replace lazyloading src's to normal and make image paths absolute.
-            // As I didn't encounter lot of sites that need this so the code will be disabled for now
-            // better solution would be using per-site js patches.
-            function parse_images(node) {
-                if (!status.parse_images) return;
-                for (i = 0, img = node.querySelectorAll('img'), len = img.length; i < len; i++) {
-                   for (j = 0, atts = img[i].attributes, n = atts.length, match = null; j < n; j++) {
-                       if (~atts[j].localName.indexOf('data-')) {
-                           match = atts[j].textContent.match(/\.(?:jpe?g|a?png|gif|svg)/g);
-                           if (match && match.length === 1) { // in case of image list variable we ignore it
-                               img[i].src = atts[j].textContent;
-                               break;
-                           }
-                       }
-                   }
-
-                   if (img.src && !img.src.match(/(^https?:\/\/|^data:|^\/)/)) {
-                       img[i].src = next.protocol + '//' + next.hostname + (next.pathname === '/' ? next.pathname + '/' : next.pathname) + img[i].src.replace(/^\//, '');
-                   }
-                }
-            }/**/
-
-            var nodes = get_main_content(htmlDoc),
-                title = htmlDoc.querySelector('title') ? htmlDoc.querySelector('title').textContent.trim() : '';
-
-            htmlDoc = null;
             if (!nodes || !nodes.length) {
                 return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.' });
             }
@@ -1093,9 +1137,16 @@
             }
 
             //var height = document_height();
+            var fix_links = options.FORCE_ABSOLUTE_HREFS || options.FORCE_TARGET_WINDOW,
+                fix_imgs = options.FORCE_ABSOLUTE_IMG_SRCS || options.TRY_CORRECT_LAZY,
+                force_target = options.FORCE_TARGET_WINDOW;
             if (status.accelerate && nodes.length > 2) {
                 var fragment = document.createDocumentFragment();
-                for (i = 0, len = nodes.length; i < len; i++) {
+                for (var i = 0, len = nodes.length; i < len; i++) {
+
+                    if (fix_links) parse_links(nodes[i], force_target);
+                    if (fix_imgs) parse_images(nodes[i]);
+
                     inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
 
                     if (status.scripts_allowed) run_node_scripts(inserted_node);
@@ -1113,7 +1164,6 @@
                 content_parent.insertBefore(document.importNode(fragment, true), content_last);
                 for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
                     if (n === content_last) break;
-                    //parse_images(n);
                     if (n.nodeType === 1) dispatch_mutation_event({
                         targetNode: n,
                         eventName: 'AutoPatchWork.DOMNodeInserted',
@@ -1128,8 +1178,13 @@
                 }
             } else {
                 // Adding nodes and firing node change event on each of them
-                for (i = 0, len = nodes.length; i < len; i++) {
+                for (var i = 0, len = nodes.length; i < len; i++) {
+
+                    if (fix_links) parse_links(nodes[i], force_target);
+                    if (fix_imgs) parse_images(nodes[i]);
+
                     inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
+
                     if (status.scripts_allowed) run_node_scripts(inserted_node);
                     if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
                         // service data for external page processing
@@ -1140,7 +1195,6 @@
                                 inserted_node.setAttribute('data-apw-offview', 'true');
                         }
                     }
-                    //parse_images(inserted_node);
                     dispatch_mutation_event({
                         targetNode: inserted_node,
                         eventName: 'AutoPatchWork.DOMNodeInserted',

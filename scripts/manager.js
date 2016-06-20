@@ -148,8 +148,8 @@ var RECORDS_PER_PAGE = 100,
                 SiteInfoView(infos.slice(RECORDS_PER_PAGE * PageIndex, RECORDS_PER_PAGE * (PageIndex + 1)), RECORDS_PER_PAGE * PageIndex);
             } else {
                 dispatch_event('AutoPatchWork.state',{state:'off'});
-                dispatch_event('AutoPatchWork.pageloaded');
             }
+            dispatch_event('AutoPatchWork.pageloaded');
         }, true);
 
         var local_siteinfo = bgProcess.siteinfo;
@@ -294,8 +294,12 @@ var RECORDS_PER_PAGE = 100,
                 fullwords = word.split(/[\+\s\.:\|#]/).concat(ret).filter(function (w) {
                     return w;
                 });
-            } else 
+            } else {
+                filtered_info = [];
+                SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
+                SiteInfoNavi(siteinfo_data);
                 return;
+            }
             filtered_info = siteinfo_data.filter(function (sinfo) {
                 var ret = [];
                 for (var k in sinfo) {
@@ -316,17 +320,17 @@ var RECORDS_PER_PAGE = 100,
                 return false;
             });
             //debug && log('search completed in ' + (new Date - s) + 'ms');
-            var v = new Date * 1;
-
             SiteInfoView(filtered_info.slice(0, RECORDS_PER_PAGE));
             SiteInfoNavi(filtered_info);
-            stop_pager = false;
-            dispatch_event('AutoPatchWork.request');
+            
         }
 
         siteinfo_search_input.addEventListener('input', function() {
+            var v = new Date * 1;
             stop_pager = true;
             process_search_input();
+            stop_pager = false;
+            dispatch_event('AutoPatchWork.request');
             //debug && log('view completed in ' + (new Date - v) + 'ms');
         }, false);
 
@@ -429,7 +433,7 @@ var RECORDS_PER_PAGE = 100,
                 var disable_separator_btn = line.querySelector('input.disable_separator');
                 var addr_change_btn = line.querySelector('input.address_change');
 
-                var custom_fields = {'length':1 , 'jsPatch':1, 'cssPatch':1,'disabled':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
+                var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
                 var custom_fields_nohl = {'length':1 , 'disabled':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1, 'forceAddressChange':1};
                 if (custom_info && custom_info[id]) {
                     var ci = custom_info[id];
@@ -520,8 +524,9 @@ var RECORDS_PER_PAGE = 100,
                                 if (typeof data === 'object') {
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
+                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['removeElement'] || '' : '';;
                                     data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['cssPatch'] || '' : '';
-                                    data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['jsPatch'] || '' : '';;
+                                    data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['jsPatch'] || '' : '';
                                     data.keys().forEach(function (si_key) {
                                         var inf = '', is_custom = si_key in custom_fields;
                                         if (typeof custom_info[id] !== 'undefined') {
@@ -544,20 +549,26 @@ var RECORDS_PER_PAGE = 100,
                                             } else {
                                                 node2 = document.createElement('textarea');
                                                 switch (si_key) {
-                                                    case 'cssPatch':
-                                                        node2.rows = 2;
-                                                    break;
                                                     case 'jsPatch':
                                                         node2.rows = 5;
                                                         break;
+                                                    case 'url':
+                                                    case 'cssPatch':
+                                                    case 'removeElement':
+                                                        node2.rows = 1;
+                                                    break;
+                                                    case 'comment':
+                                                        node2.setAttribute('readonly', '');
+                                                        node2.rows = 1;
+                                                    break;
                                                     default:
-                                                        node2.rows = 3;
+                                                        node2.rows = 2;
                                                 }
                                                 node2.value = inf || '';
                                                 if (!current_siteinfo) {
-                                                    node2.setAttribute('readonly', 'readonly'); // remote DB differs from local
+                                                    node2.setAttribute('readonly', ''); // remote DB differs from local
                                                 }
-                                                node2.onchange = function () {
+                                                node2.onchange = function() {
                                                     //log(current_siteinfo,current_siteinfo[si_key],node2.value);
                                                     current_siteinfo[si_key] = node2.value;
 
@@ -643,7 +654,6 @@ var RECORDS_PER_PAGE = 100,
             }
             siteinfo_body.appendChild(df);
             toggle_popup('loader', false);
-            dispatch_event('AutoPatchWork.pageloaded');
         }
 
         function SiteInfoNavi(siteinfo) {
@@ -672,11 +682,10 @@ var RECORDS_PER_PAGE = 100,
             var url = JSON_SITEINFO_DB,
                 xhr = new XMLHttpRequest(),
                 progressbar = document.getElementById('progressbar'),
-                progress = document.getElementById('progress'),
-                progress_max = 250;
+                progress = document.getElementById('progress');
             
             progressbar.style.display = 'block';
-            progress.style.width = '0px';
+            progress.style.width = '0%';
 
             xhr.onreadystatechange = function (evt) {  
               if (xhr.readyState === 4 /*XMLHttpRequest.DONE*/) {
@@ -689,7 +698,7 @@ var RECORDS_PER_PAGE = 100,
                       return;
                   }
 
-                  progress.style.width = progress_max + 'px';
+                  progress.style.width = '100%';
                   setTimeout(function(){ progressbar.style.display = 'none'; }, 600);
 
                   callback(d);
@@ -700,8 +709,8 @@ var RECORDS_PER_PAGE = 100,
             };
 
             xhr.onprogress = function(evt) {
-                var percent = parseInt(progress_max * evt.loaded / evt.total);
-                progress.style.width = percent + 'px';
+                var percent = Math.min(parseInt(100 * evt.loaded / evt.total, 10), 100);
+                progress.style.width = percent + '%';
             };
 
             xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
@@ -738,6 +747,7 @@ var RECORDS_PER_PAGE = 100,
                 dispatch_html_event(siteinfo_search_input, 'input');
             }
             window.onresize();
+            dispatch_event('AutoPatchWork.state', {state:'off'});
             dispatch_event('AutoPatchWork.siteinfo', {
                 siteinfo: {
                     url: '.',
@@ -760,6 +770,7 @@ var RECORDS_PER_PAGE = 100,
                     dispatch_html_event(document.getElementById('siteinfo_search_input'), 'input');
                 }
                 window.onresize();
+                dispatch_event('AutoPatchWork.state', {state:'off'});
                 dispatch_event('AutoPatchWork.siteinfo', {
                     siteinfo: {
                         url: '.',

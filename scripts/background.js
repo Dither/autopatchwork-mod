@@ -6,7 +6,20 @@ Object.keys || (Object.keys = function(k) {
 });
 
 var self = this;
-var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, custom_info = {};
+var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, 
+custom_info = {
+    "400":{"disabled":true,"length":1},
+    "430":{"disabled":true,"length":1},
+    "447":{"disabled":true,"length":1},
+    "649":{"disabled":true,"length":1},
+    "27331":{"disabled":true,"length":1},
+    "27333":{"disabled":true,"length":1},
+    "39059":{"disabled":true,"length":1},
+    "41434":{"disabled":true,"length":1},
+    "55771":{"disabled":true,"length":1},
+    "65332":{"disabled":true,"length":1},
+    "74668":{"disabled":true,"length":1}
+}; /*{}; /* Disable overzealous formats. Re-enable them manually on your own risk. */
 var JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
 var MICROFORMATs = [];/*[{
     MICROFORMAT: true,
@@ -51,13 +64,15 @@ window.AutoPatchWorkBG = {
     config: {
         auto_start: true,
         target_blank: true,
-        remaining_height: 500,
-        disable_iframe: false,
+        remaining_height: 800,
+        disable_in_frames: true,
         change_address: false,
         debug_mode: false,
         check_crc: false,
         bar_status: true,
-        enable_acceleration: false
+        enable_acceleration: false,
+        force_abs_hrefs: false,
+        force_abs_srcs: false
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
@@ -435,7 +450,7 @@ function handleMessage(request, sender, sendResponse) {
         return;
     }
     
-    if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_iframe))
+    if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_in_frames))
         return;
 
     var infos = [], url = request.url;
