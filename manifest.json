@@ -18,6 +18,11 @@
       "64": "icons/Icon-64.png",
       "128": "icons/Icon-128.png"
    },
+    "applications": {
+        "gecko": {
+            "id": "autopatchworkmod@mozilla.firefox"
+        }
+    },
    "description": "Automatically loads the next page and inserts into current one.",
    "name": "AutoPatchWorkMod",
    "permissions": [ "unlimited_storage", "tabs", "management" ],

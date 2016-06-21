@@ -71,7 +71,6 @@ window.AutoPatchWorkBG = {
         debug_mode: false,
         check_crc: false,
         bar_status: true,
-        enable_acceleration: false,
         force_abs_hrefs: false,
         force_abs_srcs: false
     },
@@ -224,7 +223,7 @@ function initDatabase() {
 }
 
 function createDatabase(info) {
-    var tmp_log = 'There were following errors in SITEINFO DB:\n', keys = ['nextLink', 'pageElement', 'url', 'insertBefore'];
+    var tmp_log = 'There were following errors in SITEINFO DB:\n', keys = ['cssPatch', 'nextLink', 'pageElement', 'url', 'insertBefore'];
     siteinfo = [];
     info.forEach(function(i) {
         var d = i.data || i, r = {};
@@ -300,7 +299,7 @@ function downloadDatabase(callback, error_back) {
 }
 
 function resetSettings() {
-    if ((typeof storagebase === 'undefined') && (typeof storagebase.setItem !== 'function')) {
+    if (typeof storagebase === 'undefined') {
         return setTimeout(function() { resetSettings(); }, 200);
     }
     resetDBLocation();

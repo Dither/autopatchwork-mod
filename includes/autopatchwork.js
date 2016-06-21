@@ -75,7 +75,6 @@
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
         CRC_CHECKING: false,
-        INSERT_ACCELERATION: false,
         BAR_STATUS: true,
         CHANGE_ADDRESS: false,
         APW_CSS: ''
@@ -108,7 +107,6 @@
         content_parent: null,
         bottom: null,
         remaining_height: null,
-        accelerate: false,
         service: false,
         id: -1
     };
@@ -141,7 +139,6 @@
     function add_css(css) {
         var style = document.createElement('style');
         style.textContent = css;
-        style.id = 'autopatchwork_style';
         style.type = 'text/css';
         document.head.appendChild(style);
     }
@@ -288,7 +285,6 @@
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
             options.CHANGE_ADDRESS = info.config.change_address;
             options.BAR_STATUS = info.config.bar_status;
-            options.INSERT_ACCELERATION = info.config.enable_acceleration,
             options.APW_CSS = info.css;
             debug = info.config.debug_mode;
         }
@@ -384,7 +380,6 @@
         status.separator_disabled = s2b(siteinfo.disableSeparator);
         status.scripts_allowed = s2b(siteinfo.allowScripts);
         status.use_iframe_req = s2b(siteinfo.forceIframe);
-        status.accelerate = (typeof siteinfo.accelerate !== 'undefined') ? s2b(siteinfo.accelerate) : options.INSERT_ACCELERATION;
         status.service = s2b(siteinfo.SERVICE);
         if(!status.service) {
             status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? !s2b(siteinfo.forceAddressChange) ^ !options.CHANGE_ADDRESS : options.CHANGE_ADDRESS;
@@ -1146,73 +1141,42 @@
             var fix_links = options.FORCE_ABSOLUTE_HREFS || options.FORCE_TARGET_WINDOW,
                 fix_imgs = options.FORCE_ABSOLUTE_IMG_SRCS || options.TRY_CORRECT_LAZY,
                 force_target = options.FORCE_TARGET_WINDOW;
-            if (status.accelerate && nodes.length > 2) {
-                var fragment = document.createDocumentFragment();
-                for (var i = 0, len = nodes.length; i < len; i++) {
 
-                    if (fix_links) parse_links(nodes[i], force_target);
-                    if (fix_imgs) parse_images(nodes[i]);
+            var fragment = document.createDocumentFragment();
+            for (var i = 0, len = nodes.length; i < len; i++) {
 
-                    inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
+                if (fix_links) parse_links(nodes[i], force_target);
+                if (fix_imgs) parse_images(nodes[i]);
 
-                    if (status.scripts_allowed) run_node_scripts(inserted_node);
-                    if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
-                        // service data for external page processing
-                        inserted_node['data-apw-url'] = loaded_url;
-                        if (i === 0) {
-                            inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
-                            if (change_location && status.separator_disabled)
-                                inserted_node.setAttribute('data-apw-offview', 'true');
-                        }
+                inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
+
+                if (status.scripts_allowed) run_node_scripts(inserted_node);
+                if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
+                    // service data for external page processing
+                    inserted_node['data-apw-url'] = loaded_url;
+                    if (i === 0) {
+                        inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
+                        if (change_location && status.separator_disabled)
+                            inserted_node.setAttribute('data-apw-offview', 'true');
                     }
                 }
-                var last_prev = (content_last && content_last.previousSibling) ? content_last.previousSibling : content_parent.lastChild;
-                content_parent.insertBefore(document.importNode(fragment, true), content_last);
-                for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
-                    if (n === content_last) break;
-                    if (n.nodeType === 1) dispatch_mutation_event({
-                        targetNode: n,
-                        eventName: 'AutoPatchWork.DOMNodeInserted',
-                        bubbles: true,
-                        cancelable: false,
-                        relatedNode: content_parent,
-                        prevValue: null,
-                        newValue: loaded_url,
-                        attrName: 'url',
-                        attrChange: 2 // MutationEvent.ADDITION
-                    });
-                }
-            } else {
-                // Adding nodes and firing node change event on each of them
-                for (var i = 0, len = nodes.length; i < len; i++) {
-
-                    if (fix_links) parse_links(nodes[i], force_target);
-                    if (fix_imgs) parse_images(nodes[i]);
-
-                    inserted_node = content_parent.insertBefore(document.importNode(nodes[i], true), content_last);
-
-                    if (status.scripts_allowed) run_node_scripts(inserted_node);
-                    if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
-                        // service data for external page processing
-                        inserted_node['data-apw-url'] = loaded_url;
-                        if (i === 0) {
-                            inserted_node.setAttribute('data-apw-page', document.apwpagenumber);
-                            if (change_location && status.separator_disabled)
-                                inserted_node.setAttribute('data-apw-offview', 'true');
-                        }
-                    }
-                    dispatch_mutation_event({
-                        targetNode: inserted_node,
-                        eventName: 'AutoPatchWork.DOMNodeInserted',
-                        bubbles: true,
-                        cancelable: false,
-                        relatedNode: content_parent,
-                        prevValue: null,
-                        newValue: loaded_url,
-                        attrName: 'url',
-                        attrChange: 2 // MutationEvent.ADDITION
-                    });
-                };
+            }
+            var last_prev = (content_last && content_last.previousSibling) ? content_last.previousSibling : content_parent.lastChild;
+            content_parent.insertBefore(document.importNode(fragment, true), content_last);
+            for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
+                if (n === content_last) break;
+                if (n.nodeType !== 1) continue;
+                dispatch_mutation_event({
+                    targetNode: n,
+                    eventName: 'AutoPatchWork.DOMNodeInserted',
+                    bubbles: true,
+                    cancelable: false,
+                    relatedNode: content_parent,
+                    prevValue: null,
+                    newValue: loaded_url,
+                    attrName: 'url',
+                    attrChange: 2 // MutationEvent.ADDITION
+                });
             }
 
             // This is bugged because if page has only one big image (with no direct dimensions mentioned in either style or height attribute) 
