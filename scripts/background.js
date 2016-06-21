@@ -185,6 +185,17 @@ function checkExists(url) {
     return http.status != 404;
 }
 
+function resetDBLocation (full) {
+    if (typeof full === 'undefined' || (typeof full === 'boolean' && !full)) {
+        storagebase.removeItem('db_location');
+        JSON_SITEINFO_DB_MIN =  'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
+    }
+    if (typeof full === 'undefined' || (typeof full === 'boolean' && full)) {
+        storagebase.removeItem('db_full_location');
+        JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
+    }
+}
+
 function updateMiniDatabaseURL(url) {
     storagebase.db_location = url;
     JSON_SITEINFO_DB_MIN = url;
@@ -292,8 +303,7 @@ function resetSettings() {
     if ((typeof storagebase === 'undefined') && (typeof storagebase.setItem !== 'function')) {
         return setTimeout(function() { resetSettings(); }, 200);
     }
-    storagebase.removeItem('db_location');
-    storagebase.removeItem('db_full_location');
+    resetDBLocation();
     storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
     storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
     storagebase.site_stats = JSON.stringify(site_stats);

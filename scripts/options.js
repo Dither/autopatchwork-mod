@@ -167,7 +167,8 @@ document.addEventListener('DOMContentLoaded',function(){
     update_wedata_location.addEventListener('click', function(e) {
         update_wedata_location.disabled = true;
         var loc = document.getElementById('db_location').value;
-        if (loc && loc.length > 10 && loc !== bgProcess.JSON_SITEINFO_DB_MIN && /^https?:\/\/.+\.json.*/i.test(loc)) {
+        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(false); document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN; }  
+        else if (loc !== bgProcess.JSON_SITEINFO_DB_MIN && /^https?:\/\/.+\.json.*/i.test(loc)) {
             if (bgProcess.checkExists(loc))
                 bgProcess.updateMiniDatabaseURL(loc);
         }
@@ -179,7 +180,8 @@ document.addEventListener('DOMContentLoaded',function(){
     update_wedata_full_location.addEventListener('click', function(e) {
         update_wedata_full_location.disabled = true;
         var loc = document.getElementById('full_db_location').value;
-        if (loc && loc.length > 10 && loc !== bgProcess.JSON_SITEINFO_DB && /^https?:\/\/.+\.json.*/i.test(loc)) {
+        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(true); document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB; }  
+        else if (loc !== bgProcess.JSON_SITEINFO_DB && /^https?:\/\/.+\.json.*/i.test(loc)) {
             if (bgProcess.checkExists(loc))
                 bgProcess.updateFullDatabaseURL(loc);
         }
