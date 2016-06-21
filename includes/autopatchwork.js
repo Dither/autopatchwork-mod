@@ -325,6 +325,8 @@
             page_titles = [],
             scroll = false;
 
+        state_off();
+
         status.next_link = siteinfo.nextLink || null;
         status.next_link_selector = siteinfo.nextLinkSelector || null;
         status.next_link_mask = siteinfo.nextMask || null;
@@ -500,17 +502,8 @@
         requested_urls[location.href] = true;
         status.remaining_height || (status.remaining_height = calc_remaining_height());
 
-        window.addEventListener('scroll', on_scroll, false);
-        window.addEventListener('resize', on_scroll, false);
-        document.addEventListener('AutoPatchWork.request', request, false);
-        document.addEventListener('AutoPatchWork.load', load, false);
-        document.addEventListener('AutoPatchWork.append', append, false);
-        document.addEventListener('AutoPatchWork.error', error, false);
-        document.addEventListener('AutoPatchWork.reset', reset, false);
-        document.addEventListener('AutoPatchWork.state', state, false);
-        document.addEventListener('AutoPatchWork.terminated', terminated, false);
-        document.addEventListener('AutoPatchWork.toggle', toggle, false);
-        document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+        add_css(options.APW_CSS);
+        if (status.css_patch) add_css(status.css_patch);
 
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
@@ -566,10 +559,17 @@
             status.bar = bar;
         }
 
-        add_css(options.APW_CSS);
-        if (status.css_patch) add_css(status.css_patch);
-
-        if (!options.DEFAULT_STATE) state_off();
+        window.addEventListener('scroll', on_scroll, false);
+        window.addEventListener('resize', on_scroll, false);
+        document.addEventListener('AutoPatchWork.request', request, false);
+        document.addEventListener('AutoPatchWork.load', load, false);
+        document.addEventListener('AutoPatchWork.append', append, false);
+        document.addEventListener('AutoPatchWork.error', error, false);
+        document.addEventListener('AutoPatchWork.reset', reset, false);
+        document.addEventListener('AutoPatchWork.state', state, false);
+        document.addEventListener('AutoPatchWork.terminated', terminated, false);
+        document.addEventListener('AutoPatchWork.toggle', toggle, false);
+        document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
 
         // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
         dispatch_event('AutoPatchWork.initialized', status);
@@ -582,6 +582,8 @@
             status: status,
             dispatch_event: dispatch_event
         };
+
+        if (options.DEFAULT_STATE) state_on();
 
         verify_scroll();
         return true;
@@ -608,9 +610,9 @@
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
             window.removeEventListener('beforeunload', savePosition, false);
 
-            if (status.bottom && status.bottom.parentNode) {
-                status.bottom.parentNode.removeChild(status.bottom);
-            }
+            //if (status.bottom && status.bottom.parentNode) {
+            //    status.bottom.parentNode.removeChild(status.bottom);
+            //}
             if (bar && bar.parentNode) {
                 bar.parentNode.removeChild(bar);
             }
@@ -651,8 +653,8 @@
                 for (var i = 0; i < elems.length; i++) elems[i].removeAttribute('data-apw-offview');
             }
 
-            status.bottom && status.bottom.parentNode && status.bottom.parentNode.removeChild(status.bottom);
-            status.bottom = null;
+            //status.bottom && status.bottom.parentNode && status.bottom.parentNode.removeChild(status.bottom);
+            //status.bottom = null;
             bar && bar.parentNode && bar.parentNode.removeChild(bar);
             bar = null;
         }
@@ -692,7 +694,6 @@
             bar && (bar.className = 'autopager_error');
             if (event.detail && event.detail.message) log(event.detail.message);
             setTimeout(cleanup, 5000);
-            return false;
         }
         /**
          * Gets current height of viewport.
@@ -773,10 +774,20 @@
             }
 
             if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remaining_height) {
-                if (bar) bar.className = 'autopager_loading';
-                status.loading = true;
+                state_loading();                
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
+        }
+        /* Sets statusbar to loading state. */
+        function state_loading() {
+            status.loading = true;
+            bar && (bar.className = 'autopager_loading');
+        }
+        /* Sets statusbar to loaded state. */
+        function state_loaded() {
+            status.loading = false;
+            var b = document.getElementById('autopatchwork_bar');
+            if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
         }
         /* Sets statusbar to ready state. */
         function state_on() {
@@ -1046,12 +1057,12 @@
             status.page_number++;
             document.apwpagenumber++;
 
-            dispatch_event('AutoPatchWork.append', { 
-                        nodes: get_main_content(event.detail.htmlDoc),
-                        title: event.detail.htmlDoc.querySelector('title') ? event.detail.htmlDoc.querySelector('title').textContent.trim() : ''
-                    });
-
+            var nodes = get_main_content(event.detail.htmlDoc),
+                title = event.detail.htmlDoc.querySelector('title') ? event.detail.htmlDoc.querySelector('title').textContent.trim() : '';
             delete event.detail.htmlDoc;
+
+            if (!nodes || !nodes.length) return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.' });
+            else dispatch_event('AutoPatchWork.append', { nodes: nodes, title: title });
         }
         /**
          * Event handler for browser location rewriting on each new page.
@@ -1079,16 +1090,11 @@
                 content_parent = status.content_parent,
                 change_location = status.change_address;
 
-
             var nodes = event.detail.nodes,
                 title = event.detail.title;
 
             delete event.detail.nodes;
             delete event.detail.title;
-
-            if (!nodes || !nodes.length) {
-                return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.' });
-            }
 
             // We can't check for repeating nodes in the same document because they can have some function 
             // also can't check responseText (earlier) as there is a higher probability of non-paging content changes like random ad id's
@@ -1238,12 +1244,7 @@
         }
         /* Sets status bar to ready state. */
         function pageloaded() {
-            status.loading = false;
-
-            var b = document.getElementById('autopatchwork_bar');
-            if (b) 
-                b.className = status.state ? 'autopager_on' : 'autopager_off';
-
+            state_loaded();
             /*///////////////////
             dispatch_notify_event({
                 extension: 'autopatchwork',
@@ -1251,8 +1252,7 @@
                 width: '200px'
             });
             ///////////////////*/
-
-            if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
+            //if (status.bottom) status.bottom.style.height = rootNode.scrollHeight + 'px';
             verify_scroll();
         }
 
