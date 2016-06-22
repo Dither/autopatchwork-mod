@@ -81,7 +81,7 @@
     };
 
     var status = {
-        state: true,
+        state: false,
         loading: false,
         scripts_allowed: false,
         separator_disabled: false,
@@ -232,7 +232,7 @@
             throw new APWException('Browser not detected!');
     } // switch(browser)
 
-    var bar, img, matched_siteinfo,
+    var bar = null, matched_siteinfo,
           rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
     document.apwpagenumber = 1;
 
@@ -320,8 +320,6 @@
             downloaded_pages = [],
             page_titles = [],
             scroll = false;
-
-        state_off();
 
         status.next_link = siteinfo.nextLink || null;
         status.next_link_selector = siteinfo.nextLinkSelector || null;
@@ -500,10 +498,22 @@
         add_css(options.APW_CSS);
         if (status.css_patch) add_css(status.css_patch);
 
+        window.addEventListener('scroll', on_scroll, false);
+        window.addEventListener('resize', on_scroll, false);
+        document.addEventListener('AutoPatchWork.request', request, false);
+        document.addEventListener('AutoPatchWork.load', load, false);
+        document.addEventListener('AutoPatchWork.append', append, false);
+        document.addEventListener('AutoPatchWork.error', error, false);
+        document.addEventListener('AutoPatchWork.reset', reset, false);
+        document.addEventListener('AutoPatchWork.state', state, false);
+        document.addEventListener('AutoPatchWork.terminated', terminated, false);
+        document.addEventListener('AutoPatchWork.toggle', toggle, false);
+        document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+
         if (options.BAR_STATUS) {
             bar = document.createElement('div');
             bar.id = 'autopatchwork_bar';
-            bar.className = 'autopager_on';
+            bar.className = 'autopager_off';
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.textContent = 'TGL';
@@ -543,8 +553,6 @@
                 bar.appendChild(img);
             //}
 
-            if (typeof siteinfo.pause !== 'undefined' &&  siteinfo.pause) state_off();
-
             document.body.appendChild(bar);
             bar.addEventListener('click', function (e) {
                 if (e.target === bar) {
@@ -553,18 +561,6 @@
             }, false);
             status.bar = bar;
         }
-
-        window.addEventListener('scroll', on_scroll, false);
-        window.addEventListener('resize', on_scroll, false);
-        document.addEventListener('AutoPatchWork.request', request, false);
-        document.addEventListener('AutoPatchWork.load', load, false);
-        document.addEventListener('AutoPatchWork.append', append, false);
-        document.addEventListener('AutoPatchWork.error', error, false);
-        document.addEventListener('AutoPatchWork.reset', reset, false);
-        document.addEventListener('AutoPatchWork.state', state, false);
-        document.addEventListener('AutoPatchWork.terminated', terminated, false);
-        document.addEventListener('AutoPatchWork.toggle', toggle, false);
-        document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
 
         // We are ready to send AutoPatchWork.initialized (and to bgProcess too).
         dispatch_event('AutoPatchWork.initialized', status);
@@ -578,10 +574,16 @@
             dispatch_event: dispatch_event
         };
 
-        if (options.DEFAULT_STATE) state_on();
+        if (typeof siteinfo.pause === 'undefined'  && options.DEFAULT_STATE) state_on();
+        if (typeof siteinfo.pause !== 'undefined' && !siteinfo.pause) state_on();
 
+        remove_nodes(document);
         verify_scroll();
+
         return true;
+
+        /*============================== end of main entry point ==============================*/
+
         /**
          * Reinitialize APW handler: removes listeners and restarts class
          * @param {Event} event Event data.
@@ -1012,6 +1014,29 @@
         }
 
         /**
+         * Filters undesired elements from a document.
+         * @param {DocumentElement} doc Document to remove nodes from.
+         * */
+        function remove_nodes (doc) {
+            // filter undesired elements
+            if (!status.remove_elem && !status.remove_elem_selector) return;
+            var r, l;
+            if (status.remove_elem) {
+                r = doc.evaluate(status.remove_elem, doc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                l = r.snapshotLength;
+                for (i = 0; i < l; i++)
+                    if (r.snapshotItem(i).parentNode)
+                        r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
+            } else {
+                r = doc.querySelectorAll(status.remove_elem_selector);
+                l = r.length;
+                for (var i = 0; i < l; i++)
+                    if (r[i].parentNode)
+                        r[i].parentNode.removeChild(r[i]);
+            }
+        }
+
+        /**
          * Event hadler for parsing new page data.
          * @param {Event} event Event data.
          * */
@@ -1023,27 +1048,8 @@
             base_url = get_base_url(loaded_url);
             next = get_next_link(event.detail.htmlDoc);
             parse_links(next);
-
-            // filter undesired elements
-            if (status.remove_elem || status.remove_elem_selector) {
-                var r, l;
-                if (status.remove_elem) {
-                    r = event.detail.htmlDoc.evaluate(status.remove_elem, event.detail.htmlDoc, status.resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                    l = r.snapshotLength;
-                    for (i = 0; i < l; i++)
-                        if (r.snapshotItem(i).parentNode)
-                            r.snapshotItem(i).parentNode.removeChild(r.snapshotItem(i));
-                } else {
-                    r = event.detail.htmlDoc.querySelectorAll(status.remove_elem_selector);
-                    l = r.length;
-                    for (var i = 0; i < l; i++)
-                        if (r[i].parentNode)
-                            r[i].parentNode.removeChild(r[i]);
-                }
-            }
-
-            // filter scripts
-            if (!status.scripts_allowed) {
+            remove_nodes(event.detail.htmlDoc); // filter nodes
+            if (!status.scripts_allowed) { // filter scripts
                for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
                    if (st[i].parentNode)
                        st[i].parentNode.removeChild(st[i]);

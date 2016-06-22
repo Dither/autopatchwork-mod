@@ -1,7 +1,6 @@
 Object.keys || (Object.keys = function(k) {
     var r = [];
-    for(var i in k)
-    r.push(i);
+    for (var i in k) r.push(i);
     return r;
 });
 
@@ -173,7 +172,10 @@ function applyCustomFields(info) {
         var id = i['wedata.net.id'];
         if (!id) return;
         var ci = custom_info[id];
-        if (ci) { Object.keys(ci).forEach(function(k) { i[k] = ci[k]; }); }
+        if (!ci) return;
+        Object.keys(ci).forEach(function(k) { 
+            if(typeof ci[k] === 'string' ? ci[k].trim() !== '' : !!ci[k]) i[k] = ci[k]; else delete i[k]; // deletes `insertBefore` in case we null it
+        });
     });
 }
 

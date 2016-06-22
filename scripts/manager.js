@@ -517,7 +517,8 @@ var RECORDS_PER_PAGE = 100,
                                 if (typeof data === 'object') {
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
-                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['removeElement'] || '' : '';;
+                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['removeElement'] || '' : '';
+                                    data['insertBefore'] = data['insertBefore'] || '';
                                     data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['cssPatch'] || '' : '';
                                     data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['jsPatch'] || '' : '';
                                     data.keys().forEach(function (si_key) {
@@ -530,7 +531,7 @@ var RECORDS_PER_PAGE = 100,
                                         } else if (!is_custom) {
                                             inf = data[si_key];
                                         }
-                                        if (inf || is_custom) {
+                                        if (inf || is_custom || si_key === 'insertBefore') {
                                             var dt2 = document.createElement('dt');
                                             var dd2 = document.createElement('dd');
                                             dl2.appendChild(dt2);
@@ -548,6 +549,7 @@ var RECORDS_PER_PAGE = 100,
                                                     case 'url':
                                                     case 'cssPatch':
                                                     case 'removeElement':
+                                                    case 'insertBefore':
                                                         node2.rows = 1;
                                                     break;
                                                     case 'comment':
@@ -562,7 +564,7 @@ var RECORDS_PER_PAGE = 100,
                                                     node2.setAttribute('readonly', ''); // remote DB differs from local
                                                 }
                                                 node2.onchange = function() {
-                                                    //log(current_siteinfo,current_siteinfo[si_key],node2.value);
+                                                    //log(current_siteinfo,current_siteinfo[si_key], node2.value);
                                                     current_siteinfo[si_key] = node2.value;
 
                                                     if (typeof custom_info[id] === 'undefined') {
@@ -577,6 +579,7 @@ var RECORDS_PER_PAGE = 100,
                                                         }
                                                     } else {
                                                         if (node2.value.replace(/\s/g,'').length || si_key === 'insertBefore') {
+                                                            // we save empty `insertBefore` value for when we want to override wedata's one
                                                             if (typeof custom_info[id][si_key] === 'undefined') {
                                                                 custom_info[id].length++;
                                                             } 

@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded',function(){
         }, function() {
             update_siteinfo_output.innerHTML = '<img src="' + imageCross + '"> SITEINFO unchanged';
             update_siteinfo_output.className = 'MSG_update_siteinfo_fail';
+            update_siteinfo.disabled = false;
         });
     }, false);
 
