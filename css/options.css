@@ -387,6 +387,8 @@ input[type="range"]{
 .MSG_filters:lang(ru) {content: 'Фильтры'}
 .MSG_styles:lang(ru) {content: 'Стили'}
 .MSG_patterns:lang(ru) {content: 'Шаблоны'}
+.MSG_backup:lang(ru) {content: 'Бэкап'}
+.MSG_backup_preferences:lang(ru) {content: 'Резервная копия:'}
 .MSG_history:lang(ru) {content: 'История'}
 .MSG_about:lang(ru) {content: 'О расширении'}
 .MSG_update_siteinfo:lang(ru) {content: 'Обновить SITEINFO'}
@@ -398,15 +400,14 @@ input[type="range"]{
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
 .MSG_check_crc:lang(ru) {content: 'Проверять CRC страниц на повторы'}
-.MSG_enable_acceleration:lang(ru) {content: 'Включить ускорение вставки страниц'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
-.MSG_change_address:lang(ru) {content: 'Изменять текущий адрес при добавлении'}
+.MSG_change_address:lang(ru) {content: 'Обновлять адрес и заголовок при прокрутке'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
 .MSG_remaining_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
 .MSG_exclude_filter:lang(ru) {content: 'Исключение сайтов по фильтру:'}
-.MSG_wedata_location:lang(ru) {content: 'Размещение мини-БД SI'}
-.MSG_wedata_full_location:lang(ru) {content: 'Размещение БД SI'}
+.MSG_wedata_location:lang(ru) {content: 'URL мини-БД SI'}
+.MSG_wedata_full_location:lang(ru) {content: 'URL БД SI'}
 .MSG_force_abs_hrefs:lang(ru) {content: 'Преобразовывать адреса ссылок в полные'}
 .MSG_force_abs_srcs:lang(ru) {content: 'Преобразовывать адреса картинок в полные'}
 #update_wedata_location:lang(ru), #update_wedata_full_location:lang(ru) {content: 'Сохранить'}
@@ -426,12 +427,13 @@ input[type="range"]{
 .MSG_license:lang(ru) {content: 'Лицензия'}
 
 /* Language: Japanese (ja) */
-/*.MSG_general:lang(ja) {content: 'メイン'}
+.MSG_general:lang(ja) {content: 'メイン'}
 .MSG_filters:lang(ja) {content: 'フィルター'}
 .MSG_styles:lang(ja) {content: 'スタイル'}
 .MSG_patterns:lang(ja) {content: 'テンプレート'}
+.MSG_backup:lang(ja) {content: 'バックアップ'}
 .MSG_history:lang(ja) {content: '履歴'}
-.MSG_about:lang(ja) {content: '情報'}*/
+.MSG_about:lang(ja) {content: '情報'}
 .MSG_update_siteinfo:lang(ja) {content: 'SITEINFOの更新'}
 .MSG_reload_db:lang(ja) {content: 'SITEINFOの再ロード'}
 .MSG_update_siteinfo_upd:lang(ja) {content: '...'}
@@ -450,7 +452,8 @@ input[type="range"]{
 .MSG_wedata_full_location:lang(ja) {content: 'データベースを配置'}
 .MSG_force_abs_hrefs:lang(ja) {content: '完全にハイパーリンクに変換されたアドレスを変換します'}
 .MSG_force_abs_srcs:lang(ja) {content: '完全なアドレスに写真を変換します'}
-#update_wedata_location:lang(ja), #update_wedata_full_location:lang(ja) {content: '保存'}
+.MSG_backup_preferences:lang(ja) {content: 'バックアップデータ'}
+.MSG_siteinfo_patterns:lang(ja) {content: '個人SITEINFO-テンプレート:'}
 /*
  * It's not working this way.
 .MSG_filter_prefix:lang(ja) {content: '接頭辞'}
@@ -458,11 +461,10 @@ input[type="range"]{
 .MSG_filter_regexp:lang(ja) {content: '正規表現'}*/
 .MSG_separator_style:lang(ja) {content: '区切りのスタイル:'}
 .MSG_add:lang(ja) {content: '追加'}
-.MSG_save:lang(ja) {content: '保存'}
+#update_wedata_location:lang(ja), #update_wedata_full_location:lang(ja), .MSG_save:lang(ja) {content: '保存'}
 .MSG_reset:lang(ja) {content: '削除'}
-/*
- *.MSG_siteinfo_patterns:lang(ja) {content: '個人SITEINFO-テンプレート:'}
+
 .MSG_extension_name:lang(ja) {content: '名前'}
 .MSG_author_name:lang(ja) {content: '著者'}
 .MSG_thank_you:lang(ja) {content: '感謝'}
-.MSG_license:lang(ja) {content: 'ライセンス'}*/
+.MSG_license:lang(ja) {content: 'ライセンス'}

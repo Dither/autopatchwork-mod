@@ -14,7 +14,8 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
     top: 0px;
     background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#fff));
     background: -o-linear-gradient(top left, #eee, #fff);
-    width: 98%;
+    max-width: 1230px;
+    width: 1230px;
     min-height: 77px;
     overflow: auto;
     border-collapse: collapse;
@@ -47,8 +48,9 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 #siteinfo_table {
     box-shadow: 0 0 10px #98b0c9;
     background: rgba(255, 255, 255, 0.5);
-    width: 98%;
-    overflow: auto;
+    width: 1230px;
+    max-width: 1230px;
+    overflow: hidden;
     border-collapse: collapse;
     text-align: center;
     margin-bottom: 0.5em;
@@ -154,7 +156,20 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 
 .name,
 .created_by {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.name {
+    max-width: 640px;
+    width: 640px;
+}
+
+.created_by {
     text-align: left;
+    max-width: 8em;
+    width: 8em;
+    text-overflow:ellipsis;
 }
 
 .created_by,
@@ -173,7 +188,9 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
     border: 1px solid #aaa;
     cursor: pointer;
     width: 100%;
+    height: 100%;
     margin: 0;
+    text-overflow: ellipsis;
 }
 
 #siteinfo_nav {
@@ -216,6 +233,15 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 #siteinfo_head th {
     margin: 0;
     padding: 0;
+}
+
+th[colspan="6"] {
+    min-width: 170px;
+    width: 170px;
+}
+
+th[colspan="6"]+th {
+    width: 640px;
 }
 
 #siteinfo_head th button {

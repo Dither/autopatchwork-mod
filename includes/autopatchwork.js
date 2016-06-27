@@ -72,6 +72,7 @@
         FORCE_ABSOLUTE_HREFS: true,
         FORCE_ABSOLUTE_IMG_SRCS: false,
         TRY_CORRECT_LAZY: false,
+        IGNORE_CORS: true,
         DEFAULT_STATE: true,
         TARGET_WINDOW_NAME: '_blank',
         CRC_CHECKING: false,
@@ -137,6 +138,7 @@
      * @param {String} css CSS string.
      * */
     function add_css(css) {
+        if (typeof css !== 'string' || css === '') return;
         var style = document.createElement('style');
         style.textContent = css;
         style.type = 'text/css';
@@ -486,17 +488,15 @@
             }
         }
 
-        var loaded_url,
+        var loaded_url = null,
             requested_urls = {},
-            loaded_crcs = {},
-            location_pushed = false,
-            session_object = {};
+            loaded_crcs = {};
 
         requested_urls[location.href] = true;
         status.remaining_height || (status.remaining_height = calc_remaining_height());
 
         add_css(options.APW_CSS);
-        if (status.css_patch) add_css(status.css_patch);
+        add_css(status.css_patch);
 
         window.addEventListener('scroll', on_scroll, false);
         window.addEventListener('resize', on_scroll, false);
@@ -514,6 +514,7 @@
             bar = document.createElement('div');
             bar.id = 'autopatchwork_bar';
             bar.className = 'autopager_off';
+            bar.style.display = 'none';
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.textContent = 'TGL';
@@ -574,8 +575,9 @@
             dispatch_event: dispatch_event
         };
 
-        if (typeof siteinfo.pause === 'undefined'  && options.DEFAULT_STATE) state_on();
+        if (typeof siteinfo.pause === 'undefined' && options.DEFAULT_STATE) state_on();
         if (typeof siteinfo.pause !== 'undefined' && !siteinfo.pause) state_on();
+        bar && bar.removeAttribute('style');
 
         remove_nodes(document);
         verify_scroll();
@@ -758,7 +760,7 @@
                     dispatch_event('AutoPatchWork.terminated', { message: 'can\'t find next page button' });
                 }
                 if (elem) { // && status.busy_string && !~elem.innerHTML.indexOf(status.busy_string)) {
-                    if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remaining_height) {
+                    if ((rootNode.scrollHeight - window.innerHeight - window.scrollY) < status.remaining_height) {
                         status.loading = true;
                         elem.click();
                         // should timeout be a variable depending on page loading speed or as SITEINFO field?
@@ -770,7 +772,7 @@
                 return;
             }
 
-            if ((rootNode.scrollHeight - window.innerHeight - window.pageYOffset) < status.remaining_height) {
+            if ((rootNode.scrollHeight - window.innerHeight - window.scrollY) < status.remaining_height) {
                 state_loading();                
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
@@ -783,8 +785,7 @@
         /* Sets statusbar to loaded state. */
         function state_loaded() {
             status.loading = false;
-            var b = document.getElementById('autopatchwork_bar');
-            if (b) b.className = status.state ? 'autopager_on' : 'autopager_off';
+            bar && (bar.className = status.state ? 'autopager_on' : 'autopager_off');
         }
         /* Sets statusbar to ready state. */
         function state_on() {
@@ -814,7 +815,7 @@
             }
 
             if (!url || url === '') {
-                return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested: ' + url });
+                return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested'  });
             }
 
             // if we ever do retries should do it inside the request function
@@ -829,15 +830,15 @@
                 x = new XMLHttpRequest();
             x.onload = function () {
                 if (dump_request) console.log(x.responseText);
-                if (!x.getResponseHeader('Access-Control-Allow-Origin'))
+                if (options.IGNORE_CORS || !x.getResponseHeader('Access-Control-Allow-Origin'))
                     dispatch_event('AutoPatchWork.load', {
                         htmlDoc: createHTML(x.responseText, url),
                         url: url
                     });
-                else dispatch_event('AutoPatchWork.terminated', { message: 'request failed on ' + url + ' because of CORS validation error.'});
+                else dispatch_event('AutoPatchWork.terminated', { message: 'request failed on ' + url + ' because of CORS access'});
             };
             x.onerror = function () {
-                dispatch_event('AutoPatchWork.error', { message: 'XMLHttpRequest failed on ' + url + '. Reason: ' + x.statusText });
+                dispatch_event('AutoPatchWork.error', { message: 'XMLHttpRequest failed on ' + url + ' (' + x.statusText + ')' });
             };
             //if (req === 'POST') {
             //    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -888,7 +889,7 @@
                 if (i && i.parentNode) i.parentNode.removeChild(i);
             }
             iframe.onerror = function () {
-                dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed.' });
+                dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed' });
                 remove_iframe();
             };
             iframe.onload = function () {
@@ -908,12 +909,13 @@
          * */
         function get_href(node) {
             if (!node) return null;
+            if (typeof node === 'string') return node;
             if (typeof node.getAttribute === 'function') {
                 if (node.getAttribute('href')) return node.getAttribute('href');
                 else if (node.getAttribute('action')) return node.getAttribute('action');
                 else if (node.getAttribute('value')) return node.getAttribute('value');
             }
-            return node.href || node.action || node.value;
+            return node.href || node.action || node.value || null;
         }
         /**
          * Runs script in current context .
@@ -1014,10 +1016,10 @@
         }
 
         /**
-         * Filters undesired elements from a document.
-         * @param {DocumentElement} doc Document to remove nodes from.
+         * Filters undesired elements from a DOM tree using either XPath or CSS selectors.
+         * @param {documentElement} doc Base DOM element to remove nodes from.
          * */
-        function remove_nodes (doc) {
+        function remove_nodes(doc) {
             // filter undesired elements
             if (!status.remove_elem && !status.remove_elem_selector) return;
             var r, l;
@@ -1062,7 +1064,7 @@
                 title = event.detail.htmlDoc.querySelector('title') ? event.detail.htmlDoc.querySelector('title').textContent.trim() : '';
             delete event.detail.htmlDoc;
 
-            if (!nodes || !nodes.length) return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found.' });
+            if (!nodes || !nodes.length) return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
             else dispatch_event('AutoPatchWork.append', { nodes: nodes, title: title });
         }
         /**
@@ -1306,7 +1308,7 @@
                 else return false;
             });
         }
-        /* Calculates height delta between end of page and botoom of last content block. */
+        /* Calculates height delta between the bottom of content block and the page end. */
         function calc_remaining_height() {
             var rect = null, bottom = null, _point = status.content_last;
             while (_point) {
@@ -1314,19 +1316,20 @@
                     rect = _point.getBoundingClientRect();
                     if (rect && !(rect.top === 0 && rect.right === 0 && rect.bottom === 0 && rect.left === 0)) break;
                     else rect = null;
-                } else break;
+                }
                 if (_point.nextSibling) _point = _point.nextSibling;
                 else break;
             }
             if (rect) {
-                bottom = rect.top + window.pageYOffset;
+                bottom = rect.top + window.scrollY;
+            } else if (status.last_element && typeof status.last_element.getBoundingClientRect === 'function') {
+                rect = status.last_element.getBoundingClientRect();
+                if (rect) bottom = rect.top + rect.height + window.scrollY;
             } else if (status.content_parent && typeof status.content_parent.getBoundingClientRect === 'function') {
                 rect = status.content_parent.getBoundingClientRect();
-                bottom = rect.top + rect.height + window.pageYOffset;
+                if (rect) bottom = rect.top + rect.height + window.scrollY;
             }
-            if (!bottom) {
-                bottom = Math.round(rootNode.scrollHeight * 0.8);
-            }
+            if (!bottom) bottom = Math.round(rootNode.scrollHeight * 0.8);
             return rootNode.scrollHeight - bottom + options.BASE_REMAINING_HEIGHT;
         }
     }

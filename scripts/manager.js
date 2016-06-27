@@ -275,10 +275,11 @@ var RECORDS_PER_PAGE = 100,
 
         function process_search_input() {
             if (!siteinfo_data || !siteinfo_data.length) return;
+            stop_pager = true;
             var fullword = siteinfo_search_input.value,
                 fullwords = [];
             var s = new Date * 1;
-            if (fullword) {
+            if (fullword.trim() !== '') {
                 var ret = [],
                     word = fullword.replace(/"([^"]+)"/g, function ($0, $1) {
                         if ($1) ret.push($1);
@@ -291,6 +292,7 @@ var RECORDS_PER_PAGE = 100,
                 filtered_info = [];
                 SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
                 SiteInfoNavi(siteinfo_data);
+                stop_pager = false;
                 return;
             }
             filtered_info = siteinfo_data.filter(function (sinfo) {
@@ -315,29 +317,31 @@ var RECORDS_PER_PAGE = 100,
             //debug && log('search completed in ' + (new Date - s) + 'ms');
             SiteInfoView(filtered_info.slice(0, RECORDS_PER_PAGE));
             SiteInfoNavi(filtered_info);
-            
+            stop_pager = false;
         }
-
+        var timer = null;
         siteinfo_search_input.addEventListener('input', function() {
             var v = new Date * 1;
-            stop_pager = true;
-            process_search_input();
-            stop_pager = false;
+            clearTimeout(timer);
+            timer = setTimeout(process_search_input, 400);
             dispatch_event('AutoPatchWork.request');
             //debug && log('view completed in ' + (new Date - v) + 'ms');
         }, false);
 
         function url2anchor(url) {
             var a = document.createElement('a');
+            if (typeof  url !== 'string' || url.trim() === '') return a;
+            a.textContent = url.replace(/http:\/\/wedata\.net\/(items\/|databases\/)?/, '');
             a.href = url;
             a.target = '_blank';
-            a.textContent = url.replace(/http:\/\/wedata\.net\/(items\/|databases\/)?/, '');
             return a;
         }
 
         function urls2anchors(urls) {
             var df = document.createDocumentFragment();
-            urls.split(/[\s\n\r]+/).map(url2anchor).forEach(function (a, i) {
+            if (typeof  urls !== 'string') return df;
+            urls = urls.trim();
+            if (urls !== '') urls.split(/[\s\n\r]+/).map(url2anchor).forEach(function (a, i) {
                 if (i) df.appendChild(document.createElement('br'));
                 df.appendChild(a);
             });
