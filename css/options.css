@@ -361,7 +361,7 @@ div.outputs{
     display:block;
     margin:0;
     text-align:center;
-    width:340px;
+    width:440px;
 }
 
 div.outputs span.outputs{
@@ -374,7 +374,7 @@ div.outputs span.outputs{
 }
 
 input[type="range"]{
-    width:300px;
+    width:400px;
 }
 
 #news ul { padding-left: 20px; padding-right: 20px; }

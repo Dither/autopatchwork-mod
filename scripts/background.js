@@ -21,7 +21,8 @@ var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fai
     }, /*{}; /* Disable overzealous formats. Re-enable them manually on your own risk. */
     JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json',
     JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
-const MICROFORMATs = [];/*[{
+
+const MICROFORMATs = [/*{
     MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//a[@rel="next"] | //link[@rel="next"]',
@@ -32,7 +33,8 @@ const MICROFORMATs = [];/*[{
     url: '^https?://.',
     nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
-}];*/
+}*/];
+
 var browser, 
     BROWSER_CHROME = 1,
     BROWSER_SAFARI = 2,
@@ -71,7 +73,8 @@ window.AutoPatchWorkBG = {
         check_crc: false,
         bar_status: true,
         force_abs_hrefs: false,
-        force_abs_srcs: false
+        force_abs_srcs: false,
+        enable_notifications: false
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;

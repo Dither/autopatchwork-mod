@@ -123,8 +123,8 @@
 }
 
 #autopatchwork_bar.autopager_terminated{
-    border-bottom: 1px solid rgba(200, 128, 64, .5) !important;
-    border-top : 4px solid rgba(200, 128, 64, .5) !important;
+    border-bottom: 1px solid rgba(230, 7, 110, 0.5) !important;
+    border-top : 4px solid rgba(230, 7, 110, 0.5) !important;
 }
 
 #autopatchwork_bar.autopager_error{

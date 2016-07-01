@@ -25,7 +25,7 @@
     },
    "description": "Automatically loads the next page and inserts into current one.",
    "name": "AutoPatchWorkMod",
-   "permissions": [ "unlimited_storage", "tabs", "management" ],
+   "permissions": [ "unlimited_storage", "tabs", "management", "desktop-notification", "notifications"],
    "optional_permissions": [ "storage" ],
    "options_ui": {
       "page": "options.html"
