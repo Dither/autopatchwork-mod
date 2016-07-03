@@ -228,6 +228,26 @@
         return doc;
     }
 
+    /**
+     * Evaluates CSS selector to find a node.
+     * @param {Node} doc Node to perform selector search on.
+     * @return {Node} Matched node.
+     * */
+    function get_node(doc, path) {
+        return doc.querySelector(path);
+    }
+
+    /**
+     * Evaluates XPath to find a node.
+     * @param {Node} doc Node to perform XPath search on.
+     * @return {Node} Matched node.
+     * */
+    function get_node_xpath(doc, path) {
+        //if (typeof doc.selectSingleNode === 'undefined') 
+        return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        //else return doc.selectSingleNode(path);
+    }
+
     if (browser === BROWSER_OPERA && !APW.loaded) {
         var args = arguments;
         document.addEventListener('DOMContentLoaded', function (e) {
@@ -284,7 +304,41 @@
     var matched_siteinfo = [],
           rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
 
-    window.AutoPatchWorked = {dispatch_event: dispatch_event, create_html: create_html};
+    /**
+     * Sets event listener for external scripts (once per name).
+     * @param {String} name Event name.
+     * @param {Function} callback Event callback.
+     * */
+    var event_handlers = {};
+    function on(name, callback) {
+        if (!callback || !name) return;
+        if (event_handlers[name]) {
+            document.removeEventListener('AutoPatchWork.' + name, event_handlers[name], false);
+        }
+        event_handlers[name] = callback;
+        document.addEventListener('AutoPatchWork.' + name, event_handlers[name], false);
+    }
+
+    /**
+     * Removes event listener for external scripts.
+     * @param {String} name Event name.
+     * */
+    function off(name) {
+        if (!name || !event_handlers[name]) return;
+        document.removeEventListener('AutoPatchWork.' + name, event_handlers[name], false);
+        delete event_handlers[name];
+    }
+
+    /**
+     * Dispatches shorthand event on the document.
+     * @param {String} type Shorthand event name string.
+     * @param {Array} opt Array of event's parameters.
+     * */
+    function trigger(type, opt) {
+        dispatch_event('AutoPatchWork.' + type, opt);
+    }
+
+    window.AutoPatchWorked = {on: on, off: off, trigger: trigger, create_html: create_html, get_node: get_node, get_node_x: get_node_xpath};
 
     // Begin listening for init messages and request configuration if got one
     document.addEventListener('AutoPatchWork.init', init, false);
@@ -300,23 +354,7 @@
 
     dispatch_event('AutoPatchWork.init');
 
-    window.addEventListener('hashchange', function (e) {
-        if (AutoPatchWorked.already && AutoPatchWorked.siteinfo) {
-            var status = AutoPatchWorked.status;
-            if (status.button_elem || status.button_elem_selector) return;
-            var first_element = (AutoPatchWorked.get_main_content(document) || [])[0];
-            if (status.first_element !== first_element) {
-                //forceIframe = true; // probably bugged
-                AutoPatchWorked.siteinfo.forceIframe = true;
-                dispatch_event('AutoPatchWork.reset', {'siteinfo': AutoPatchWorked.siteinfo});
-            }
-        } else if (matched_siteinfo) {
-            matched_siteinfo.some(function (s) { return AutoPatchWork(s); });
-        }
-    }, false);
-
-    //function hashChanged (e) { setTimeout(reInit, 100, e);  };
-    //window.addEventListener('hashchange', hashChanged, false);
+    /* Hash changes affecting content can be handled by external scripts and forceIframe can be manually set in preferences or by SITEINFO field now. */
 
     /**
      * APW initialisation, config reading and fail registration.
@@ -463,12 +501,12 @@
                 if (!get_node(document, status.button_elem_selector)) { log('next page button ' + status.button_elem_selector + ' not found'); return false; }
             } else {
                 if (!get_href(next)) {
-                    if (s2b(siteinfo.MICROFORMAT)) return;
+                    if (s2b(siteinfo.MICROFORMAT)) return false;
                     log('next page link ' + (status.next_link || status.next_link_selector || status.next_link_mask)  + ' not found');
                     return false;
                 }
                 if (!page_elements || !page_elements.length) {
-                    if (s2b(siteinfo.MICROFORMAT)) return;
+                    if (s2b(siteinfo.MICROFORMAT)) return false;
                     log('page content ' + (status.page_elem || status.page_elem_selector)  + ' not found');
                     return false;
                 }
@@ -481,8 +519,8 @@
                     (next.protocol && next.protocol.length && !~next.protocol.indexOf('javascript') &&
                      next.protocol !== location.protocol)
                 ) {
+                    log('next page has different base address: switching to IFrame requests...');
                     status.use_iframe_req = true;
-                    log('Next page has different base address: using IFrame requests...');
                 }
         }
 
@@ -602,6 +640,7 @@
         status.bar && status.bar.removeAttribute('style');
 
         remove_nodes(document);
+
         verify_scroll();
 
         return true;
@@ -618,6 +657,8 @@
             cleanup();
             remove_css('user');
 
+            window.removeEventListener('scroll', on_scroll, false);
+            window.removeEventListener('resize', on_scroll, false);
             document.removeEventListener('AutoPatchWork.request', request, false);
             document.removeEventListener('AutoPatchWork.load', load, false);
             document.removeEventListener('AutoPatchWork.append', append, false);
@@ -683,17 +724,15 @@
          * Cleanup after stopping;
          *  */
         function cleanup() {
-            remove_css('main'); // Not removing user CSS here as it can affect separators and paginated pages styling.
-
-            window.removeEventListener('scroll', on_scroll, false);
-            window.removeEventListener('resize', on_scroll, false);
+            //remove_css('main'); // Not removing user CSS as it can affect separators and paginated pages styling. Commented out because it causes visual twitch in Opera 12 on remove.
 
             if (status.change_address) {
-                while (downloaded_pages.length) change_address(downloaded_pages.shift());
-                while (page_titles.length) document.title = page_titles.shift();
-
-                var elems = document.querySelectorAll('[data-apw-offview]');
-                for (var i = 0; i < elems.length; i++) elems[i].removeAttribute('data-apw-offview');
+                var title = page_titles.pop(), url = downloaded_pages.pop();
+                if (title && title !== '') document.title = title;
+                if (url && url !== '') change_address(url);
+                downloaded_pages = [];
+                page_titles = [];
+                for (var i = 0, elems = document.querySelectorAll('[data-apw-offview]'), l = elems.length; i < l; i++) elems[i].removeAttribute('data-apw-offview');
             }
 
             status.bar && status.bar.parentNode && bar.parentNode.removeChild(status.bar);
@@ -702,47 +741,51 @@
 
         /**
          * Termination event handler.
-         * Stops scroll processing and removes statusbar.
+         * Stops all event processing, removes statusbar.
          * @param {Event} event Event data.
          * */
         function terminated(event) {
+            status.bar && (status.bar.className = 'autopager_terminated');
+
+            window.removeEventListener('scroll', on_scroll, false);
+            window.removeEventListener('resize', on_scroll, false);
+            document.removeEventListener('AutoPatchWork.request', request, false);
+            document.removeEventListener('AutoPatchWork.load', load, false);
+            document.removeEventListener('AutoPatchWork.append', append, false);
+            document.removeEventListener('AutoPatchWork.error', error, false);
+            document.removeEventListener('AutoPatchWork.reset', reset, false);
+            document.removeEventListener('AutoPatchWork.state', state, false);
+            document.removeEventListener('AutoPatchWork.terminated', terminated, false);
+            document.removeEventListener('AutoPatchWork.toggle', toggle, false);
+            document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+
             status.state = false;
             status.loading = false;
+
             ///////////////////
             dispatch_notification({
                 extension: 'autopatchwork',
-                text: event.detail ? event.detail.message : '',
-                type: 'terminated'
+                text: (event.detail && event.detail.message) ? event.detail.message : '',
+                type: (event.detail && event.detail.type) ? event.detail.type : 'terminated'
             });
             ///////////////////
-            status.bar && (status.bar.className = 'autopager_terminated');
             if (event.detail && event.detail.message) log(event.detail.message);
             setTimeout(cleanup, 5000);
 
         }
 
         /**
-         * Error (recoverable) event handler.
-         * Stops scroll processing, prints error, sets error statusbar.
+         * Recoverable error event handler (currently redirects to terminated event).
+         * Stops scroll processing, prints error, sets error statusbar (possibly will allow to recover from the error).
          * @param {Event} event Event data.
          * */
         function error(event) {
-            status.state = false;
-            status.loading = false;
-            ///////////////////
-              dispatch_notification({
-                extension: 'autopatchwork',
-                text: (event.detail ? event.detail.message : ''),
-                type: 'error'
-             });
-             ///////////////////
-            status.bar && (status.bar.className = 'autopager_error');
-            if (event.detail && event.detail.message) log(event.detail.message);
-            setTimeout(cleanup, 5000);
+            //status.bar && (status.bar.className = 'autopager_error');
+            terminated({'detail': { message: ((event.detail && event.detail.message) ? event.detail.message : ''), type: 'error' }});
         }
 
         /**
-         * Gets current height of viewport.
+         * Gets height of the current viewport.
          * @return {Number} Height of viewport
          * */
         function get_viewport_height() {
@@ -787,8 +830,9 @@
                             elem.removeAttribute('data-apw-offview');
                             // first loaded page on the other end of the array
                             if (downloaded_pages.length) {
-                                if (page_titles.length) document.title = page_titles.shift();
-                                change_address(downloaded_pages.shift());
+                                var title = page_titles.shift(), url = downloaded_pages.shift();
+                                if (title && title !== '') document.title = title;
+                                if (url && url !== '') change_address(url);
                             }
                         } else {
                             //break;
@@ -1117,8 +1161,9 @@
             status.page_number++;
             document.apwpagenumber++;
 
-            var nodes = get_main_content(event.detail.htmlDoc),
-                  title = event.detail.htmlDoc.querySelector('title') ? event.detail.htmlDoc.querySelector('title').textContent.trim() : '';
+            var title_node = event.detail.htmlDoc.querySelector('title'),
+                 nodes = get_main_content(event.detail.htmlDoc),
+                 title =  title_node ? title_node.textContent.trim() : '';
             delete event.detail.htmlDoc;
 
             if (!nodes || !nodes.length) return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
@@ -1254,8 +1299,7 @@
 
             if (change_location && loaded_url && loaded_url.length) {
                 downloaded_pages.push(loaded_url);
-                if (title.length > 2) 
-                    page_titles.push(title);
+                page_titles.push(title);
             }
             status.load_count++;
             setTimeout(function(){ dispatch_event('AutoPatchWork.pageloaded'); }, get_load_delay());
@@ -1278,24 +1322,6 @@
         function pageloaded() {
             state_loaded();
             verify_scroll();
-        }
-
-        /**
-         * Evaluates CSS selector to find a node.
-         * @param {Node} doc Node to perform selector search on.
-         * @return {Node} Matched node.
-         * */
-        function get_node(doc, path) {
-            return doc.querySelector(path);
-        }
-
-        /**
-         * Evaluates XPath to find a node.
-         * @param {Node} doc Node to perform XPath search on.
-         * @return {Node} Matched node.
-         * */
-        function get_node_xpath(doc, path) {
-            return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
 
         /**
@@ -1340,7 +1366,7 @@
         }
 
         /**
-         * Keeps only elements on the same level.
+         * Keeps only following elements on the same level.
          * @param {NodeList} nodes The nodelist to filter.
          * @return {NodeList} Filtered list.
          * */

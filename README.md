@@ -10,7 +10,7 @@ Screenshots
 Config page:  
 ![config tab](https://dithersky.files.wordpress.com/2014/08/preferences.png)
 
-Pager in action:  
+Autopager in action:  
 ![page result](https://dithersky.files.wordpress.com/2014/08/demo_separator.png)
 
 License
