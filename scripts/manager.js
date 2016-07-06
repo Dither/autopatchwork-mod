@@ -75,7 +75,7 @@ var RECORDS_PER_PAGE = 100,
         return !element.dispatchEvent(evt);
     }
     
-    var browser, 
+    var browser_type, 
         BROWSER_CHROME = 1,
         BROWSER_SAFARI = 2,
         BROWSER_OPERA = 3;
@@ -87,13 +87,13 @@ var RECORDS_PER_PAGE = 100,
         entry_editor_running = false,
         stop_pager = false;
         
-    if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
-    else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
-    else browser = BROWSER_OPERA;
+    if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
+    else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+    else browser_type = BROWSER_OPERA;
     
     function log() {
         if (!debug) return;
-        if (browser === BROWSER_OPERA) {
+        if (browser_type === BROWSER_OPERA) {
             window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         } else if (window.console) {
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
@@ -101,7 +101,7 @@ var RECORDS_PER_PAGE = 100,
     }
     
     // Init browser-specific messaging
-    switch (browser) {
+    switch (browser_type) {
         case BROWSER_SAFARI:
             if (bgProcess) break;
             safari.self.tab.dispatchMessage('siteinfo_init');
@@ -110,7 +110,7 @@ var RECORDS_PER_PAGE = 100,
         case BROWSER_OPERA:
             bgProcess = bgProcess || opera.extension.bgProcess;
         case BROWSER_CHROME:
-            bgProcess = bgProcess || chrome.extension.getBackgroundPage();
+            bgProcess = bgProcess || browser.extension.getBackgroundPage();
     }
 
     if (!bgProcess) {
@@ -682,7 +682,8 @@ var RECORDS_PER_PAGE = 100,
             var url = JSON_SITEINFO_DB,
                 xhr = new XMLHttpRequest(),
                 progressbar = document.getElementById('progressbar'),
-                progress = document.getElementById('progress');
+                progress = document.getElementById('progress'),
+                progress_percent = document.getElementById('progress_percent');
             
             progressbar.style.display = 'block';
             progress.style.width = '0%';
@@ -698,7 +699,7 @@ var RECORDS_PER_PAGE = 100,
                       return;
                   }
 
-                  progress.style.width = '100%';
+                  progress_percent.textContent = 'Done!';
                   setTimeout(function(){ progressbar.style.display = 'none'; }, 600);
 
                   callback(d);
@@ -709,11 +710,17 @@ var RECORDS_PER_PAGE = 100,
             };
 
             xhr.onprogress = function(evt) {
+                if (!evt.lengthComputable) {
+                    xhr.onprogress = null;
+                    return;
+                }
                 var percent = Math.min(parseInt(100 * evt.loaded / evt.total, 10), 100);
+                if (isNaN(percent)) return;
+                progress_percent.textContent = percent + '%';
                 progress.style.width = percent + '%';
             };
 
-            xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
+            xhr.open('GET', url, true); // URL can be updated to +?time in preferences in case something happens
             xhr.send(null);
         }
 

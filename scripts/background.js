@@ -35,14 +35,14 @@ const MICROFORMATs = [/*{
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
 }*/];
 
-var browser, 
+var browser_type, 
     BROWSER_CHROME = 1,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
-else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
-else browser = BROWSER_OPERA;
+if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
+else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+else browser_type = BROWSER_OPERA;
 
 /**
  * Logging function.
@@ -50,7 +50,7 @@ else browser = BROWSER_OPERA;
  * */
 function log() {
     if (!debug) return;
-    if (browser === BROWSER_OPERA) {
+    if (browser_type === BROWSER_OPERA) {
         window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
     } else if (window.console) {
         window.console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
@@ -132,7 +132,7 @@ window.AutoPatchWorkBG = {
 
 //// main //////
 
-if(browser === BROWSER_SAFARI) {
+if(browser_type === BROWSER_SAFARI) {
     safari.extension.settings.addEventListener('change', function(evt) {
         if(evt.key in AutoPatchWorkBG.config) {
             AutoPatchWorkBG.config[evt.key] = evt.newValue;
@@ -338,8 +338,8 @@ window.onload = function() {
         group: 'AutoPatchWork',
         actions: [{ name: 'AutoPatchWork.toggle' }, { name: 'AutoPatchWork.request' }]
     };
-    //self.chrome && chrome.runtime.sendMessage(CHROME_GESTURES, action);
-    //self.chrome && chrome.runtime.sendMessage(CHROME_KEYCONFIG, action);
+    //self.chrome && browser.runtime.sendMessage(CHROME_GESTURES, action);
+    //self.chrome && browser.runtime.sendMessage(CHROME_KEYCONFIG, action);
 };
 
 var toggleCode = '(' + (function() {
@@ -347,9 +347,9 @@ var toggleCode = '(' + (function() {
     document.dispatchEvent(ev);
 }).toString() + ')();';
 
-switch(browser) {
+switch(browser_type) {
     case BROWSER_CHROME:
-            chrome.runtime.onMessage.addListener(handleMessage);
+            browser.runtime.onMessage.addListener(handleMessage);
             break;
     case BROWSER_SAFARI:
         safari.application.addEventListener("message", function(evt) {
@@ -508,21 +508,20 @@ function handleMessage(request, sender, sendResponse) {
 }
 
 function openOrFocusTab(uri) {
-    switch (browser) {
+    switch (browser_type) {
         case BROWSER_CHROME:
-            chrome.windows.getAll({ populate: true},
-                function(windows) {
-                if(!windows.some(function(w) {
-                    if(w.type === 'normal') {
+            browser.windows.getAll({ populate: true}, function(windows) {
+                if (!windows.some(function(w) {
+                    if (w.type === 'normal') {
                         return w.tabs.some(function(t) {
-                            if(t.url === H + uri) {
-                                chrome.tabs.update(t.id, { 'selected': true });
+                            if (t.url === H + uri) {
+                                browser.tabs.update(t.id, { 'selected': true });
                                 return true;
                             }
                         });
                     }
-                })) { chrome.tabs.getSelected(null, function(t) {
-                        chrome.tabs.create({ 'url': uri, 'selected': true, index: t.index + 1 });
+                })) { browser.tabs.query({active: true}, function(t) {
+                        browser.tabs.create({ 'url': uri, index: (t[0] ? t[0].index : 0) + 1 });
                     });
                 }
             });

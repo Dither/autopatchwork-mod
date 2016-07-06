@@ -48,7 +48,7 @@
         }
     };
 
-    var browser, checksum = new FastCRC32, debug = false, profiler = false, dump_request = false,
+    var browser_type, checksum = new FastCRC32, debug = false, profiler = false, dump_request = false,
           BROWSER_CHROME = 1,
           BROWSER_SAFARI = 2,
           BROWSER_OPERA = 3;
@@ -101,9 +101,9 @@
         id: -1
     };
 
-    if ((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
-    else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
-    else browser = BROWSER_OPERA;
+    if ((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME;
+    else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+    else browser_type = BROWSER_OPERA;
 
     function APWException(message) {
         this.message = message;
@@ -133,7 +133,7 @@
         if (!debug) return;
         if (window.console) {
             console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-        } else if (browser === BROWSER_OPERA) {
+        } else if (browser_type === BROWSER_OPERA) {
             window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
         }
     }
@@ -248,7 +248,7 @@
         //else return doc.selectSingleNode(path);
     }
 
-    if (browser === BROWSER_OPERA && !APW.loaded) {
+    if (!APW.loaded) {
         var args = arguments;
         document.addEventListener('DOMContentLoaded', function (e) {
             APW.loaded = true;
@@ -258,7 +258,7 @@
     }
 
     var sendRequest;
-    switch (browser) {
+    switch (browser_type) {
         case BROWSER_CHROME:
             sendRequest = function (data, callback) {
                 if (callback) chrome.runtime.sendMessage(data, callback);
@@ -299,7 +299,7 @@
         default:
             sendRequest = null;
             throw new APWException('Browser not detected!');
-    } // switch(browser)
+    } // switch(browser_type)
 
     var matched_siteinfo = [],
           rootNode = /BackCompat/.test(document.compatMode) ? document.body : document.documentElement;
@@ -416,8 +416,9 @@
 
         status.css_patch = siteinfo.cssPatch || null;
         status.js_patch = siteinfo.jsPatch || null;
-        if (status.js_patch)
+        if (status.js_patch) {
             run_script(status.js_patch);
+        }
 
         status.next_link = siteinfo.nextLink || null;
         status.next_link_selector = siteinfo.nextLinkSelector || null;
@@ -609,12 +610,12 @@
                 dispatch_event('AutoPatchWork.toggle');
             }
 
-            //if (browser === BROWSER_OPERA) { // test :before + background-image: url(animated SVG) in CSS for other browsers
+            if (browser_type === BROWSER_OPERA) { // :before + background-image: url(animated SVG) in CSS for other browsers
                 var img = document.createElement('img');
                 img.id = 'autopatchwork_loader';
                 img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" width="60" height="32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
                 bar.appendChild(img);
-            //}
+            }
 
             document.body.appendChild(bar);
             bar.addEventListener('click', function (e) {
@@ -1022,8 +1023,13 @@
          * */
         function run_script(text) {
             try {
-                if (text && text.length > 1)
-                    window.eval(text);
+                if (text && text.length > 1) {
+                    var script = document.createElement('script');
+                    script.textContent = text;
+                    (document.head || document.documentElement).appendChild(script);
+                    script.remove();
+                    //window.eval(text);
+                }
             } catch (bug) {
                 log(bug.message);
             }

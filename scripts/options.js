@@ -11,14 +11,14 @@ var imageCross = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf
 //var imgSave =
 // 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAH+SURBVBgZBcE9i11VGAbQtc/sO0OCkqhghEREAwpWAWUg8aMVf4KFaJEqQtAipTZWViKiCGOh2Ap2gmJhlSIWFsFOxUK0EsUM3pl79n4f12qHb3z3Fh7D83gC95GOJsDe0ixLk5Qq/+xv/Lw9Xd+78/HLX3Y8fXTr2nWapy4eCFKxG7Fby97SnDlYtMbxthyfzHO//nl85fNvfvnk8MbX5xa8IHx1518Vkrj54Q+qQms2vVmWZjdiu5ZR2rT01166/NCZg/2PFjwSVMU6yjoC1oq+x6Y3VbHdlXWExPd379nf7Nmejv2Os6OC2O4KLK0RNn3RNCdr2Z5GJSpU4o+/TkhaJ30mEk5HwNuvX7Hpi76wzvjvtIwqVUSkyjqmpHS0mki8+9mPWmuWxqYvGkbFGCUAOH/+QevYI9GFSqmaHr5wkUYTAlGhqiRRiaqiNes6SOkwJwnQEqBRRRJEgkRLJGVdm6R0GLMQENE0EkmkSkQSVVMqopyuIaUTs0J455VLAAAAAODW0U/GiKT0pTWziEj44PZ1AAAAcPPqkTmH3QiJrlEVDXDt0qsAAAAAapa5BqUnyaw0Am7//gUAAAB49tEXzTmtM5KkV/y2G/X4M5fPao03n/sUAAAAwIX7y5yBv9vhjW/fT/IkuSp5gJKElKRISYoUiSRIyD1tufs/IXxui20QsKIAAAAASUVORK5CYII=';
 var imgLoad = 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==';
-var browser,
+var browser_type,
     BROWSER_CHROME = 1,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if((!!window.chrome && !!window.chrome.webstore) || (typeof InstallTrigger !== 'undefined')) browser = BROWSER_CHROME;
-else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser = BROWSER_SAFARI;
-else browser = BROWSER_OPERA;
+if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
+else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+else browser_type = BROWSER_OPERA;
 
 // main
 document.addEventListener('DOMContentLoaded',function(){
@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded',function(){
         this.name = "[AutoPatchWork]";
     }
 
-    switch (browser) {
+    switch (browser_type) {
         case BROWSER_CHROME:
-            bgProcess = chrome.extension.getBackgroundPage();
+            bgProcess = browser.extension.getBackgroundPage();
             AutoPatchWork = bgProcess.AutoPatchWorkBG;
             break;
         case BROWSER_SAFARI:
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var WIDTH = 700;
     var HEIGHT = Math.max(window.innerHeight - 100, 500);
 
-    var i18n = browser === BROWSER_CHROME  ? chrome.i18n : this.safari ? {
+    var i18n = browser_type === BROWSER_CHROME  ? browser.i18n : this.safari ? {
         getAcceptLanguages: function() {},
         getMessage: function() {}
     } : {
@@ -110,8 +110,10 @@ document.addEventListener('DOMContentLoaded',function(){
         var elems = document.querySelectorAll('*[class^="MSG_"]');
         Array.prototype.forEach.call(elems, function(node) {
             var key = node.className.match(/MSG_(\w+)/)[1];
-            var message = i18n.getMessage(key);
-            if(message) node.textContent = message;
+            try {
+                var message = i18n.getMessage(key);
+                if(message) node.textContent = message;
+            } catch(bug) {}
         });
     }
     L10N();
@@ -119,11 +121,11 @@ document.addEventListener('DOMContentLoaded',function(){
     // General settings tab
     var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
     open_siteinfo_manager.addEventListener('click', function(e) {
-        switch (browser) {
+        switch (browser_type) {
             case BROWSER_CHROME:
-                window.chrome.tabs.getCurrent(function(tab) {
-                    chrome.tabs.update(tab.id, { url: "siteinfo_manager.html" });
-                });
+                browser.tabs.query({active: true}, function(t) {
+                        browser.tabs.create({ 'url': 'siteinfo_manager.html', index: (t[0] ? t[0].index : 0) + 1 });
+                 });
                 break;
             case BROWSER_SAFARI:
                 safari.self.tab.dispatchMessage('options', { manage: true });
