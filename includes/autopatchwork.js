@@ -49,9 +49,9 @@
     };
 
     var browser_type, checksum = new FastCRC32, debug = false, profiler = false, dump_request = false,
-          BROWSER_CHROME = 1,
-          BROWSER_SAFARI = 2,
-          BROWSER_OPERA = 3;
+        BROWSER_CHROME = 1,
+        BROWSER_SAFARI = 2,
+        BROWSER_OPERA = 3;
 
     var options = {
         BASE_REMAINING_HEIGHT: 800,
@@ -234,6 +234,9 @@
      * @return {Node} Matched node.
      * */
     function get_node(doc, path) {
+        if (typeof doc === 'string') {
+            return document.querySelector(doc);
+        }
         return doc.querySelector(path);
     }
 
@@ -243,6 +246,9 @@
      * @return {Node} Matched node.
      * */
     function get_node_xpath(doc, path) {
+        if (typeof doc === 'string') {
+            return document.evaluate(doc, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        }
         //if (typeof doc.selectSingleNode === 'undefined') 
         return doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         //else return doc.selectSingleNode(path);
@@ -382,7 +388,7 @@
             return AutoPatchWork(s) || (fails.push(s), false);
         });
         if (ready === false) sendRequest({ failed_siteinfo: fails });
-        return dispatch_event('AutoPatchWork.ready');
+        dispatch_event('AutoPatchWork.ready');
     }
 
     /**
@@ -406,50 +412,22 @@
     function AutoPatchWork(siteinfo) {
         if (window.AutoPatchWorked.already) return true;
 
-        var base_url,
-              downloaded_pages = [],
-              page_titles = [],
-              scroll = false,
-              loaded_url = null,
-              requested_urls = {},
-              loaded_crcs = {};
+        var base_url = '',
+            downloaded_pages = [],
+            page_titles = [],
+            scroll = false,
+            loaded_url = null,
+            requested_urls = {},
+            loaded_crcs = {};
+
+        status.service = s2b(siteinfo.SERVICE);
+        if(!status.service) {
+            status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? !s2b(siteinfo.forceAddressChange) ^ !options.CHANGE_ADDRESS : options.CHANGE_ADDRESS;
+        }
 
         status.css_patch = siteinfo.cssPatch || null;
         status.js_patch = siteinfo.jsPatch || null;
-        if (status.js_patch) {
-            run_script(status.js_patch);
-        }
-
-        status.next_link = siteinfo.nextLink || null;
-        status.next_link_selector = siteinfo.nextLinkSelector || null;
-        if (status.next_link) {
-            if (status.next_link.indexOf('http') === 0 && ~status.next_link.indexOf('|')) {
-                status.next_link_mask = status.next_link;
-                status.next_link = null;
-            } else try {
-                document.querySelector(status.next_link);
-                status.next_link_selector = status.next_link;
-                status.next_link = null;
-            } catch (bug) {
-                status.next_link_selector = null;
-            }
-        }
-
-        status.next_link_mask = siteinfo.nextMask || null;
-        if (status.next_link_mask) {
-            var arr = status.next_link_mask.split('|'),
-                matches = /\d{1,}/.exec(location.href.replace(arr[0],'').replace(arr[2],'')),
-                pagen = parseInt(arr[1], 10);
-            if (isNaN(pagen) || !matches) {
-                status.page_number = 1;
-            } else {
-                status.page_number = parseInt(matches[0], 10) / pagen;
-            }
-        } else {
-            status.page_number = 1;
-        }
-
-        status.id = parseInt(siteinfo['wedata.net.id'], 10) || -1;
+        if (status.js_patch) run_script(status.js_patch);
 
         status.page_elem = siteinfo.pageElement || null;
         status.page_elem_selector = siteinfo.pageElementSelector || null;
@@ -481,19 +459,47 @@
             status.remove_elem_selector = null;
         }
 
+        if (!status.page_elem && !status.page_elem_selector && !status.button_elem && !status.button_elem_selector && status.service) return true;
+
+        status.next_link = siteinfo.nextLink || null;
+        status.next_link_selector = siteinfo.nextLinkSelector || null;
+        if (status.next_link) {
+            if (status.next_link.indexOf('http') === 0 && ~status.next_link.indexOf('|')) {
+                status.next_link_mask = status.next_link;
+                status.next_link = null;
+            } else try {
+                document.querySelector(status.next_link);
+                status.next_link_selector = status.next_link;
+                status.next_link = null;
+            } catch (bug) {
+                status.next_link_selector = null;
+            }
+        }
+
+        status.next_link_mask = siteinfo.nextMask || null;
+        if (status.next_link_mask) {
+            var arr = status.next_link_mask.split('|'),
+                matches = /\d{1,}/.exec(location.href.replace(arr[0],'').replace(arr[2],'')),
+                pagen = parseInt(arr[1], 10);
+            if (isNaN(pagen) || !matches) {
+                status.page_number = 1;
+            } else {
+                status.page_number = parseInt(matches[0], 10) / pagen;
+            }
+        } else {
+            status.page_number = 1;
+        }
+
+        status.id = parseInt(siteinfo['wedata.net.id'], 10) || -1;
         status.separator_disabled = s2b(siteinfo.disableSeparator);
         status.scripts_allowed = s2b(siteinfo.allowScripts);
         status.use_iframe_req = typeof siteinfo.forceIframe !== 'undefined' ? s2b(siteinfo.forceIframe) : null;
-        status.service = s2b(siteinfo.SERVICE);
-        if(!status.service) {
-            status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? !s2b(siteinfo.forceAddressChange) ^ !options.CHANGE_ADDRESS : options.CHANGE_ADDRESS;
-        }
 
         if (!s2b(siteinfo.MICROFORMAT)) log('detected SITEINFO = ' + JSON.stringify(siteinfo, null, 4));
 
         var not_button_mode = (!status.button_elem && !status.button_elem_selector),
-              next = not_button_mode ? get_next_link(document) : null,
-              page_elements = not_button_mode ? get_main_content(document) : null;
+            next = not_button_mode ? get_next_link(document) : null,
+            page_elements = not_button_mode ? get_main_content(document) : null;
 
         if (!status.service) {
             if (status.button_elem) {
@@ -640,7 +646,7 @@
         if (typeof siteinfo.pause !== 'undefined' && !siteinfo.pause) state_on();
         status.bar && status.bar.removeAttribute('style');
 
-        remove_nodes(document);
+        remove_nodes();
 
         verify_scroll();
 
@@ -1124,6 +1130,7 @@
          * @param {documentElement} doc Base DOM element to remove nodes from.
          * */
         function remove_nodes(doc) {
+            if (typeof doc === 'undefined') doc = document;
             // filter undesired elements
             if (!status.remove_elem && !status.remove_elem_selector) return;
             var r, l;
@@ -1150,26 +1157,28 @@
             if (!event.detail || !event.detail.htmlDoc)
                 return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
 
-            loaded_url = event.detail.url;
-            base_url = get_base_url(loaded_url);
-            next = get_next_link(event.detail.htmlDoc);
+            if (typeof event.detail.url === 'string' && event.detail.url.length) {
+                loaded_url = event.detail.url;
+                base_url = get_base_url(loaded_url);
+            }
 
-            parse_links(next);
-
-            remove_nodes(event.detail.htmlDoc);
-
-            if (!status.scripts_allowed) { // filter scripts
-               for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
-                   if (st[i].parentNode)
-                       st[i].parentNode.removeChild(st[i]);
+            if (!status.service) {
+                next = get_next_link(event.detail.htmlDoc);
+                parse_links(next);
+                remove_nodes(event.detail.htmlDoc);
+                if (!status.scripts_allowed) { // filter scripts
+                   for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
+                       if (st[i].parentNode)
+                           st[i].parentNode.removeChild(st[i]);
+                }
             }
 
             status.page_number++;
             document.apwpagenumber++;
 
             var title_node = event.detail.htmlDoc.querySelector('title'),
-                 nodes = get_main_content(event.detail.htmlDoc),
-                 title =  title_node ? title_node.textContent.trim() : '';
+                nodes = get_main_content(event.detail.htmlDoc),
+                title =  title_node ? title_node.textContent.trim() : '';
             delete event.detail.htmlDoc;
 
             if (!nodes || !nodes.length) return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
@@ -1201,12 +1210,12 @@
                 return dispatch_event('AutoPatchWork.error', { message: 'page content is not specified' });;
 
             var inserted_node, tmp_title,
-                  content_last = status.content_last,
-                  content_parent = status.content_parent,
-                  change_location = status.change_address;
+                content_last = status.content_last,
+                content_parent = status.content_parent,
+                change_location = status.change_address;
 
             var nodes = event.detail.nodes,
-                  title = event.detail.title;
+                title = event.detail.title;
 
             delete event.detail.nodes;
             delete event.detail.title;

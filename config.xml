@@ -15,7 +15,6 @@
   <preference name="custom_info" value="" />
   <preference name="site_fail_stats" value="" />
   <preference name="disabled_sites" value="" />
-  <preference name="disabled_sites" value="" />
   <preference name="siteinfo_wedata" value="" />
   <license href="http://www.opensource.org/licenses/mit-license.php">Licensed under the Open Source Initiative OSI - The MIT License (MIT);
 you may not use this file except in compliance with the License.

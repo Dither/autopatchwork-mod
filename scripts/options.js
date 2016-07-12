@@ -101,12 +101,12 @@ document.addEventListener('DOMContentLoaded',function(){
     };
     
     function L10N() {
-        i18n.getAcceptLanguages(function(langs) {
-            if(langs.indexOf('ja') < 0) {
+        /*i18n.getAcceptLanguages(function(langs) {
+            if (langs.indexOf('ja') < 0) {
                 // We should probably load history from language JSONs via AJAX
                 document.querySelector('#menu-tabs > #menu-news').style.display = 'none';
             }
-        });
+        });*/
         var elems = document.querySelectorAll('*[class^="MSG_"]');
         Array.prototype.forEach.call(elems, function(node) {
             var key = node.className.match(/MSG_(\w+)/)[1];
