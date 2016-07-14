@@ -69,6 +69,11 @@ var RECORDS_PER_PAGE = 100,
         document.dispatchEvent(ev);
     }
 
+    /**
+     * Dispatches HTML event on specific node.
+     * @param {Node} element Node to fire event on.
+     * @param {String} event Event name string.
+     * */
     function dispatch_html_event(element, event) {
         var evt = document.createEvent("HTMLEvents");
         evt.initEvent(event, true, true ); // event type,bubbling,cancelable
@@ -80,7 +85,7 @@ var RECORDS_PER_PAGE = 100,
         BROWSER_SAFARI = 2,
         BROWSER_OPERA = 3;
         
-    var debug = JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode,
+    var profiler = false, prof_first_run = true, debug = JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode,
         custom_info = JSON.parse(storagebase.custom_info),
         site_stats = JSON.parse(storagebase.site_stats),
         site_fail_stats = JSON.parse(storagebase.site_fail_stats),
@@ -90,7 +95,23 @@ var RECORDS_PER_PAGE = 100,
     if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
     else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
     else browser_type = BROWSER_OPERA;
-    
+
+    /**
+     * Profiling function.
+     * @param {String} name Profiled function name.
+     * @param {Any} end Any variable to mark function end.
+     * @example profile('function_name'); some code; profile('function_name', 'end');
+     * */
+    function profile(name, end) {
+        if (!debug || !profiler) return;
+        if (prof_first_run) { prof_first_run = false; console.log('============================'); } 
+        if (typeof end === 'undefined') {
+            console.time(name);
+        } else {
+            console.timeEnd(name);
+        }
+    }
+
     function log() {
         if (!debug) return;
         if (browser_type === BROWSER_OPERA) {
@@ -131,6 +152,7 @@ var RECORDS_PER_PAGE = 100,
         document.getElementById('loader').style.display = 'none';
 
         window.addEventListener('AutoPatchWork.request', function(e) {
+            profile('AutoPatchWork.request');
             e.stopPropagation ? e.stopPropagation() : e.cancelBubble = true;
             if (stop_pager) return;
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
@@ -143,6 +165,7 @@ var RECORDS_PER_PAGE = 100,
                 dispatch_event('AutoPatchWork.state',{state:'off'});
             }
             dispatch_event('AutoPatchWork.pageloaded');
+            profile('AutoPatchWork.request', 'end');
         }, true);
 
         var local_siteinfo = bgProcess.siteinfo;
@@ -162,8 +185,7 @@ var RECORDS_PER_PAGE = 100,
         };
 
         var template_element = document.getElementById('tmpl_siteinfo_body').firstChild;
-        while (template_element && (template_element.nodeType !== 1))
-            template_element = template_element.nextSibling;
+        while (template_element && (template_element.nodeType !== 1)) template_element = template_element.nextSibling;
         
         var siteinfo_search_input = document.getElementById('siteinfo_search_input');
         siteinfo_search_input.value = ~window.location.hash.indexOf('=') ? window.location.hash.substr(1).split('=')[1] || '' : '';
@@ -262,23 +284,22 @@ var RECORDS_PER_PAGE = 100,
                 sorted = e.target;
             }
         };
-        
+
         siteinfo_view.onclick = function (e) {
             if (e.target && e.target === siteinfo_view) {
                 entry_editor_running = false;
                 siteinfo_view.style.top = -window.innerHeight + 'px';
                 siteinfo_view.style.bottom = window.innerHeight + 'px';
-                while (siteinfo_view.firstChild)
-                    siteinfo_view.removeChild(siteinfo_view.firstChild);
+                while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
             }
         };
 
         function process_search_input() {
             if (!siteinfo_data || !siteinfo_data.length) return;
+            profile('process_search_input');
             stop_pager = true;
             var fullword = siteinfo_search_input.value,
                 fullwords = [];
-            var s = new Date * 1;
             if (fullword.trim() !== '') {
                 var ret = [],
                     word = fullword.replace(/"([^"]+)"/g, function ($0, $1) {
@@ -314,18 +335,16 @@ var RECORDS_PER_PAGE = 100,
                 })) return true;
                 return false;
             });
-            //debug && log('search completed in ' + (new Date - s) + 'ms');
             SiteInfoView(filtered_info.slice(0, RECORDS_PER_PAGE));
             SiteInfoNavi(filtered_info);
             stop_pager = false;
+            profile('process_search_input', 'end');
         }
         var timer = null;
         siteinfo_search_input.addEventListener('input', function() {
-            var v = new Date * 1;
             clearTimeout(timer);
             timer = setTimeout(process_search_input, 400);
             dispatch_event('AutoPatchWork.request');
-            //debug && log('view completed in ' + (new Date - v) + 'ms');
         }, false);
 
         function url2anchor(url) {
@@ -416,9 +435,13 @@ var RECORDS_PER_PAGE = 100,
         }
 
         function SiteInfoView(siteinfo, append) {
+            profile('SiteInfoView');
             entry_editor_running = false;
             toggle_popup('loader', true);
             var df = document.createDocumentFragment();
+            var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
+            var essential_fields = {'url':1 , 'pageElement':1,'nextLink':1};
+
             siteinfo.forEach(function (info, i) {
                 var id = getWedataId(info);
                 var current_siteinfo = siteinfos_array[id];
@@ -430,12 +453,10 @@ var RECORDS_PER_PAGE = 100,
                 var disable_separator_btn = line.querySelector('input.disable_separator');
                 var addr_change_btn = line.querySelector('input.address_change');
 
-                var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
-                var custom_fields_nohl = {'length':1 , 'disabled':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1, 'forceAddressChange':1};
                 if (custom_info && custom_info[id]) {
                     var ci = custom_info[id];
                     if (ci.keys().some(function (k) { 
-                            if (k in custom_fields_nohl) {
+                            if (k in custom_fields) {
                                 return false;
                             }
                             return ci[k] !== info.data[k]; 
@@ -454,6 +475,9 @@ var RECORDS_PER_PAGE = 100,
                     ci.forceIframe ? line.setAttribute('data-iframe', 'enabled' ) : line.removeAttribute('data-iframe');
                     ci.disableSeparator ? line.setAttribute('data-separator', 'disabled' ) : line.removeAttribute('data-separator');
                     ci.forceAddressChange ? line.setAttribute('data-addrchange', 'enabled' ) : line.removeAttribute('data-addrchange');
+                    ci.removeElement ? line.setAttribute('data-remove', 'enabled' ) : line.removeAttribute('data-remove');
+                    ci.cssPatch ? line.setAttribute('data-csspatch', 'enabled' ) : line.removeAttribute('data-csspatch');
+                    ci.jsPatch ? line.setAttribute('data-jspatch', 'enabled' ) : line.removeAttribute('data-jspatch');
                 }
 
                 var cb_handler = function(name, type, state, value){
@@ -526,7 +550,7 @@ var RECORDS_PER_PAGE = 100,
                                     data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['cssPatch'] || '' : '';
                                     data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['jsPatch'] || '' : '';
                                     data.keys().forEach(function (si_key) {
-                                        var inf = '', is_custom = si_key in custom_fields;
+                                        var inf = '', is_custom = si_key in custom_fields, is_essential = si_key in essential_fields;
                                         if (typeof custom_info[id] !== 'undefined') {
                                             inf = custom_info[id][si_key];
                                             if (!inf && !is_custom) {
@@ -569,40 +593,64 @@ var RECORDS_PER_PAGE = 100,
                                                 }
                                                 node2.onchange = function() {
                                                     //log(current_siteinfo,current_siteinfo[si_key], node2.value);
-                                                    current_siteinfo[si_key] = node2.value;
-
+                                                    var nval = node2.value.trim(),
+                                                        is_not_empty = nval.length;
+                                                    
                                                     if (typeof custom_info[id] === 'undefined') {
                                                         custom_info[id] = {};
                                                         custom_info[id].length = 0;
                                                     }
-                                                    if (current_siteinfo[si_key] === info.data[si_key]) { // remote SI equals local SI
+                                                    if (nval === info.data[si_key]) { // remote SI equals local SI
+                                                        // only way to remove `insertBefore` from storagebase is to set it equal to remote SI's
                                                         if (--custom_info[id].length < 1) {
                                                             delete custom_info[id];
                                                         } else {
                                                             delete custom_info[id][si_key];
                                                         }
-                                                    } else {
-                                                        if (node2.value.replace(/\s/g,'').length || si_key === 'insertBefore') {
+                                                        current_siteinfo[si_key] = nval;
+                                                    } else { // remote SI differs from local SI
+                                                        if (is_not_empty || si_key === 'insertBefore') {
                                                             // we save empty `insertBefore` value for when we want to override wedata's one
                                                             if (typeof custom_info[id][si_key] === 'undefined') {
                                                                 custom_info[id].length++;
                                                             } 
-                                                            custom_info[id][si_key] = node2.value;
+                                                            custom_info[id][si_key] = nval; // set siteinfo field in custom_info
+                                                            current_siteinfo[si_key] = nval; // set runtime siteinfo field
                                                         } else {
                                                             if (--custom_info[id].length < 1) {
                                                                 delete custom_info[id];
                                                             } else {
                                                                 delete custom_info[id][si_key];
                                                             }
-                                                            delete current_siteinfo[si_key];
+                                                            if (!is_essential) {
+                                                                delete current_siteinfo[si_key];
+                                                            } else {
+                                                                current_siteinfo[si_key] = info.data[si_key];
+                                                            }
                                                         }
                                                     }
+
+                                                    // highlight changed lines
                                                     var ci = custom_info[id];
-                                                    if (ci && ci.keys().some(function (k) { if (k in custom_fields_nohl) return false; return ci[k] !== info.data[k]; })) {
-                                                        line.setAttribute('data-modified', 'modified');
+                                                    if (ci) {
+                                                        if (ci.keys().some(function (k) { if (k in custom_fields) return false; if (ci[k] === '') return false; return (ci[k] !== info.data[k]); })) {
+                                                            line.setAttribute('data-modified', 'modified');
+                                                        } else {
+                                                            line.removeAttribute('data-modified');
+                                                        }
+
+                                                        ci.removeElement ? line.setAttribute('data-remove', 'enabled' ) : line.removeAttribute('data-remove');
+                                                        ci.cssPatch ? line.setAttribute('data-csspatch', 'enabled' ) : line.removeAttribute('data-csspatch');
+                                                        ci.jsPatch ? line.setAttribute('data-jspatch', 'enabled' ) : line.removeAttribute('data-jspatch');
                                                     } else {
                                                         line.removeAttribute('data-modified');
+                                                        node2.removeAttribute('data-modified', 'modified');
                                                     }
+
+                                                    if (nval !== info.data[si_key]) {
+                                                        node2.setAttribute('data-modified', 'modified');
+                                                    }
+
                                                     storagebase.custom_info = JSON.stringify(custom_info);
                                                 };
                                                 if (!is_custom) {
@@ -654,13 +702,14 @@ var RECORDS_PER_PAGE = 100,
             }
             siteinfo_body.appendChild(df);
             toggle_popup('loader', false);
+            profile('SiteInfoView', 'end');
         }
 
         function SiteInfoNavi(siteinfo) {
+            profile('SiteInfoNavi');
             var nav = siteinfo_nav;
             PageIndex = 0;
-            while (nav.firstChild) 
-                nav.removeChild(nav.firstChild);
+            while (nav.firstChild) nav.removeChild(nav.firstChild);
             for (var i = 0, len = siteinfo.length / RECORDS_PER_PAGE; i < len; i++)(function (i) {
                 var a = document.createElement('a');
                 a.textContent = i + 1;
@@ -676,6 +725,7 @@ var RECORDS_PER_PAGE = 100,
             })(i);
             var r = nav.parentNode.getBoundingClientRect();
             siteinfo_table.style.marginTop = r.height + 10 + 'px';
+            profile('SiteInfoNavi', 'end');
         }
 
         function UpdateSiteInfo(callback) {
@@ -699,6 +749,7 @@ var RECORDS_PER_PAGE = 100,
                       return;
                   }
 
+                  progress.style.width = '100%';
                   progress_percent.textContent = 'Done!';
                   setTimeout(function(){ progressbar.style.display = 'none'; }, 600);
 
@@ -733,14 +784,15 @@ var RECORDS_PER_PAGE = 100,
         }
 
         window.onresize = function () {
-            // do we need onresize event at all?
-            siteinfo_view.style.top = -window.innerHeight + 'px';
-            siteinfo_view.style.bottom = window.innerHeight + 'px';
-            while (siteinfo_view.firstChild) 
-                siteinfo_view.removeChild(siteinfo_view.firstChild);
-            entry_editor_running = false;
+            if (entry_editor_running) {
+                siteinfo_view.style.top = -window.innerHeight + 'px';
+                siteinfo_view.style.bottom = window.innerHeight + 'px';
+                entry_editor_running = false;
+            }
+            while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
         };
 
+        profile('UpdateSiteInfo');
         stop_pager = true;
         if (sessionStorage.siteinfo_wedata) {
             siteinfo_data = JSON.parse(sessionStorage.siteinfo_wedata);
@@ -763,6 +815,7 @@ var RECORDS_PER_PAGE = 100,
                     SERVICE: true
                 }
             });/**/
+            profile('UpdateSiteInfo', 'end');
         } else {
             UpdateSiteInfo(function (siteinfo) {
                 siteinfo_data = siteinfo;
@@ -786,6 +839,7 @@ var RECORDS_PER_PAGE = 100,
                         SERVICE: true
                     }
                 });/**/
+                profile('UpdateSiteInfo', 'end');
             });
         }
     }, false);

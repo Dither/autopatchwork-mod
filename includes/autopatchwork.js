@@ -1033,7 +1033,11 @@
                     var script = document.createElement('script');
                     script.textContent = text;
                     (document.head || document.documentElement).appendChild(script);
-                    script.remove();
+                    if (script.remove) 
+                        script.remove();
+                    else {
+                        script.parentNode ? script.parentNode.removeChild(script) : (script.text = '');
+                    }
                     //window.eval(text);
                 }
             } catch (bug) {
@@ -1049,7 +1053,6 @@
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return;
             for (var i = 0, st = node.querySelectorAll('script'), len = st.length; i < len; i++) {
                 run_script(st[i].text);
-                //st[i].parentNode ? st[i].parentNode.removeChild(st[i]) : (st[i].text = '');
             }
         }
 
