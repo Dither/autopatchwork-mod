@@ -1,8 +1,4 @@
-Object.keys || (Object.keys = function(k) {
-    var r = [];
-    for(var i in k) r.push(i);
-    return r;
-});
+Object.keys || (Object.keys = function(k) { var r = []; for(var i in k) r.push(i); return r; });
 var bgProcess;
 var imageTick = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAGrSURBVDjLvZPZLkNhFIV75zjvYm7VGFNCqoZUJ+roKUUpjRuqp61Wq0NKDMelGGqOxBSUIBKXWtWGZxAvobr8lWjChRgSF//dv9be+9trCwAI/vIE/26gXmviW5bqnb8yUK028qZjPfoPWEj4Ku5HBspgAz941IXZeze8N1bottSo8BTZviVWrEh546EO03EXpuJOdG63otJbjBKHkEp/Ml6yNYYzpuezWL4s5VMtT8acCMQcb5XL3eJE8VgBlR7BeMGW9Z4yT9y1CeyucuhdTGDxfftaBO7G4L+zg91UocxVmCiy51NpiP3n2treUPujL8xhOjYOzZYsQWANyRYlU4Y9Br6oHd5bDh0bCpSOixJiWx71YY09J5pM/WEbzFcDmHvwwBu2wnikg+lEj4mwBe5bC5h1OUqcwpdC60dxegRmR06TyjCF9G9z+qM2uCJmuMJmaNZaUrCSIi6X+jJIBBYtW5Cge7cd7sgoHDfDaAvKQGAlRZYc6ltJlMxX03UzlaRlBdQrzSCwksLRbOpHUSb7pcsnxCCwngvM2Rm/ugUCi84fycr4l2t8Bb6iqTxSCgNIAAAAAElFTkSuQmCC';
 var imageCross = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAIhSURBVDjLlZPrThNRFIWJicmJz6BWiYbIkYDEG0JbBiitDQgm0PuFXqSAtKXtpE2hNuoPTXwSnwtExd6w0pl2OtPlrphKLSXhx07OZM769qy19wwAGLhM1ddC184+d18QMzoq3lfsD3LZ7Y3XbE5DL6Atzuyilc5Ciyd7IHVfgNcDYTQ2tvDr5crn6uLSvX+Av2Lk36FFpSVENDe3OxDZu8apO5rROJDLo30+Nlvj5RnTlVNAKs1aCVFr7b4BPn6Cls21AWgEQlz2+Dl1h7IdA+i97A/geP65WhbmrnZZ0GIJpr6OqZqYAd5/gJpKox4Mg7pD2YoC2b0/54rJQuJZdm6Izcgma4TW1WZ0h+y8BfbyJMwBmSxkjw+VObNanp5h/adwGhaTXF4NWbLj9gEONyCmUZmd10pGgf1/vwcgOT3tUQE0DdicwIod2EmSbwsKE1P8QoDkcHPJ5YESjgBJkYQpIEZ2KEB51Y6y3ojvY+P8XEDN7uKS0w0ltA7QGCWHCxSWWpwyaCeLy0BkA7UXyyg8fIzDoWHeBaDN4tQdSvAVdU1Aok+nsNTipIEVnkywo/FHatVkBoIhnFisOBoZxcGtQd4B0GYJNZsDSiAEadUBCkstPtN3Avs2Msa+Dt9XfxoFSNYF/Bh9gP0bOqHLAm2WUF1YQskwrVFYPWkf3h1iXwbvqGfFPSGW9Eah8HSS9fuZDnS32f71m8KFY7xs/QZyu6TH2+2+FAAAAABJRU5ErkJggg==';
@@ -24,6 +20,13 @@ else browser_type = BROWSER_OPERA;
 document.addEventListener('DOMContentLoaded',function(){
 (function option_init(opt) {
     var self = this;
+
+    function find(path) {
+        if (typeof path !== 'string') return [];
+        var arr = [];
+        for (var nl = document.querySelectorAll(path), i = 0, ref = arr.length = nl.length; i < ref; i++) arr[i] = nl[i];
+        return arr;
+    }
     
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
@@ -112,7 +115,7 @@ document.addEventListener('DOMContentLoaded',function(){
             var key = node.className.match(/MSG_(\w+)/)[1];
             try {
                 var message = i18n.getMessage(key);
-                if(message) node.textContent = message;
+                if (message) node.textContent = message;
             } catch(bug) {}
         });
     }
@@ -139,23 +142,40 @@ document.addEventListener('DOMContentLoaded',function(){
             default:
         }
     }, false);
-    
+
     var update_siteinfo = document.getElementById('update_siteinfo');
-    var update_siteinfo_output = document.getElementById('update_siteinfo');
     update_siteinfo.addEventListener('click', function(e) {
+        var button_text = update_siteinfo.textContent.trim();
         update_siteinfo.disabled = true;
-        update_siteinfo_output.innerHTML = '<img src="' + imgLoad + '"> Updating...';
-        update_siteinfo_output.className = 'MSG_update_siteinfo_upd';
+        update_siteinfo.innerHTML = '<img src="' + imgLoad + '">Updating...';
+        update_siteinfo.className = 'MSG_update_siteinfo_upd';
 
         bgProcess.downloadDatabase(function() {
-            update_siteinfo_output.innerHTML = '<img src="' + imageTick + '"> SITEINFO updated';
-            update_siteinfo_output.className = 'MSG_update_siteinfo_sucс';
-            update_siteinfo.disabled = false;
+            update_siteinfo.innerHTML = '<img src="' + imageTick + '">Updated';
+            update_siteinfo.className = 'MSG_update_siteinfo_sucс';
+            setTimeout(function(){
+                update_siteinfo.textContent = button_text;
+                update_siteinfo.className = 'MSG_update_siteinfo';
+                update_siteinfo.disabled = false;
+            }, 4000);
         }, function() {
-            update_siteinfo_output.innerHTML = '<img src="' + imageCross + '"> SITEINFO unchanged';
-            update_siteinfo_output.className = 'MSG_update_siteinfo_fail';
-            update_siteinfo.disabled = false;
+            update_siteinfo.innerHTML = '<img src="' + imageCross + '">Unchanged';
+            update_siteinfo.className = 'MSG_update_siteinfo_fail';
+            setTimeout(function(){
+                update_siteinfo.textContent = button_text;
+                update_siteinfo.className = 'MSG_update_siteinfo';
+                update_siteinfo.disabled = false;
+            }, 4000);
+            
         });
+    }, false);
+
+    var cleanup_db = document.getElementById('cleanup_db');
+    cleanup_db.addEventListener('click', function(e) {
+        cleanup_db.disabled = true;
+        bgProcess.reimoveUnusedSI();
+        bgProcess.initDatabase();
+        cleanup_db.disabled = false;
     }, false);
 
     var reload_db = document.getElementById('reload_db');
@@ -191,7 +211,7 @@ document.addEventListener('DOMContentLoaded',function(){
         update_wedata_full_location.disabled = false;
     }, false);
 
-    $X('//input[@type="radio"]').forEach(function(box) {
+    find('[type="radio"]').forEach(function(box) {
         var id = box.id;
         var name = box.name;
         var val = AutoPatchWork.config[name] || 'on';
@@ -204,7 +224,7 @@ document.addEventListener('DOMContentLoaded',function(){
             AutoPatchWork.update();
         }, false);
     });
-    $X('/html/body/div/div/section/div/input[@type="checkbox"]').forEach(function(box) {
+    find('[type="checkbox"]').forEach(function(box) {
         var id = box.id;
         var val = AutoPatchWork.config[id];
         if(val === true || val === false) {
@@ -217,7 +237,7 @@ document.addEventListener('DOMContentLoaded',function(){
             AutoPatchWork.update();
         }, false);
     });
-    $X('/html/body/div/div/section/div/input[@type="range"]').forEach(function(box) {
+    find('[type="range"]').forEach(function(box) {
         var id = box.id;
         var output = document.querySelector('#' + id + '_value');
         var val = AutoPatchWork.config[id];
@@ -352,7 +372,7 @@ document.addEventListener('DOMContentLoaded',function(){
         AutoPatchWork.add_disabled_site(site);
         filter_text.value = '';
     }, false);
-    var sections = $X('//section[contains(@class, "content")]');
+    var sections = find('section.content');
     var inner_container = document.getElementById('inner-container');
     var container = document.getElementById('base');
     inner_container.style.width = sections.length * (WIDTH + 20) + 'px';
@@ -361,7 +381,7 @@ document.addEventListener('DOMContentLoaded',function(){
         section.style.visibility = 'hidden';
         section.style.height = '100px';
     });
-    var btns = $X('id("menu-tabs")/li/a');
+    var btns = find('#menu-tabs>li>a');
     var default_title = document.title;
     btns.forEach(function(btn, i, btns) {
         btn.addEventListener('click', function(evt) {
@@ -413,3 +433,71 @@ document.addEventListener('DOMContentLoaded',function(){
     
 })();
 }, false);
+
+// Tweener Like snippet
+// var tw = new Tween(div.style,{time:1, onComplete:function(){},left:{to:0,from:100,tmpl:"$#px"}});
+function Tween(item, opt) {
+    var self = this, TIME = 10, time = (opt.time||1) * 1000, TM_EXP = /(\+)?\$([\#\d])/g, sets = [], isFilter,
+        easing = opt.transition || function(t, b, c, d){return c*t/d + b;}, _T = {time:1,onComplete:1,transition:1,delay:1};
+    for (var k in opt) if (!_T[k]) {
+        if (typeof item === 'function') {
+            isFilter = true;
+            sets.push({from:from, to:set.to});
+        } else {
+            var set = opt[k], from = set.from || parseFloat(item[k]) || 0, values = [], tmpl = set.tmpl || '-$#';
+            sets.push({key:k, from:from, to:set.to, tmpl:tmpl});
+        }
+    }
+    var L = sets.length, delay = opt.delay*1000 || 0, startTime = new Date()*1 + delay, run = function(){
+        var now = new Date()*1, tim = self.prev = now - startTime;
+        for (var k = 0; k < L; ++k) {
+            var set = sets[k], val = easing(tim, set.from, set.to - set.from, time);
+            if (isFilter) {
+                item(val);
+            } else {
+                item[set.key] = set.tmpl.replace(TM_EXP,
+                    function(m, p, m1){return p && val < 0 ? 0 : (m1 == '#' ? val : val.toFixed(m1));});
+            }
+        }
+        if (tim <= time) {self.T=setTimeout(function(){run.call(self);},TIME);}
+        else {
+            for (var k = 0; k < L; ++k) {
+                if (isFilter) {
+                    item(sets[k].to);
+                } else {
+                    item[sets[k].key] = sets[k].tmpl.replace(TM_EXP, sets[k].to);
+                }
+            }
+            if (typeof opt.onComplete == 'function') opt.onComplete(item);
+            self.end = true;
+        }
+    };
+    self.prev = 0;
+    this.restart = function(){
+        startTime = new Date()*1 - self.prev;
+        run();
+    };
+    this.pause = function(){
+        if(self.T){
+            clearTimeout(self.T);
+            self.T = null;
+        }
+    };
+    this.stop = function(){
+        if(self.T){
+            clearTimeout(self.T);
+            self.T = null;
+            self.prev = 0;
+            for (var k = 0; k < L; ++k) {
+                var set = sets[k], val = set.from;
+                if (isFilter) {
+                    item(val);
+                } else {
+                    item[set.key] = set.tmpl.replace(TM_EXP,
+                        function(m, p, m1){return p && val < 0 ? 0 : (m1 == '#' ? val : val.toFixed(m1));});
+                }
+            }
+        }
+    };
+    delay ? this.T=setTimeout(function(){run();},delay) : run(0);
+}

@@ -5,8 +5,6 @@
     <title>AutoPatchWorkMod</title>
     <link href='css/options.css' rel='stylesheet' type='text/css'>
     <script type='text/javascript' src='scripts/storage.js'></script>
-    <script type='text/javascript' src='scripts/xpath.js'></script>
-    <script type='text/javascript' src='scripts/tween2.js'></script>
     <script type='text/javascript' src='scripts/options.js'></script>
 </head>
 <body class='tabbox'>
@@ -36,21 +34,11 @@
     <div id='base'>
         <div id='inner-container'>
             <section id='general' class='content'>
-                <div class='buttons'>
-                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>
-                        SITEINFO manager
-                    </button>
-                </div>
-                <div class='buttons'>
-                    <button id='update_siteinfo' class='MSG_update_siteinfo'>
-                        Update SITEINFO
-                    </button>
-                    <span id='update_siteinfo_output'></span>
-                </div>
-                <div class='buttons'>
-                    <button id='reload_db' class='MSG_reload_db'>
-                        Reload SITEINFO
-                    </button>
+                <div class='btn-group main'>
+                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>Manager</button>
+                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update</button>
+                    <button id='reload_db' class='MSG_reload_db'>Reload</button>
+                    <button id='cleanup_db' class='MSG_cleanup_db'>Cleanup</button>
                 </div>
                 <div>
                     <input type='text' id='db_location'><button id='update_wedata_location'>Save</button>
@@ -105,17 +93,6 @@
                     <input type='checkbox' id='debug_mode'>
                     <label for='debug_mode' class='MSG_debugmode'>Debug output</label>
                 </div>
-                <!--<div>
-                <h4 class='MSG_bottom_bar'>Statusbar</h4>
-                <p>
-                <input type='radio' name='bar_status' id='bar_on' value='on'>
-                <label for='bar_on' class='MSG_bar_on'>ON</label>
-                </p>
-                <p>
-                <input type='radio' name='bar_status' id='bar_off' value='off'>
-                <label for='bar_off' class='MSG_bar_off'>OFF</label>
-                </p>
-                </div>-->
             </section>
             <section id='filters' class='content' style='visibility: hidden; height: 100px'>
                 <div class='MSG_exclude_filter'>
@@ -181,103 +158,108 @@
                 </div>
             </section>
             <section id='news' class='content' style='visibility: hidden; height: 100px'>
+                <h4>Version 1.9.7</h4>
                 <ul>
                     <li>
-                        <h4>2012/02/02</h4>
-                        <ul>
-                            <li>
-                                Autostart option.
-                            </li>
-                            <li>
-                                Links target rewriting option.
-                            </li>
-                            <li>
-                                SITEINFO updater and manager.
-                            </li>
-                            <li>
-                                IFRAME mode toggle.
-                            </li>
-                            <li>
-                                Fast history navigation.
-                            </li>
-                            <li>
-                                Support of custom CSS for the page separator and statusbar.
-                            </li>
-                            <li>
-                                Support of custom SITEINFO patterns in JSON format.
-                            </li>
-                            <li>
-                                Option to replace location URL on pagerizing.
-                            </li>
-                            <li>
-                                Scroll height option.
-                            </li>
-                            <li>
-                                Debug output support.
-                            </li>
-                            <li>
-                                Site filters by regexps, prefixes and domains.
-                            </li>
-                            <li>
-                                SITEINFO manager: instant search, editing and disabling of sites, internal auto-pagerizing.
-                            </li>
-                            <li>
-                                Status bar: loading animation, toggle APW, call SI-manager or APW's preferences page.
-                            </li>
-                        </ul>
-                        <h4>2012/19/06</h4>
-                        <ul>
-                            <li>
-                                Following custom SITEINFO fields were added: <i>nextMask, pageElementSelector, nextLinkSelector, forceIframe, disableSeparator, forceAddressChange, allowScripts</i>.
-                            </li>
-                            <li>
-                                The <i>link</i> property is now available in <i>AutoPatchWork.request</i> event. It contains an element (Node type) with reference to the next page. Also there is <i>norequest</i> option (Boolean type) which defines whether or not to download the page referenced from previous element (if you set it to false blank page template will be returned).
-                            </li>
-                            <li>
-                                Added the option to process next page before it is appended in <i>AutoPatchWork.load</i> event (including bringing it to the form specified in SITEINFO-pattern of the site). DOM-document of new pages is always available as <i>htmlDoc</i> (HTMLDocument type) property of this event.
-                            </li>
-                        </ul>
-                        <h4>2013/09/01</h4>
-                        <ul>
-                            <li>
-                                Opera 15 support.
-                            </li>
-                            <li>
-                                CSS/XPath autorecognition for standard SITEINFO fields.
-                            </li>
-                            <li>
-                                All event properties now accesible via additional attribute <i>detail</i> of the <i>CustomEvent</i>-type events.
-                            </li>
-                            <li>
-                                All events targeted to <i>document</i> instead of <i>window</i>.
-                            </li>
-                        </ul>
-                       <h4>2016/07/07</h4>
-                        <ul>
-                            <li>
-                                Firefox 48 and Chrome 49 support.
-                            </li>
-                            <li>
-                                <i>removeElement</i> removes nodes in added pages by selector or XPath rule, <i>jsPatch</i> field allows per site JS patching and <i>cssPatch</i> - CSS patching.
-                            </li>
-                            <li>
-                                Options in SITEINFO manager to disable separators, allow scripts, load pages via IFrames and update URL/title on scroll.
-                            </li>
-                            <li>
-                                Options to make link <i>href</i>s and image <i>src</i>s absolute.
-                            </li>
-                            <li>
-                                SITEINFO database URLs can now be specified.
-                            </li>
-                            <li>
-                                SITEINFO database can be reloaded manually.
-                            </li>
-                            <li>
-                                Various bugfixes.
-                            </li>
-                        </ul>
+                        Autostart option.
                     </li>
-                </ul><br />
+                    <li>
+                        Links target rewriting option.
+                    </li>
+                    <li>
+                        Site filters by regexps, prefixes and domains.
+                    </li>
+                    <li>
+                        SITEINFO updater and manager.
+                    </li>
+                    <li>
+                        Instant search, editing and disabling of rules and internal auto-pagerizing in SITEINFO manager.
+                    </li>
+                    <li>
+                        Option to disable extension in IFRAMEs.
+                    </li>
+                    <li>
+                        Custom CSS for extension's page separator and statusbar.
+                    </li>
+                    <li>
+                        Custom SITEINFO patterns in JSON format.
+                    </li>
+                    <li>
+                        Option to update location's URL on scroll.
+                    </li>
+                    <li>
+                        Option to change how many pixels left before adding next page.
+                    </li>
+                    <li>
+                        Debug output support.
+                    </li>
+                    <li>
+                        Status bar: loading animation, toggle auto-pagerizing (TGL), show SITEINFO manager (SIM) or options page (OPT).
+                    </li>
+                </ul>
+                <h4>Version 1.9.8</h4>
+                <ul>
+                    <li>
+                        Opera 15 support.
+                    </li>
+                    <li>
+                        Following local SITEINFO fields were added:
+                        <ul><li><i>nextMask</i></li><li><i>pageElementSelector</i></li><li><i>nextLinkSelector</i></li><li><i>forceIframe</i></li><li><i>disableSeparator</i></li><li><i>forceAddressChange</i></li><li><i>allowScripts</i></i></ul>
+                    </li>
+                    <li>
+                        Event properties accessible via <i>detail</i> property of <i>CustomEvent</i>-type events.
+                    </li>
+                    <li>
+                        <i>detail.link</i> property of <i>AutoPatchWork.request</i> event contains element (Node type) with reference to the next page. <i>detail.norequest</i> property (Boolean type) defines whether to download page referenced in previous property (false to return blank page template).
+                    </li>
+                    <li>
+                        Next page can be additionally pre-processed in <i>AutoPatchWork.load</i> event as it is available from <i>detail.htmlDoc</i> (HTMLDocument type) property of this event.
+                    </li>
+                    <li>
+                        CSS selector/XPath auto-recognition for standard SITEINFO fields.
+                    </li>
+                    <li>
+                        Events are targeted to <i>document</i> instead of <i>window</i>.
+                    </li>
+                </ul>
+               <h4>Version 1.9.9</h4>
+                <ul>
+                    <li>
+                        Firefox 48 and Chrome 49 support.
+                    </li>
+                    <li>
+                         In <i>AutoPatchWork.load</i> event loaded page's URL available through <i>detail.url</i> property.
+                    </li>
+                    <li>
+                         <i>AutoPatchWork.append</i> event now contains <i>detail.nodes</i> and <i>detail.title</i> where first contains elements defined by <i>pageElement</i> field and the latter title of added page.
+                    </li>
+                    <li>
+                        <i>insertBefore</i> field can be set to empty in SITEINFO manager to override value from remote database.
+                    </li>
+                    <li>
+                        Following local SITEINFO fields were added:
+                        <ul><li><i>removeElement[Selector]</i> - removes elements from current and added pages by selector or XPath.</li><li> <i>jsPatch</i> - allows per site JavaScript patching.</li><li><i>cssPatch</i> - allows per site CSS patching.</li></ul>
+                    </li>
+                    <li>
+                        Options in SITEINFO manager to disable separators, allow scripts, load pages via IFrames and update URL/title on scroll.
+                    </li>
+                    <li>
+                        Options to make link <i>href</i>s and image <i>src</i>s absolute in added pages.
+                    </li>
+                    <li>
+                        SITEINFO database URL can now be changed in case remote database becomes inaccessible.
+                    </li>
+                    <li>
+                        SITEINFO database can be reloaded manually.
+                    </li>
+                    <li>
+                        SITEINFO database can be cleaned from all unused entries that have no successful hits until next update. 
+                    </li>
+                    <li>
+                        Various bugfixes.
+                    </li>
+                </ul>
+            <br />
             </section>
             <section id='about' class='content' style='visibility: hidden; height: 100px'>
                 <dl>
@@ -285,13 +267,13 @@
                         Name:
                     </dt>
                     <dd>
-                        AutoPatchWork
+                        AutoPatchWork Mod
                     </dd>
                     <dt class='MSG_author_name'>
                         Author:
                     </dt>
                     <dd>
-                        <a href='' target='_blank'>Dither</a>
+                        <a href='https://github.com/Dither' target='_blank'>Dither</a>
                     </dd>
                     <dt class='MSG_thank_you'>
                         Thanks:

@@ -1,11 +1,6 @@
-Object.keys || (Object.keys = function(k) {
-    var r = [];
-    for (var i in k) r.push(i);
-    return r;
-});
-
-var self = this;
-var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fail_stats = {}, 
+Object.keys || (Object.keys = function(k) { var r = []; for(var i in k) r.push(i); return r; });
+var debug = false, 
+    self = this, siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {}, 
     custom_info = {
         "400":{"disabled":true,"length":1},
         "430":{"disabled":true,"length":1},
@@ -18,11 +13,14 @@ var debug = false, siteinfo = [], timestamp, manifest, site_stats = {}, site_fai
         "55771":{"disabled":true,"length":1},
         "65332":{"disabled":true,"length":1},
         "74668":{"disabled":true,"length":1}
-    }, /*{}; /* Disable overzealous formats. Re-enable them manually on your own risk. */
+    }, /*{}; /* Disabling overzealous formats. Re-enable them manually on your own risk. */
+    MICROFORMATs = [],
+    ENABLE_STYLISH_FIELD = false,
+    ENABLE_MICROFORMATS = false,
     JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json',
     JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
 
-const MICROFORMATs = [/*{
+if (ENABLE_MICROFORMATS) MICROFORMATs = [{
     MICROFORMAT: true,
     url: '^https?://.',
     nextLink: '//a[@rel="next"] | //link[@rel="next"]',
@@ -33,7 +31,7 @@ const MICROFORMATs = [/*{
     url: '^https?://.',
     nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
-}*/];
+}];
 
 var browser_type, 
     BROWSER_CHROME = 1,
@@ -146,18 +144,6 @@ if(browser_type === BROWSER_SAFARI) {
     }, false);
 }
 
-var version = '', Manifest, IconData = {};
-
-function getManifest(callback) {
-    var url = './manifest.json';
-    var xhr = new XMLHttpRequest();
-    xhr.onload = function() {
-        callback(JSON.parse(xhr.responseText));
-    };
-    xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
-    xhr.send(null);
-}
-
 function getCSS() {
     var url = './css/main.css';
     var xhr = new XMLHttpRequest();
@@ -210,6 +196,28 @@ function updateFullDatabaseURL(url) {
     JSON_SITEINFO_DB = url;
 }
 
+function reimoveUnusedSI() {
+    try {
+        if (!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
+        var data = Store.get('siteinfo_wedata');
+        var filtered_siteinfo = data.siteinfo.filter(function(si, i) {
+            var id = si['wedata.net.id'];
+            if (id && (typeof site_stats[id] === 'undefined' || site_stats[id] < 1)) {
+                delete site_fail_stats[id];
+                delete site_stats[id];
+                return false;
+            }
+            return true;
+        });
+        storagebase.site_stats = JSON.stringify(site_stats);
+        storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
+        Store.set('siteinfo_wedata', {
+            siteinfo: filtered_siteinfo,
+            timestamp: (new Date).toLocaleString()
+        }, { day: 90 });
+    } catch (bug) {}
+}
+
 function initDatabase() {
     if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
     if (storagebase.db_full_location) JSON_SITEINFO_DB = storagebase.db_full_location;
@@ -228,32 +236,41 @@ function initDatabase() {
 }
 
 function createDatabase(info) {
-    var tmp_log = 'There were following errors in SITEINFO DB:\n', keys = ['cssPatch', 'nextLink', 'pageElement', 'url', 'insertBefore'];
+    var tmp_log = 'There were following errors in SITEINFO DB:\n',
+        allowed_fields = ['nextLink', 'pageElement', 'url', 'insertBefore'],
+        is_default_db = !!~JSON_SITEINFO_DB_MIN.indexOf('ss-o.net');
+
     siteinfo = [];
+    if (ENABLE_STYLISH_FIELD) allowed_fields.push('cssPatch');
+
     info.forEach(function(i) {
         var d = i.data || i, r = {};
-        if (0 && d && typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) { // check CSSes
-            var t = d['Stylish'];
-            t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
-            t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
-            r['cssPatch'] = t;
+        if (ENABLE_STYLISH_FIELD && d) {
+            var t = null;
+            if (typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) t = d['Stylish']; // Stylish CSS
+            else if (typeof d['cssPatch'] === 'string' && d['cssPatch'].replace(/\s/g,'').length > 5) t = d['cssPatch']; // Plain CSS
+            delete d['cssPatch'];
+            if (t && !t.match(/\burl[^\(\{]*\(/ig)) {
+                d['cssPatch'] = (t.match(/@-moz-document[^{]+{\s*([^@\}]+)\s*}/) || [])[1] || t; // Stylish CSS -> Plain CSS
+            }
         }
-        keys.forEach(function(k) {
-            if(d[k])
-                r[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
+        allowed_fields.forEach(function(k) {
+            if(!d[k]) return;
+            if (is_default_db) d[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
+            r[k] = d[k];
         });
         r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
         try { new RegExp(r.url); } catch (bug) { 
         	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n'; 
-        	return;
+            return;
         }
         try { document.evaluate(r.nextLink, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug) { 
-        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid next XPath '  + r.nextLink + ': ' +  (bug.message || bug) + '\n'; 
-        	return;
+            tmp_log += '[' + r['wedata.net.id'] + '] Invalid next XPath '  + r.nextLink + ': ' +  (bug.message || bug) + '\n'; 
+            return;
         }
         try { document.evaluate(r.pageElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug)  { 
-        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n'; 
-        	return;
+            tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n'; 
+            return;
         }
         siteinfo.push(r);
     });
@@ -328,18 +345,31 @@ if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
 if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
 if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
 
-getManifest(function(_manifest) { Manifest = _manifest; version = _manifest.version; });
+var version = '', manifest, IconData = {};
+function getManifest(callback) {
+    var url = './manifest.json';
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+        callback(JSON.parse(xhr.responseText));
+    };
+    xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
+    xhr.send(null);
+}
+
+getManifest(function(_manifest) { manifest = _manifest; version = _manifest.version; });
+
 initDatabase();
 
 window.onload = function() {
+    if (1 || browser_type !== BROWSER_CHROME) return;
     var CHROME_GESTURES = 'jpkfjicglakibpenojifdiepckckakgk';
     var CHROME_KEYCONFIG = 'okneonigbfnolfkmfgjmaeniipdjkgkl';
     var action = {
         group: 'AutoPatchWork',
         actions: [{ name: 'AutoPatchWork.toggle' }, { name: 'AutoPatchWork.request' }]
     };
-    //self.chrome && browser.runtime.sendMessage(CHROME_GESTURES, action);
-    //self.chrome && browser.runtime.sendMessage(CHROME_KEYCONFIG, action);
+    browser.runtime.sendMessage(CHROME_GESTURES, action);
+    browser.runtime.sendMessage(CHROME_KEYCONFIG, action);
 };
 
 var toggleCode = '(' + (function() {

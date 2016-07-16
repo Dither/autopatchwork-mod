@@ -1,6 +1,7 @@
 // ==UserScript==
 // @include http*
 // @exclude *//localhost*
+// @exclude *//127.0.0.*
 // @exclude *//192.168.*
 // @exclude *.com/embed*
 // @run-at document-start
@@ -48,7 +49,7 @@
         }
     };
 
-    var browser_type, checksum = new FastCRC32, debug = false, profiler = false, dump_request = false,
+    var browser_type, checksum = new FastCRC32, debug = false, profiler = false, prof_first_run = true, dump_request = false,
         BROWSER_CHROME = 1,
         BROWSER_SAFARI = 2,
         BROWSER_OPERA = 3;
@@ -118,6 +119,7 @@
      * */
     function profile(name, end) {
         if (!debug || !profiler) return;
+        if (prof_first_run) { prof_first_run = false; console.log('============================'); } 
         if (typeof end === 'undefined') {
             console.time(name);
         } else {

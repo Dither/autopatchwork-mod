@@ -42,13 +42,9 @@ body {
     overflow-x: hidden;
 }
 
-ul, li, section, div, button{
+ul, li, section, div {
     border:none;
     margin:0;
-}
-
-.buttons{
-    display:inline-block !important;
 }
 
 .tabbox {
@@ -111,7 +107,7 @@ ul, li, section, div, button{
     background: linear-gradient(#EEF, #FFF 70%);
 }
 
-span.key, kbd.key{
+span.key, kbd.key {
     background:#334455;
     border:2px solid black;
     color:#eeeeee;
@@ -121,12 +117,12 @@ span.key, kbd.key{
     padding:6px;
 }
 
-dt.disabled .key,li.disabled .key{
+dt.disabled .key, li.disabled .key {
     background:#cccccc;
     border:2px solid #bbbbbb;
 }
 
-#base{
+#base {
     -moz-border-radius: 3px;
     -moz-box-shadow: #CCC 0 0 .25em;
     -webkit-border-radius: 3px;
@@ -142,7 +138,7 @@ dt.disabled .key,li.disabled .key{
     margin-top: -2px;
 }
 
-h1{
+h1 {
     background: -webkit-gradient(linear, left top, left bottom, from(#333333), to(#999999));
     border-top-left-radius:4px;
     border-top-right-radius:4px;
@@ -154,11 +150,11 @@ h1{
     text-shadow: 3px 3px 3px black;
 }
 
-#inner-container{
+#inner-container {
     vertical-align:top;
 }
 
-#inner-container section{
+#inner-container section {
     display:inline-block;
     margin:0;
     padding: 10px;
@@ -167,51 +163,56 @@ h1{
     width:680px;
 }
 
-section > div > fieldset{
+#filter_type { 
+    height: 27px;
+    vertical-align: middle;
+}
+
+section > div > fieldset {
     border:none;
     display:block;
     margin:0;
     padding:0;
 }
 
-optgroup{
+optgroup {
     background:#333333;
     color:#ffffff;
 }
 
-optgroup > option{
+optgroup > option {
     color:#000000;
 }
 
-.content > .box{
+.content > .box {
     display:inline-block;
     vertical-align:top;
 }
 
-.content > .box > h3{
+.content > .box > h3 {
     margin:0px;
     padding:0 10px;
 }
 
-#about dl{
+#about dl {
     margin:30px;
 }
 
-#about dl dd{
+#about dl dd {
     margin:10px 0 20px 50px;
 }
 
-#css_text, #custom_patterns, #config_text, #backup_field{
+#css_text, #custom_patterns, #config_text, #backup_field {
     height:400px;
     width:98%;
     max-width: 98%;
 }
 
-#advanced .margin{
+#advanced .margin {
     margin:60px 0 0 0;
 }
 
-input:not([type="text"]),button,label{
+input:not([type="text"]), button, label {
     cursor:pointer;
 }
 
@@ -221,13 +222,8 @@ section.content {
     -o-transition: 0.25s;
 }
 
-section.content > div.sub{
+section.content > div.sub {
     margin-left:2em;
-}
-
-#AccelerationValue{
-    min-width:4em;
-    width:4em;
 }
 
 section label, fieldset legend {
@@ -244,10 +240,48 @@ section *:disabled {
     opacity: 0.5;
 }
 
+section .btn-group,  section .buttons{
+    display: inline-block !important;
+}
+
+section .btn-group.main:before {
+    content: 'SITEINFO:';
+    float: left;
+    display: inline-block !important;
+    height: 25px;
+    line-height: 25px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding: 0 5px 0 0;
+}
+
+section .btn-group > button:last-child:not(:first-child) { 
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+}
+
+section .btn-group > button:not(:first-child):not(:last-child) { 
+    border-radius: 0px;
+}
+
+section .btn-group > button:first-child:not(:last-child) { 
+    border-bottom-right-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+section .btn-group button + button { 
+    margin-left: -1px;
+}
+
+section .btn-group > button { 
+    float: left;
+    position: relative;
+}
+
 section button {
     -o-transition: 0.25s;
+    border-radius: 6px 6px 6px 6px;
     background: rgba(173,181,217,0.75) url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAAeCAYAAAAGos%2FEAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSoghodkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89%2BbN%2FrXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJHAAEAizZCFz%2FSMBAPh%2BPDwrIsAHvgABeNMLCADATZvAMByH%2Fw%2FqQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGAnf%2BbTAICd%2BJl7AQBblCEVAaCRACATZYhEAGg7AKzPVopFAFgwABRmS8Q5ANgtADBJV2ZIALC3AMDOEAuyAAgMADBRiIUpAAR7AGDIIyN4AISZABRG8lc88SuuEOcqAAB4mbI8uSQ5RYFbCC1xB1dXLh4ozkkXKxQ2YQJhmkAuwnmZGTKBNA%2Fg88wAAKCRFRHgg%2FP9eM4Ors7ONo62Dl8t6r8G%2FyJiYuP%2B5c%2BrcEAAAOF0ftH%2BLC%2BzGoA7BoBt%2FqIl7gRoXgugdfeLZrIPQLUAoOnaV%2FNw%2BH48PEWhkLnZ2eXk5NhKxEJbYcpXff5nwl%2FAV%2F1s%2BX48%2FPf14L7iJIEyXYFHBPjgwsz0TKUcz5IJhGLc5o9H%2FLcL%2F%2Fwd0yLESWK5WCoU41EScY5EmozzMqUiiUKSKcUl0v9k4t8s%2BwM%2B3zUAsGo%2BAXuRLahdYwP2SycQWHTA4vcAAPK7b8HUKAgDgGiD4c93%2F%2B8%2F%2FUegJQCAZkmScQAAXkQkLlTKsz%2FHCAAARKCBKrBBG%2FTBGCzABhzBBdzBC%2FxgNoRCJMTCQhBCCmSAHHJgKayCQiiGzbAdKmAv1EAdNMBRaIaTcA4uwlW4Dj1wD%2FphCJ7BKLyBCQRByAgTYSHaiAFiilgjjggXmYX4IcFIBBKLJCDJiBRRIkuRNUgxUopUIFVIHfI9cgI5h1xGupE7yAAygvyGvEcxlIGyUT3UDLVDuag3GoRGogvQZHQxmo8WoJvQcrQaPYw2oefQq2gP2o8%2BQ8cwwOgYBzPEbDAuxsNCsTgsCZNjy7EirAyrxhqwVqwDu4n1Y8%2BxdwQSgUXACTYEd0IgYR5BSFhMWE7YSKggHCQ0EdoJNwkDhFHCJyKTqEu0JroR%2BcQYYjIxh1hILCPWEo8TLxB7iEPENyQSiUMyJ7mQAkmxpFTSEtJG0m5SI%2BksqZs0SBojk8naZGuyBzmULCAryIXkneTD5DPkG%2BQh8lsKnWJAcaT4U%2BIoUspqShnlEOU05QZlmDJBVaOaUt2ooVQRNY9aQq2htlKvUYeoEzR1mjnNgxZJS6WtopXTGmgXaPdpr%2Bh0uhHdlR5Ol9BX0svpR%2BiX6AP0dwwNhhWDx4hnKBmbGAcYZxl3GK%2BYTKYZ04sZx1QwNzHrmOeZD5lvVVgqtip8FZHKCpVKlSaVGyovVKmqpqreqgtV81XLVI%2BpXlN9rkZVM1PjqQnUlqtVqp1Q61MbU2epO6iHqmeob1Q%2FpH5Z%2FYkGWcNMw09DpFGgsV%2FjvMYgC2MZs3gsIWsNq4Z1gTXEJrHN2Xx2KruY%2FR27iz2qqaE5QzNKM1ezUvOUZj8H45hx%2BJx0TgnnKKeX836K3hTvKeIpG6Y0TLkxZVxrqpaXllirSKtRq0frvTau7aedpr1Fu1n7gQ5Bx0onXCdHZ4%2FOBZ3nU9lT3acKpxZNPTr1ri6qa6UbobtEd79up%2B6Ynr5egJ5Mb6feeb3n%2Bhx9L%2F1U%2FW36p%2FVHDFgGswwkBtsMzhg8xTVxbzwdL8fb8VFDXcNAQ6VhlWGX4YSRudE8o9VGjUYPjGnGXOMk423GbcajJgYmISZLTepN7ppSTbmmKaY7TDtMx83MzaLN1pk1mz0x1zLnm%2Beb15vft2BaeFostqi2uGVJsuRaplnutrxuhVo5WaVYVVpds0atna0l1rutu6cRp7lOk06rntZnw7Dxtsm2qbcZsOXYBtuutm22fWFnYhdnt8Wuw%2B6TvZN9un2N%2FT0HDYfZDqsdWh1%2Bc7RyFDpWOt6azpzuP33F9JbpL2dYzxDP2DPjthPLKcRpnVOb00dnF2e5c4PziIuJS4LLLpc%2BLpsbxt3IveRKdPVxXeF60vWdm7Obwu2o26%2FuNu5p7ofcn8w0nymeWTNz0MPIQ%2BBR5dE%2FC5%2BVMGvfrH5PQ0%2BBZ7XnIy9jL5FXrdewt6V3qvdh7xc%2B9j5yn%2BM%2B4zw33jLeWV%2FMN8C3yLfLT8Nvnl%2BF30N%2FI%2F9k%2F3r%2F0QCngCUBZwOJgUGBWwL7%2BHp8Ib%2BOPzrbZfay2e1BjKC5QRVBj4KtguXBrSFoyOyQrSH355jOkc5pDoVQfujW0Adh5mGLw34MJ4WHhVeGP45wiFga0TGXNXfR3ENz30T6RJZE3ptnMU85ry1KNSo%2Bqi5qPNo3ujS6P8YuZlnM1VidWElsSxw5LiquNm5svt%2F87fOH4p3iC%2BN7F5gvyF1weaHOwvSFpxapLhIsOpZATIhOOJTwQRAqqBaMJfITdyWOCnnCHcJnIi%2FRNtGI2ENcKh5O8kgqTXqS7JG8NXkkxTOlLOW5hCepkLxMDUzdmzqeFpp2IG0yPTq9MYOSkZBxQqohTZO2Z%2Bpn5mZ2y6xlhbL%2BxW6Lty8elQfJa7OQrAVZLQq2QqboVFoo1yoHsmdlV2a%2FzYnKOZarnivN7cyzytuQN5zvn%2F%2FtEsIS4ZK2pYZLVy0dWOa9rGo5sjxxedsK4xUFK4ZWBqw8uIq2Km3VT6vtV5eufr0mek1rgV7ByoLBtQFr6wtVCuWFfevc1%2B1dT1gvWd%2B1YfqGnRs%2BFYmKrhTbF5cVf9go3HjlG4dvyr%2BZ3JS0qavEuWTPZtJm6ebeLZ5bDpaql%2BaXDm4N2dq0Dd9WtO319kXbL5fNKNu7g7ZDuaO%2FPLi8ZafJzs07P1SkVPRU%2BlQ27tLdtWHX%2BG7R7ht7vPY07NXbW7z3%2FT7JvttVAVVN1WbVZftJ%2B7P3P66Jqun4lvttXa1ObXHtxwPSA%2F0HIw6217nU1R3SPVRSj9Yr60cOxx%2B%2B%2Fp3vdy0NNg1VjZzG4iNwRHnk6fcJ3%2FceDTradox7rOEH0x92HWcdL2pCmvKaRptTmvtbYlu6T8w%2B0dbq3nr8R9sfD5w0PFl5SvNUyWna6YLTk2fyz4ydlZ19fi753GDborZ752PO32oPb%2B%2B6EHTh0kX%2Fi%2Bc7vDvOXPK4dPKy2%2BUTV7hXmq86X23qdOo8%2FpPTT8e7nLuarrlca7nuer21e2b36RueN87d9L158Rb%2F1tWeOT3dvfN6b%2FfF9%2FXfFt1%2Bcif9zsu72Xcn7q28T7xf9EDtQdlD3YfVP1v%2B3Njv3H9qwHeg89HcR%2FcGhYPP%2FpH1jw9DBY%2BZj8uGDYbrnjg%2BOTniP3L96fynQ89kzyaeF%2F6i%2FsuuFxYvfvjV69fO0ZjRoZfyl5O%2FbXyl%2FerA6xmv28bCxh6%2ByXgzMV70VvvtwXfcdx3vo98PT%2BR8IH8o%2F2j5sfVT0Kf7kxmTk%2F8EA5jz%2FGMzLdsAAAAgY0hSTQAAeiUAAICDAAD5%2FwAAgOkAAHUwAADqYAAAOpgAABdvkl%2FFRgAAADdJREFUeNpi%2Bf%2F%2FvwkDAwMDCwMDw38Y4y9uxj8Y4w8Riv8SbSAjI%2BMvmAgTbgYjEWpIUoyqBjAA3v4Smdk8p4QAAAAASUVORK5CYII%3D) 0 50% repeat-x;
-    border-radius: 3px;
     border: 1px solid rgba(80,80,130,0.5);
     box-shadow: 0 1px 1px rgba(121,153,166,0.75), inset 0 1px rgba(255,255,255,0.25), inset 0 0 1px rgba(255,255,255,0.75);
     color: rgba(0,0,0,0.75);
@@ -264,13 +298,17 @@ section button:hover {
     box-shadow: 0 1px 1px rgba(121,153,166,0.75), inset 0 1px rgba(255,255,255,0.25), inset 0 0 1px rgba(255,255,255,0.75);
 }
 
-section button img{
+section button img {
     border:none;
     display: inline-block;
     height:16px;
     margin:0 3px -3px 0 !important;
     padding:0;
     width:16px;
+}
+
+section button:focus {
+    color: rgba(0,0,0,1);
 }
 
 section button:active {
@@ -338,33 +376,33 @@ section input[type=radio]:disabled, fieldset input[type=checkbox]:disabled {
     border-color: rgba(80,80,130,0.5);
 }
 
-span.lt{
+span.lt {
     display:inline-block;
     min-width:60px;
 }
 
-.box dl dt{
+.box dl dt {
     border-left:#cccccc 1px solid;
     border-right:#cccccc 1px solid;
     border-top:#cccccc 1px solid;
     padding:.3em .2em;
 }
 
-.box dl dd{
+.box dl dd {
     border-bottom:#cccccc 1px solid;
     border-left:#cccccc 1px solid;
     border-right:#cccccc 1px solid;
     padding:.3em .2em;
 }
 
-div.outputs{
+div.outputs {
     display:block;
     margin:0;
     text-align:center;
     width:440px;
 }
 
-div.outputs span.outputs{
+div.outputs span.outputs {
     background:#dddddd;
     border-radius:5px;
     display:inline-block;
@@ -373,14 +411,15 @@ div.outputs span.outputs{
     padding:5px 10px;
 }
 
-input[type="range"]{
+input[type="range"] {
     width:400px;
 }
 
 #news ul { padding-left: 20px; padding-right: 20px; }
 
 #db_location, #full_db_location { width:400px; margin-right: 5px; }
-#update_wedata_full_location, #update_wedata_location{ margin-right: 5px; }
+#update_wedata_full_location, #update_wedata_location { margin-right: 5px; }
+#update_siteinfo img { margin-right: 5px; }
 
 /* Options translation */
 .MSG_general:lang(ru) {content: 'Основые'}
@@ -390,20 +429,21 @@ input[type="range"]{
 .MSG_backup:lang(ru) {content: 'Бэкап'}
 .MSG_backup_preferences:lang(ru) {content: 'Резервная копия:'}
 .MSG_history:lang(ru) {content: 'История'}
-.MSG_about:lang(ru) {content: 'О расширении'}
-.MSG_update_siteinfo:lang(ru) {content: 'Обновить SITEINFO'}
-.MSG_reload_db:lang(ru) {content: 'Переоткрыть SITEINFO'}
+.MSG_about:lang(ru) {content: 'Инфо'}
+.MSG_update_siteinfo:lang(ru) {content: 'Обновить'}
+.MSG_reload_db:lang(ru) {content: 'Переоткрыть'}
+.MSG_cleanup_db:lang(ru) {content: 'Удалить неисп.'}
 .MSG_update_siteinfo_upd:lang(ru) {content: 'Обновление...'}
-.MSG_update_siteinfo_sucс:lang(ru) {content: 'SITEINFO обновлены'}
-.MSG_update_siteinfo_fail:lang(ru) {content: 'Ошибка обновления'}
-.MSG_open_siteinfo_manager:lang(ru) {content: 'Управление SITEINFO'}
+.MSG_update_siteinfo_sucс:lang(ru) {content: 'Обновлено'}
+.MSG_update_siteinfo_fail:lang(ru) {content: 'Ошибка обн.'}
+.MSG_open_siteinfo_manager:lang(ru) {content: 'Редактор'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
-.MSG_check_crc:lang(ru) {content: 'Проверять CRC страниц на повторы'}
+.MSG_check_crc:lang(ru) {content: 'Проверять страницы на повторы по CRC'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
 .MSG_change_address:lang(ru) {content: 'Обновлять адрес и заголовок при прокрутке'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
-.MSG_remaining_height:lang(ru) {content: 'Высота прокрутки до загрузки:'}
+.MSG_remaining_height:lang(ru) {content: 'Пикселов при прокрутке до загрузки:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
 .MSG_exclude_filter:lang(ru) {content: 'Исключение сайтов по фильтру:'}
 .MSG_wedata_location:lang(ru) {content: 'URL мини-БД SI'}
@@ -434,12 +474,13 @@ input[type="range"]{
 .MSG_backup:lang(ja) {content: 'バックアップ'}
 .MSG_history:lang(ja) {content: '履歴'}
 .MSG_about:lang(ja) {content: '情報'}
-.MSG_update_siteinfo:lang(ja) {content: 'SITEINFOの更新'}
-.MSG_reload_db:lang(ja) {content: 'SITEINFOの再ロード'}
+.MSG_update_siteinfo:lang(ja) {content: '更新'}
+.MSG_reload_db:lang(ja) {content: '再ロード'}
+.MSG_cleanup_db:lang(ja) {content: 'クリーン'}
 .MSG_update_siteinfo_upd:lang(ja) {content: '...'}
 .MSG_update_siteinfo_sucс:lang(ja) {content: '!!!'}
 .MSG_update_siteinfo_fail:lang(ja) {content: '???'}
-.MSG_open_siteinfo_manager:lang(ja) {content: 'SITEINFO管理ページを開く'}
+.MSG_open_siteinfo_manager:lang(ja) {content: '管理ページを開く'}
 .MSG_auto_start:lang(ja) {content: 'ページを開いたときにデフォルトで有効にする'}
 .MSG_open_newtab:lang(ja) {content: '継ぎ足ししたコンテンツ内のリンクを新規タブで開(target=_blank指定をする)'}
 .MSG_noiframe:lang(ja) {content: 'フレーム内では起動させない'}
