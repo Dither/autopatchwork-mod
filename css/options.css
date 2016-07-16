@@ -244,7 +244,7 @@ section .btn-group,  section .buttons{
     display: inline-block !important;
 }
 
-section .btn-group.main:before {
+/*section .btn-group.main:before {
     content: 'SITEINFO:';
     float: left;
     display: inline-block !important;
@@ -253,7 +253,7 @@ section .btn-group.main:before {
     margin-bottom: 5px;
     margin-top: 5px;
     padding: 0 5px 0 0;
-}
+}*/
 
 section .btn-group > button:last-child:not(:first-child) { 
     border-bottom-left-radius: 0px;
@@ -430,8 +430,8 @@ input[type="range"] {
 .MSG_backup_preferences:lang(ru) {content: 'Резервная копия:'}
 .MSG_history:lang(ru) {content: 'История'}
 .MSG_about:lang(ru) {content: 'Инфо'}
-.MSG_update_siteinfo:lang(ru) {content: 'Обновить'}
-.MSG_reload_db:lang(ru) {content: 'Переоткрыть'}
+.MSG_update_siteinfo:lang(ru) {content: 'Обновить БД'}
+.MSG_reload_db:lang(ru) {content: 'Переоткрыть БД'}
 .MSG_cleanup_db:lang(ru) {content: 'Удалить неисп.'}
 .MSG_update_siteinfo_upd:lang(ru) {content: 'Обновление...'}
 .MSG_update_siteinfo_sucс:lang(ru) {content: 'Обновлено'}

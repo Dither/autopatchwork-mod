@@ -1,6 +1,6 @@
  <?xml version="1.0" encoding="utf-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" version="1.9.9" id="https://dithersky.wordpress.com/2012/01/28/mod-autopatchwork/">
-  <name>AutoPatchWorkMod</name>
+  <name>AutoPatchWork Mod</name>
   <description xml:lang="en">Automatically loads next pages and inserts into the current one.</description>
   <description xml:lang="ru">Автоматически подгружает следующие странички при просмотре.</description>
   <description xml:lang="ja">ページのしたの方にスクロールした時に、現在表示しているページに次のページを挿入します。</description>

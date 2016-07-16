@@ -35,10 +35,10 @@
         <div id='inner-container'>
             <section id='general' class='content'>
                 <div class='btn-group main'>
-                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>Manager</button>
-                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update</button>
-                    <button id='reload_db' class='MSG_reload_db'>Reload</button>
-                    <button id='cleanup_db' class='MSG_cleanup_db'>Cleanup</button>
+                    <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>Editor</button>
+                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update DB</button>
+                    <button id='reload_db' class='MSG_reload_db'>Reload DB</button>
+                    <button id='cleanup_db' class='MSG_cleanup_db'>Cleanup DB</button>
                 </div>
                 <div>
                     <input type='text' id='db_location'><button id='update_wedata_location'>Save</button>
@@ -204,7 +204,14 @@
                     </li>
                     <li>
                         Following local SITEINFO fields were added:
-                        <ul><li><i>nextMask</i></li><li><i>pageElementSelector</i></li><li><i>nextLinkSelector</i></li><li><i>forceIframe</i></li><li><i>disableSeparator</i></li><li><i>forceAddressChange</i></li><li><i>allowScripts</i></i></ul>
+                        <ul><li><i>nextMask</i> - allows nuber auto-increments in next page address.</li>
+                                <li><i>pageElementSelector</i> - allows next link search by selector.</li>
+                                <li><i>nextLinkSelector</i> - allows content search by selector.</li>
+                                <li><i>forceIframe</i> - pages loaded through temporary IFrame instead of XHR.</li>
+                                <li><i>disableSeparator</i> - disables page separator between added pages.</li>
+                                <li><i>forceAddressChange</i> - dinamically updates location URL.</li>
+                                <li><i>allowScripts</i> - allows scripts inside content block of new pages.</i>
+                        </ul>
                     </li>
                     <li>
                         Event properties accessible via <i>detail</i> property of <i>CustomEvent</i>-type events.
@@ -231,14 +238,20 @@
                          In <i>AutoPatchWork.load</i> event loaded page's URL available through <i>detail.url</i> property.
                     </li>
                     <li>
-                         <i>AutoPatchWork.append</i> event now contains <i>detail.nodes</i> and <i>detail.title</i> where first contains elements defined by <i>pageElement</i> field and the latter title of added page.
+                         <i>AutoPatchWork.append</i> event now contains <i>detail.nodes</i> and <i>detail.title</i> where first contains elements defined by <i>pageElement[Selector]</i> field and the latter title of added page.
+                    </li>
+                    <li>
+                        <i>forceAddressChange</i> field enables updating of both location URL and page title.
                     </li>
                     <li>
                         <i>insertBefore</i> field can be set to empty in SITEINFO manager to override value from remote database.
                     </li>
                     <li>
+                        Per site <i>forceAddressChange</i> (<i>address</i> checkbox) inverts global setting.
+                    </li>
+                    <li>
                         Following local SITEINFO fields were added:
-                        <ul><li><i>removeElement[Selector]</i> - removes elements from current and added pages by selector or XPath.</li><li> <i>jsPatch</i> - allows per site JavaScript patching.</li><li><i>cssPatch</i> - allows per site CSS patching.</li></ul>
+                        <ul><li><i>removeElement[Selector]</i> - removes elements from current and added pages.</li><li> <i>jsPatch</i> - allows per site JavaScript patching.</li><li><i>cssPatch</i> - allows per site CSS patching.</li></ul>
                     </li>
                     <li>
                         Options in SITEINFO manager to disable separators, allow scripts, load pages via IFrames and update URL/title on scroll.

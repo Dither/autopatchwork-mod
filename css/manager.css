@@ -297,51 +297,6 @@ th[colspan="6"]+th {
     z-index: 1000;
 }
 
-.MSG_manager:lang(ru) {
-    content: 'Редактор базы SITEINFO'
-}
-
-.MSG_siteinfo_search_input:lang(ru) {
-    content: 'Поиск:'
-}
-
-#disable:lang(ru) {
-    content: 'Откл.'
-}
-
-#name:lang(ru) {
-    content: 'Название'
-}
-
-#created_at:lang(ru) {
-    content: 'Создано'
-}
-
-#updated_at:lang(ru) {
-    content: 'Обновлено'
-}
-
-#created_by:lang(ru) {
-    content: 'Автор'
-}
-
-#resource_url:lang(ru) {
-    content: 'Номер'
-}
-
-#database_resource_url:lang(ru) {
-    content: 'База'
-}
-
-#number_of_successful:lang(ru) {
-    content: 'Сраб.'
-}
-
-#number_of_failed:lang(ru) {
-    content: 'Ошиб.'
-}
-
-
 /* Progress bar */
 
 #progressbar {
@@ -439,3 +394,29 @@ td.index {
     color: #000;
     background-color: #D0F5A9;
 }
+
+/* Language strings */
+
+.MSG_manager:lang(ru) { content: 'Редактор базы SITEINFO'}
+.MSG_siteinfo_search_input:lang(ru) { content: 'Поиск:'}
+span.onoff:lang(ru) { content: 'откл.'}
+span.disable_separator:lang(ru) { content: 'без раздел.'}
+span.address_change:lang(ru) { content: 'адрес'}
+span.scripts_enable:lang(ru) { content: 'скрипты'}
+span.force_iframe:lang(ru) { content: 'ифрейм'}
+#name:lang(ru) { line-height: 3.5em; content: 'Название'}
+#created_at:lang(ru) {  line-height: 3.5em; content: 'Создано'}
+#updated_at:lang(ru) {  line-height: 3.5em; content: 'Обновл.'}
+#created_by:lang(ru) {  line-height: 3.5em; content: 'Автор'}
+#resource_url:lang(ru) {  line-height: 3.5em; content: 'Ссылка'}
+#database_resource_url:lang(ru) {  line-height: 3.5em; content: 'База'}
+#number_of_successful:lang(ru) {  line-height: 3.5em; content: 'Сраб.'}
+#number_of_failed:lang(ru) {  line-height: 3.5em; content: 'Сбоев'}
+dt.resource_url:lang(ru) { content: 'URL записи'}
+dt.name:lang(ru) { content: 'Описание'}
+dt.created_by:lang(ru) { content: 'Создано'}
+dt.database_resource_url:lang(ru) { content: 'URL базы'}
+dt.updated_at:lang(ru) { content: 'Обновлено'}
+dt.created_at:lang(ru) { content: 'Создано'}
+dt.number_of_successful:lang(ru) { content: 'Срабатываний'}
+dt.number_of_failed:lang(ru) { content: 'Сбоев'}

@@ -27,6 +27,10 @@ var RECORDS_PER_PAGE = 100,
 (function siteinfo_manager(bgProcess) {
     var self = this;
 
+    var html = document.querySelector('html');
+    html.setAttribute('lang', window.navigator.language);
+    html.setAttribute('xml:lang', window.navigator.language);
+
     function APWException(message) {
         this.message = message;
         this.name = "[AutoPatchWork]";
@@ -118,10 +122,6 @@ var RECORDS_PER_PAGE = 100,
                         };
 
     document.addEventListener('DOMContentLoaded', function () {
-        var html = document.querySelector('html');
-        html.setAttribute('lang', window.navigator.language);
-        html.setAttribute('xml:lang', window.navigator.language);
-
         document.getElementById('loader').style.display = 'none';
 
         window.addEventListener('AutoPatchWork.request', function(e) {
