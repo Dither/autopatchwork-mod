@@ -1,18 +1,18 @@
-Object.keys || (Object.keys = function(k) { var r = []; for(var i in k) r.push(i); return r; });
-var debug = false, 
-    self = this, siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {}, 
+if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
+var debug = false,
+    self = this, siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {},
     custom_info = {
-        "400":{"disabled":true,"length":1},
-        "430":{"disabled":true,"length":1},
-        "447":{"disabled":true,"length":1},
-        "649":{"disabled":true,"length":1},
-        "27331":{"disabled":true,"length":1},
-        "27333":{"disabled":true,"length":1},
-        "39059":{"disabled":true,"length":1},
-        "41434":{"disabled":true,"length":1},
-        "55771":{"disabled":true,"length":1},
-        "65332":{"disabled":true,"length":1},
-        "74668":{"disabled":true,"length":1}
+        '400':{'disabled':true,'length':1},
+        '430':{'disabled':true,'length':1},
+        '447':{'disabled':true,'length':1},
+        '649':{'disabled':true,'length':1},
+        '27331':{'disabled':true,'length':1},
+        '27333':{'disabled':true,'length':1},
+        '39059':{'disabled':true,'length':1},
+        '41434':{'disabled':true,'length':1},
+        '55771':{'disabled':true,'length':1},
+        '65332':{'disabled':true,'length':1},
+        '74668':{'disabled':true,'length':1}
     }, /*{}; /* Disabling overzealous formats. Re-enable them manually on your own risk. */
     MICROFORMATs = [],
     ENABLE_STYLISH_FIELD = false,
@@ -33,7 +33,7 @@ if (ENABLE_MICROFORMATS) MICROFORMATs = [{
     pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
 }];
 
-var browser_type, 
+var browser_type,
     BROWSER_CHROME = 1,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
@@ -156,23 +156,24 @@ function getWedataId(inf) {
     return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '') : '0', 10);
 }
 
-function applyCustomFields(info) {
+function applyCustomFields() {
     siteinfo.forEach(function(i) {
         var id = i['wedata.net.id'];
         if (!id) return;
         var ci = custom_info[id];
         if (!ci) return;
-        Object.keys(ci).forEach(function(k) { 
+        Object.keys(ci).forEach(function(k) {
             if(typeof ci[k] === 'string' ? ci[k].trim() !== '' : !!ci[k]) i[k] = ci[k]; else delete i[k]; // deletes `insertBefore` in case we null it
         });
     });
 }
 
+/* jshint ignore:start */
 function checkExists(url) {
     var http = new XMLHttpRequest();
     http.open('HEAD', url, false);
     http.send();
-    return http.status != 404;
+    return http.status !== 404;
 }
 
 function resetDBLocation (full) {
@@ -200,7 +201,7 @@ function reimoveUnusedSI() {
     try {
         if (!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
         var data = Store.get('siteinfo_wedata');
-        var filtered_siteinfo = data.siteinfo.filter(function(si, i) {
+        var filtered_siteinfo = data.siteinfo.filter(function(si) {
             var id = si['wedata.net.id'];
             if (id && (typeof site_stats[id] === 'undefined' || site_stats[id] < 1)) {
                 delete site_fail_stats[id];
@@ -217,6 +218,7 @@ function reimoveUnusedSI() {
         }, { day: 90 });
     } catch (bug) {}
 }
+/* jshint ignore:end */
 
 function initDatabase() {
     if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
@@ -260,16 +262,16 @@ function createDatabase(info) {
             r[k] = d[k];
         });
         r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
-        try { new RegExp(r.url); } catch (bug) { 
-        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n'; 
+        try { new RegExp(r.url); } catch (bug) {
+        	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n';
             return;
         }
-        try { document.evaluate(r.nextLink, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug) { 
-            tmp_log += '[' + r['wedata.net.id'] + '] Invalid next XPath '  + r.nextLink + ': ' +  (bug.message || bug) + '\n'; 
+        try { document.evaluate(r.nextLink, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug) {
+            tmp_log += '[' + r['wedata.net.id'] + '] Invalid next XPath '  + r.nextLink + ': ' +  (bug.message || bug) + '\n';
             return;
         }
-        try { document.evaluate(r.pageElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug)  { 
-            tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n'; 
+        try { document.evaluate(r.pageElement, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null); } catch (bug)  {
+            tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n';
             return;
         }
         siteinfo.push(r);
@@ -315,7 +317,7 @@ function downloadDatabase(callback, error_back) {
     try {
        xhr.open('GET', JSON_SITEINFO_DB_MIN, true);
        xhr.send(null);
-   } catch (bug) { 
+   } catch (bug) {
        log(bug.message || bug);
    }
 }
@@ -345,14 +347,14 @@ if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
 if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
 if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
 
-var version = '', manifest, IconData = {};
+var version = '', manifest;
 function getManifest(callback) {
     var url = './manifest.json';
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
         callback(JSON.parse(xhr.responseText));
     };
-    xhr.open('GET', url += ((/\?/).test(url) ? "&" : "?") + (new Date()).getTime(), true);
+    xhr.open('GET', url += ((/\?/).test(url) ? '&' : '?') + Date.now(), true);
     xhr.send(null);
 }
 
@@ -372,17 +374,19 @@ window.onload = function() {
     browser.runtime.sendMessage(CHROME_KEYCONFIG, action);
 };
 
+/* jshint ignore:start */
 var toggleCode = '(' + (function() {
     var ev = new window.CustomEvent('AutoPatchWork.toggle');
     document.dispatchEvent(ev);
 }).toString() + ')();';
+/* jshint ignore:end */
 
 switch(browser_type) {
     case BROWSER_CHROME:
             browser.runtime.onMessage.addListener(handleMessage);
             break;
     case BROWSER_SAFARI:
-        safari.application.addEventListener("message", function(evt) {
+        safari.application.addEventListener('message', function(evt) {
             var name = evt.name;
             if(name === 'option_init') {
                 evt.target.page.dispatchMessage(name, AutoPatchWorkBG);
@@ -475,7 +479,7 @@ function handleMessage(request, sender, sendResponse) {
         storagebase.site_stats = JSON.stringify(site_stats);
         return;
     }
-    
+
     if(request.failed_siteinfo) {
         request.failed_siteinfo.forEach(function(s) {
             var id = s['wedata.net.id'];
@@ -488,14 +492,14 @@ function handleMessage(request, sender, sendResponse) {
 
     if(request.pause) {
         if (typeof request.id === 'number' && request.id !== -1) {
-            var len = siteinfo.length;
-            function set_pause (id, val) {
-                for (var i = 0; i < len; i++)
+            var silen = siteinfo.length;
+            var set_pause = function(id, val) {
+                for (var i = 0; i < silen; i++)
                     if (siteinfo[i]['wedata.net.id']  === id) {
                         siteinfo[i].pause = val;
                         break;
                     }
-            }
+            };
             if (request.pause === 'off') {
                 set_pause(request.id, false);
             } else if (request.pause === 'on') {
@@ -504,18 +508,18 @@ function handleMessage(request, sender, sendResponse) {
         }
         return;
     }
-    
+
     if(request.manage) {
         if (request.hash) openOrFocusTab('siteinfo_manager.html#siteinfo_search_input='+request.hash);
         else openOrFocusTab('siteinfo_manager.html');
         return;
     }
-    
+
     if(request.options) {
         openOrFocusTab('options.html');
         return;
     }
-    
+
     if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_in_frames))
         return;
 

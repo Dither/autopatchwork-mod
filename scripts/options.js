@@ -1,4 +1,4 @@
-Object.keys || (Object.keys = function(k) { var r = []; for(var i in k) r.push(i); return r; });
+if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
 var bgProcess;
 var imageTick = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAGrSURBVDjLvZPZLkNhFIV75zjvYm7VGFNCqoZUJ+roKUUpjRuqp61Wq0NKDMelGGqOxBSUIBKXWtWGZxAvobr8lWjChRgSF//dv9be+9trCwAI/vIE/26gXmviW5bqnb8yUK028qZjPfoPWEj4Ku5HBspgAz941IXZeze8N1bottSo8BTZviVWrEh546EO03EXpuJOdG63otJbjBKHkEp/Ml6yNYYzpuezWL4s5VMtT8acCMQcb5XL3eJE8VgBlR7BeMGW9Z4yT9y1CeyucuhdTGDxfftaBO7G4L+zg91UocxVmCiy51NpiP3n2treUPujL8xhOjYOzZYsQWANyRYlU4Y9Br6oHd5bDh0bCpSOixJiWx71YY09J5pM/WEbzFcDmHvwwBu2wnikg+lEj4mwBe5bC5h1OUqcwpdC60dxegRmR06TyjCF9G9z+qM2uCJmuMJmaNZaUrCSIi6X+jJIBBYtW5Cge7cd7sgoHDfDaAvKQGAlRZYc6ltJlMxX03UzlaRlBdQrzSCwksLRbOpHUSb7pcsnxCCwngvM2Rm/ugUCi84fycr4l2t8Bb6iqTxSCgNIAAAAAElFTkSuQmCC';
 var imageCross = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAIhSURBVDjLlZPrThNRFIWJicmJz6BWiYbIkYDEG0JbBiitDQgm0PuFXqSAtKXtpE2hNuoPTXwSnwtExd6w0pl2OtPlrphKLSXhx07OZM769qy19wwAGLhM1ddC184+d18QMzoq3lfsD3LZ7Y3XbE5DL6Atzuyilc5Ciyd7IHVfgNcDYTQ2tvDr5crn6uLSvX+Av2Lk36FFpSVENDe3OxDZu8apO5rROJDLo30+Nlvj5RnTlVNAKs1aCVFr7b4BPn6Cls21AWgEQlz2+Dl1h7IdA+i97A/geP65WhbmrnZZ0GIJpr6OqZqYAd5/gJpKox4Mg7pD2YoC2b0/54rJQuJZdm6Izcgma4TW1WZ0h+y8BfbyJMwBmSxkjw+VObNanp5h/adwGhaTXF4NWbLj9gEONyCmUZmd10pGgf1/vwcgOT3tUQE0DdicwIod2EmSbwsKE1P8QoDkcHPJ5YESjgBJkYQpIEZ2KEB51Y6y3ojvY+P8XEDN7uKS0w0ltA7QGCWHCxSWWpwyaCeLy0BkA7UXyyg8fIzDoWHeBaDN4tQdSvAVdU1Aok+nsNTipIEVnkywo/FHatVkBoIhnFisOBoZxcGtQd4B0GYJNZsDSiAEadUBCkstPtN3Avs2Msa+Dt9XfxoFSNYF/Bh9gP0bOqHLAm2WUF1YQskwrVFYPWkf3h1iXwbvqGfFPSGW9Eah8HSS9fuZDnS32f71m8KFY7xs/QZyu6TH2+2+FAAAAABJRU5ErkJggg==';
@@ -19,7 +19,6 @@ else browser_type = BROWSER_OPERA;
 // main
 document.addEventListener('DOMContentLoaded',function(){
 (function option_init(opt) {
-    var self = this;
 
     function find(path) {
         if (typeof path !== 'string') return [];
@@ -27,14 +26,14 @@ document.addEventListener('DOMContentLoaded',function(){
         for (var nl = document.querySelectorAll(path), i = 0, ref = arr.length = nl.length; i < ref; i++) arr[i] = nl[i];
         return arr;
     }
-    
+
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
     html.setAttribute('xml:lang', window.navigator.language);
 
     function APWException(message) {
         this.message = message;
-        this.name = "[AutoPatchWork]";
+        this.name = '[AutoPatchWork]';
     }
 
     switch (browser_type) {
@@ -85,7 +84,7 @@ document.addEventListener('DOMContentLoaded',function(){
             break;
         case BROWSER_OPERA:
             bgProcess = opera.extension.bgProcess;
-            if (typeof bgProcess == 'object') AutoPatchWork = bgProcess.AutoPatchWorkBG;
+            if (typeof bgProcess === 'object') AutoPatchWork = bgProcess.AutoPatchWorkBG;
             else
                 throw new APWException('Browser version is too old.');
             break;
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
 
     var WIDTH = 700;
-    var HEIGHT = Math.max(window.innerHeight - 100, 500);
+    //var HEIGHT = Math.max(window.innerHeight - 100, 500);
 
     var i18n = browser_type === BROWSER_CHROME  ? browser.i18n : this.safari ? {
         getAcceptLanguages: function() {},
@@ -102,7 +101,7 @@ document.addEventListener('DOMContentLoaded',function(){
         getAcceptLanguages: function() {},
         getMessage: function() {}
     };
-    
+
     function L10N() {
         /*i18n.getAcceptLanguages(function(langs) {
             if (langs.indexOf('ja') < 0) {
@@ -120,10 +119,10 @@ document.addEventListener('DOMContentLoaded',function(){
         });
     }
     L10N();
-    
+
     // General settings tab
     var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
-    open_siteinfo_manager.addEventListener('click', function(e) {
+    open_siteinfo_manager.addEventListener('click', function() {
         switch (browser_type) {
             case BROWSER_CHROME:
                 browser.tabs.query({active: true}, function(t) {
@@ -144,7 +143,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }, false);
 
     var update_siteinfo = document.getElementById('update_siteinfo');
-    update_siteinfo.addEventListener('click', function(e) {
+    update_siteinfo.addEventListener('click', function() {
         var button_text = update_siteinfo.textContent.trim();
         update_siteinfo.disabled = true;
         update_siteinfo.innerHTML = '<img src="' + imgLoad + '">Updating...';
@@ -166,12 +165,12 @@ document.addEventListener('DOMContentLoaded',function(){
                 update_siteinfo.className = 'MSG_update_siteinfo';
                 update_siteinfo.disabled = false;
             }, 4000);
-            
+
         });
     }, false);
 
     var cleanup_db = document.getElementById('cleanup_db');
-    cleanup_db.addEventListener('click', function(e) {
+    cleanup_db.addEventListener('click', function() {
         cleanup_db.disabled = true;
         bgProcess.reimoveUnusedSI();
         bgProcess.initDatabase();
@@ -179,7 +178,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }, false);
 
     var reload_db = document.getElementById('reload_db');
-    reload_db.addEventListener('click', function(e) {
+    reload_db.addEventListener('click', function() {
         reload_db.disabled = true;
         bgProcess.initDatabase();
         reload_db.disabled = false;
@@ -187,10 +186,10 @@ document.addEventListener('DOMContentLoaded',function(){
 
     document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN;
     var update_wedata_location = document.getElementById('update_wedata_location');
-    update_wedata_location.addEventListener('click', function(e) {
+    update_wedata_location.addEventListener('click', function() {
         update_wedata_location.disabled = true;
         var loc = document.getElementById('db_location').value;
-        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(false); document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN; }  
+        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(false); document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN; }
         else if (loc !== bgProcess.JSON_SITEINFO_DB_MIN && /^https?:\/\/.+\.json.*/i.test(loc)) {
             if (bgProcess.checkExists(loc))
                 bgProcess.updateMiniDatabaseURL(loc);
@@ -200,10 +199,10 @@ document.addEventListener('DOMContentLoaded',function(){
 
     document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB;
     var update_wedata_full_location = document.getElementById('update_wedata_full_location');
-    update_wedata_full_location.addEventListener('click', function(e) {
+    update_wedata_full_location.addEventListener('click', function() {
         update_wedata_full_location.disabled = true;
         var loc = document.getElementById('full_db_location').value;
-        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(true); document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB; }  
+        if (!loc || loc.length < 10) { bgProcess.resetDBLocation(true); document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB; }
         else if (loc !== bgProcess.JSON_SITEINFO_DB && /^https?:\/\/.+\.json.*/i.test(loc)) {
             if (bgProcess.checkExists(loc))
                 bgProcess.updateFullDatabaseURL(loc);
@@ -212,12 +211,10 @@ document.addEventListener('DOMContentLoaded',function(){
     }, false);
 
     find('[type="radio"]').forEach(function(box) {
-        var id = box.id;
         var name = box.name;
         var val = AutoPatchWork.config[name] || 'on';
-        if(val == box.value) {
+        if(val === box.value) {
             box.checked = true;
-        } else {
         }
         box.addEventListener('click', function() {
             AutoPatchWork.config[name] = box.value;
@@ -249,7 +246,7 @@ document.addEventListener('DOMContentLoaded',function(){
             AutoPatchWork.update();
         }, false);
     });
-    
+
     // Custom CSS for separator tab
     var css_text = document.getElementById('css_text');
     css_text.value = AutoPatchWork.css || '';
@@ -264,7 +261,7 @@ document.addEventListener('DOMContentLoaded',function(){
             css_text.value = AutoPatchWork.css = storagebase.AutoPatchWorkCSS;
         }, 0);
     }, false);
-    
+
     // Custom SITEINFO patterns tab
     var custom_patterns = document.getElementById('custom_patterns');
     custom_patterns.value = storagebase.AutoPatchWorkPatterns || '';
@@ -285,13 +282,13 @@ document.addEventListener('DOMContentLoaded',function(){
             custom_patterns.value = storagebase.AutoPatchWorkPatterns;
         }, 0);
     }, false);
-    
+
     // Backup tab
     var backup_field = document.getElementById('backup_field');
     // It's too big to load from the beginning
     document.getElementById('menu-backup').onclick = function() {
         backup_field.value = JSON.stringify(storagebase) || '';
-    }
+    };
     var save_backup = document.getElementById('save_backup');
     save_backup.addEventListener('click', function() {
         var backup = JSON.parse(backup_field.value);
@@ -308,13 +305,13 @@ document.addEventListener('DOMContentLoaded',function(){
             backup_field.value = JSON.stringify(storagebase);
         }, 1000);
     }, false);
-    
+
     // Blacklists
     var filter_list = document.getElementById('filter_list');
     var filter_text = document.getElementById('filter_text');
     var filter_type = document.getElementById('filter_type');
     var add_filter = document.getElementById('add_filter');
-    
+
     AutoPatchWork.disabled_sites.forEach(create_filter);
 
     function create_filter(site) {
@@ -327,7 +324,7 @@ document.addEventListener('DOMContentLoaded',function(){
             site.type = types.value;
             AutoPatchWork.save_disabled_site();
         }, false);
-        
+
         var input = document.createElement('input');
         input.type = 'text';
         input.value = site.matcher;
@@ -336,7 +333,7 @@ document.addEventListener('DOMContentLoaded',function(){
             AutoPatchWork.save_disabled_site();
         }, false);
         li.appendChild(input);
-        
+
         var del = document.createElement('button');
         del.textContent = i18n.getMessage('del') || 'Del';
         del.addEventListener('click', function() {
@@ -350,7 +347,7 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }, false);
         li.appendChild(del);
-        
+
         filter_list.appendChild(li);
     }
 
@@ -362,7 +359,7 @@ document.addEventListener('DOMContentLoaded',function(){
         if(type.toLowerCase() === 'regexp') {
             try {
                 new RegExp(site);
-            } catch (bug) { 
+            } catch (bug) {
                 alert('[AutoPatchWork] RegExp '+site+' has invalid format!');
                 return;
             }
@@ -377,7 +374,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var container = document.getElementById('base');
     inner_container.style.width = sections.length * (WIDTH + 20) + 'px';
     container.style.height = 'auto'; //HEIGHT + 'px';
-    sections.forEach(function(section, _i) {
+    sections.forEach(function(section) {
         section.style.visibility = 'hidden';
         section.style.height = '100px';
     });
@@ -400,7 +397,7 @@ document.addEventListener('DOMContentLoaded',function(){
                 time: 0.2,
                 onComplete: function() {
                     document.title = default_title + btn.hash;
-                    !window.opera && (location.hash = btn.hash);
+                    if (!window.opera) location.hash = btn.hash;
                     window.scrollBy(0, -1000);
                     sections.forEach(function(section, _i) {
                         if(i !== _i) {
@@ -430,22 +427,24 @@ document.addEventListener('DOMContentLoaded',function(){
         sections[0].style.visibility = 'visible';
         document.title = default_title + '#' + sections[0].id;
     }
-    
+
 })();
 }, false);
 
+/* jshint ignore:start */
 // Tweener Like snippet
 // var tw = new Tween(div.style,{time:1, onComplete:function(){},left:{to:0,from:100,tmpl:"$#px"}});
 function Tween(item, opt) {
     var self = this, TIME = 10, time = (opt.time||1) * 1000, TM_EXP = /(\+)?\$([\#\d])/g, sets = [], isFilter,
         easing = opt.transition || function(t, b, c, d){return c*t/d + b;}, _T = {time:1,onComplete:1,transition:1,delay:1};
-    for (var k in opt) if (!_T[k]) {
+    for (var k in opt) if (opt.hasOwnProperty(k)) if (!_T[k]) {
+        var set = opt[k], from = set.from || 0;
         if (typeof item === 'function') {
             isFilter = true;
             sets.push({from:from, to:set.to});
         } else {
-            var set = opt[k], from = set.from || parseFloat(item[k]) || 0, values = [], tmpl = set.tmpl || '-$#';
-            sets.push({key:k, from:from, to:set.to, tmpl:tmpl});
+            from = from || parseFloat(item[k]) || 0;
+            sets.push({key:k, from:from, to:set.to, tmpl:(set.tmpl || '-$#')});
         }
     }
     var L = sets.length, delay = opt.delay*1000 || 0, startTime = new Date()*1 + delay, run = function(){
@@ -456,7 +455,7 @@ function Tween(item, opt) {
                 item(val);
             } else {
                 item[set.key] = set.tmpl.replace(TM_EXP,
-                    function(m, p, m1){return p && val < 0 ? 0 : (m1 == '#' ? val : val.toFixed(m1));});
+                    function(m, p, m1){return p && val < 0 ? 0 : (m1 === '#' ? val : val.toFixed(m1));});
             }
         }
         if (tim <= time) {self.T=setTimeout(function(){run.call(self);},TIME);}
@@ -468,7 +467,7 @@ function Tween(item, opt) {
                     item[sets[k].key] = sets[k].tmpl.replace(TM_EXP, sets[k].to);
                 }
             }
-            if (typeof opt.onComplete == 'function') opt.onComplete(item);
+            if (typeof opt.onComplete === 'function') opt.onComplete(item);
             self.end = true;
         }
     };
@@ -494,10 +493,11 @@ function Tween(item, opt) {
                     item(val);
                 } else {
                     item[set.key] = set.tmpl.replace(TM_EXP,
-                        function(m, p, m1){return p && val < 0 ? 0 : (m1 == '#' ? val : val.toFixed(m1));});
+                        function(m, p, m1){return p && val < 0 ? 0 : (m1 === '#' ? val : val.toFixed(m1));});
                 }
             }
         }
     };
-    delay ? this.T=setTimeout(function(){run();},delay) : run(0);
+    if (delay) this.T=setTimeout(function(){run();},delay); else run(0);
 }
+/* jshint ignore:end */

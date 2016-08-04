@@ -16,7 +16,7 @@ doesnotexist:-o-prefocus, body {
 }
 
 /*_:-moz-tree-row(hover), html {
-} 
+}
 */
 
 html * {
@@ -163,7 +163,7 @@ h1 {
     width:680px;
 }
 
-#filter_type { 
+#filter_type {
     height: 27px;
     vertical-align: middle;
 }
@@ -255,25 +255,25 @@ section .btn-group,  section .buttons{
     padding: 0 5px 0 0;
 }*/
 
-section .btn-group > button:last-child:not(:first-child) { 
+section .btn-group > button:last-child:not(:first-child) {
     border-bottom-left-radius: 0px;
     border-top-left-radius: 0px;
 }
 
-section .btn-group > button:not(:first-child):not(:last-child) { 
+section .btn-group > button:not(:first-child):not(:last-child) {
     border-radius: 0px;
 }
 
-section .btn-group > button:first-child:not(:last-child) { 
+section .btn-group > button:first-child:not(:last-child) {
     border-bottom-right-radius: 0px;
     border-top-right-radius: 0px;
 }
 
-section .btn-group button + button { 
+section .btn-group button + button {
     margin-left: -1px;
 }
 
-section .btn-group > button { 
+section .btn-group > button {
     float: left;
     position: relative;
 }
@@ -439,7 +439,7 @@ input[type="range"] {
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Редактор'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
-.MSG_check_crc:lang(ru) {content: 'Проверять страницы на повторы по CRC'}
+.MSG_check_crc:lang(ru) {content: 'Проверять страницы на повторы используя хеш-код'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
 .MSG_change_address:lang(ru) {content: 'Обновлять адрес и заголовок при прокрутке'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
@@ -495,6 +495,7 @@ input[type="range"] {
 .MSG_force_abs_srcs:lang(ja) {content: '完全なアドレスに写真を変換します'}
 .MSG_backup_preferences:lang(ja) {content: 'バックアップデータ'}
 .MSG_siteinfo_patterns:lang(ja) {content: '個人SITEINFO-テンプレート:'}
+.MSG_check_crc:lang(ja) {content: 'ハッシュコードをチェック'}
 /*
  * It's not working this way.
 .MSG_filter_prefix:lang(ja) {content: '接頭辞'}

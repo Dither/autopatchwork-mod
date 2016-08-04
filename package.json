@@ -1,0 +1,26 @@
+{
+  "name": "autopatchwork-mod",
+  "version": "1.9.9",
+  "description": "Addon for auto-appending following paginated pages to the current on scroll.",
+  "readme": "README.md",
+  "devDependencies": {
+    "grunt": ">=0.4.5",
+    "google-closure-compiler": "^20160713.2.0",
+    "grunt-closure-compiler": "0.0.21",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-google-closure-tools-compiler": "^0.1.7",
+    "ncp": ">=0.4.2"
+  },
+  "dependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Dither/autopatchwork-mod.git"
+  },
+  "author": "DitherSky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Dither/autopatchwork-mod/issues"
+  },
+  "engine": "node >= 4.0.0"
+}
