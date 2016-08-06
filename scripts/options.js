@@ -12,8 +12,9 @@ var browser_type,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
-else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
+if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
+else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
 else browser_type = BROWSER_OPERA;
 
 // main
@@ -94,32 +95,6 @@ document.addEventListener('DOMContentLoaded',function(){
     var WIDTH = 700;
     //var HEIGHT = Math.max(window.innerHeight - 100, 500);
 
-    var i18n = browser_type === BROWSER_CHROME  ? browser.i18n : this.safari ? {
-        getAcceptLanguages: function() {},
-        getMessage: function() {}
-    } : {
-        getAcceptLanguages: function() {},
-        getMessage: function() {}
-    };
-
-    function L10N() {
-        /*i18n.getAcceptLanguages(function(langs) {
-            if (langs.indexOf('ja') < 0) {
-                // We should probably load history from language JSONs via AJAX
-                document.querySelector('#menu-tabs > #menu-news').style.display = 'none';
-            }
-        });*/
-        var elems = document.querySelectorAll('*[class^="MSG_"]');
-        Array.prototype.forEach.call(elems, function(node) {
-            var key = node.className.match(/MSG_(\w+)/)[1];
-            try {
-                var message = i18n.getMessage(key);
-                if (message) node.textContent = message;
-            } catch(bug) {}
-        });
-    }
-    L10N();
-
     // General settings tab
     var open_siteinfo_manager = document.getElementById('open_siteinfo_manager');
     open_siteinfo_manager.addEventListener('click', function() {
@@ -152,6 +127,7 @@ document.addEventListener('DOMContentLoaded',function(){
         bgProcess.downloadDatabase(function() {
             update_siteinfo.innerHTML = '<img src="' + imageTick + '">Updated';
             update_siteinfo.className = 'MSG_update_siteinfo_sucс';
+
             setTimeout(function(){
                 update_siteinfo.textContent = button_text;
                 update_siteinfo.className = 'MSG_update_siteinfo';
@@ -167,14 +143,6 @@ document.addEventListener('DOMContentLoaded',function(){
             }, 4000);
 
         });
-    }, false);
-
-    var cleanup_db = document.getElementById('cleanup_db');
-    cleanup_db.addEventListener('click', function() {
-        cleanup_db.disabled = true;
-        bgProcess.reimoveUnusedSI();
-        bgProcess.initDatabase();
-        cleanup_db.disabled = false;
     }, false);
 
     var reload_db = document.getElementById('reload_db');
@@ -335,15 +303,15 @@ document.addEventListener('DOMContentLoaded',function(){
         li.appendChild(input);
 
         var del = document.createElement('button');
-        del.textContent = i18n.getMessage('del') || 'Del';
+        del.textContent = /*i18n.getMessage('del') ||*/ 'Del';
         del.addEventListener('click', function() {
             input.disabled = !input.disabled;
             if(input.disabled) {
                 AutoPatchWork.delete_disabled_site(site);
-                del.textContent = i18n.getMessage('undo') || 'Undo';
+                del.textContent = /*i18n.getMessage('undo') ||*/ 'Undo';
             } else {
                 AutoPatchWork.add_disabled_site(site);
-                del.textContent = i18n.getMessage('del') || 'Del';
+                del.textContent = /*i18n.getMessage('del') ||*/ 'Del';
             }
         }, false);
         li.appendChild(del);

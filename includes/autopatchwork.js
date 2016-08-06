@@ -144,6 +144,7 @@
         service: false,
         state: false,
         use_iframe_req: null,
+        dom_modification_events: false,
         id: -1,
         /**
          * @struct
@@ -159,7 +160,8 @@
         }
     };
 
-    if ((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME;
+    if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
+    if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
     else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
     else browser_type = BROWSER_OPERA;
 
@@ -421,7 +423,7 @@
 
     /**
      * APW initialisation, config reading and fail registration.
-      * @param {Object} info Contains APW paramenters.
+     * @param {Object} info Contains APW paramenters.
      * */
     function begin_init(info) {
         if (typeof info === 'undefined') return dispatch_event('AutoPatchWork.ready');
@@ -470,7 +472,7 @@
     function AutoPatchWork(siteinfo) {
         if (window.AutoPatchWorked.already) return true;
 
-        var base_url = '',
+        var base_url = get_base_url(),
             downloaded_pages = [],
             page_titles = [],
             requested_urls = {},
@@ -483,6 +485,7 @@
             status.change_address = typeof siteinfo.forceAddressChange !== 'undefined' ? !s2b(siteinfo.forceAddressChange) ^ !options.CHANGE_ADDRESS : options.CHANGE_ADDRESS;
         }
 
+        status.dom_modification_events = siteinfo.domEvents || false;
         status.css_patch = siteinfo.cssPatch || null;
         status.js_patch = siteinfo.jsPatch || null;
         if (status.js_patch) run_script(status.js_patch);
@@ -574,6 +577,8 @@
             next = not_button_mode ? get_next_link(document) : null,
             page_elements = not_button_mode ? get_main_content(document) : null;
 
+        if (not_button_mode) parse_links(next);
+
         if (!status.service) {
             if (status.button_elem) {
                 if (!get_node_xpath(document, status.button_elem)) { log('next page button ' + status.button_elem + ' not found'); return false; }
@@ -657,54 +662,114 @@
 
         if (options.BAR_STATUS) {
             var bar = document.createElement('div');
+            var lang = window.navigator.language.substr(0,2);
+            if (lang !== 'en') {
+                bar.setAttribute('lang', lang);
+                bar.setAttribute('xml:lang', lang);
+            }
             bar.id = 'autopatchwork_bar';
             bar.className = 'autopager_off';
             bar.style.display = 'none';
+
+            var new_img_url = function(src) {
+                var hash = (src.match(/#.+/gi) || ['#'])[0].slice(1); // if there is hash, save it
+                src = src.replace(/#.+/gi,'');
+                if (~src.indexOf('?') && !~src.indexOf('&')) { //have 1 parameter
+                    src = src.replace(/\?\d+$/g, '');
+                    if (~src.indexOf('?')) return src + '&' + Date.now() + hash;
+                    else return src + '?' + Date.now();
+                } else if (~src.indexOf('?')) { //have >1 parameter
+                    return src.replace(/&\d+$/g, '') + '&' + Date.now() + hash;
+                } else { //have 0 parameters
+                    return src + '?' + Date.now() + hash;
+                }
+            };
+
+            var is_image_ok = function(img) {
+                if (img.src && img.src.indexOf('data:') === 0) return true;
+                if (!img.complete)
+                    return false;
+                if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0)
+                    return false;
+                return true;
+            };
+
+            var refresh_incomplete_imgs = function(event){
+                var images = document.querySelectorAll('img[src]:not(#autopatchwork_loader)');
+                for (var i = 0; i < images.length; i++) {
+                    if (!is_image_ok(images[i]) || event.shiftKey) {
+                        images[i].src = new_img_url(images[i].src);
+                    }
+                }
+            };
+
+            // Font-Awesome Icons: https://github.com/encharm/Font-Awesome-SVG-PNG (License: SIL OFL 1.1 -> MIT)
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.id = 'bar_onoff';
-                onoff.textContent = 'TGL';
+                //onoff.textContent = 'TGL';
+                onoff.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1664 896q0 156-61 298t-164 245-245 164-298 61-298-61-245-164-164-245-61-298q0-182 80.5-343t226.5-270q43-32 95.5-25t83.5 50q32 42 24.5 94.5t-49.5 84.5q-98 74-151.5 181t-53.5 228q0 104 40.5 198.5t109.5 163.5 163.5 109.5 198.5 40.5 198.5-40.5 163.5-109.5 109.5-163.5 40.5-198.5q0-121-53.5-228t-151.5-181q-42-32-49.5-84.5t24.5-94.5q31-43 84-50t95 25q146 109 226.5 270t80.5 343zm-640-768v640q0 52-38 90t-90 38-90-38-38-90v-640q0-52 38-90t90-38 90 38 38 90z" fill="#fff"/></svg>';
+                //onoff.title = 'Toggle';
                 onoff.onclick = _toggle;
+
                 var option = document.createElement('button');
                 option.id = 'bar_option';
-                option.textContent = 'OPT';
+                //option.textContent = 'OPT';
+                option.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1152 896q0-106-75-181t-181-75-181 75-75 181 75 181 181 75 181-75 75-181zm512-109v222q0 12-8 23t-20 13l-185 28q-19 54-39 91 35 50 107 138 10 12 10 25t-9 23q-27 37-99 108t-94 71q-12 0-26-9l-138-108q-44 23-91 38-16 136-29 186-7 28-36 28h-222q-14 0-24.5-8.5t-11.5-21.5l-28-184q-49-16-90-37l-141 107q-10 9-25 9-14 0-25-11-126-114-165-168-7-10-7-23 0-12 8-23 15-21 51-66.5t54-70.5q-27-50-41-99l-183-27q-13-2-21-12.5t-8-23.5v-222q0-12 8-23t19-13l186-28q14-46 39-92-40-57-107-138-10-12-10-24 0-10 9-23 26-36 98.5-107.5t94.5-71.5q13 0 26 10l138 107q44-23 91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l142-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 70.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z" fill="#fff"/></svg>';
+                //option.title = 'Options';
                 option.onclick = function () {
                     sendRequest({ options: true });
                 };
+
                 var reverse = document.createElement('button');
                 reverse.id = 'bar_reverse';
-                reverse.textContent = 'REV';
-                reverse.onclick = function () {
-                    swap_directions();
-                };
+                //reverse.textContent = 'REV';
+                reverse.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1683 141q19-19 32-13t13 32v1472q0 26-13 32t-32-13l-710-710q-8-9-13-19v710q0 26-13 32t-32-13l-710-710q-19-19-19-45t19-45l710-710q19-19 32-13t13 32v710q5-11 13-19z" fill="#fff"/></svg>';
+                //reverse.title = 'Reverse';
+                reverse.onclick = swap_directions;
+
                 var retry = document.createElement('button');
                 retry.id = 'bar_retry';
-                retry.textContent = 'RTR';
-                retry.onclick = function () {
-                    clear_error();
-                };
+                //retry.textContent = 'RTR';
+                retry.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1639 1056q0 5-1 7-64 268-268 434.5t-478 166.5q-146 0-282.5-55t-243.5-157l-129 129q-19 19-45 19t-45-19-19-45v-448q0-26 19-45t45-19h448q26 0 45 19t19 45-19 45l-137 137q71 66 161 102t187 36q134 0 250-65t186-179q11-17 53-117 8-23 30-23h192q13 0 22.5 9.5t9.5 22.5zm25-800v448q0 26-19 45t-45 19h-448q-26 0-45-19t-19-45 19-45l138-138q-148-137-349-137-134 0-250 65t-186 179q-11 17-53 117-8 23-30 23h-199q-13 0-22.5-9.5t-9.5-22.5v-7q65-268 270-434.5t480-166.5q146 0 284 55.5t245 156.5l130-129q19-19 45-19t45 19 19 45z" fill="#fff"/></svg>';
+                //retry.title = 'Retry';
+                retry.onclick = clear_error;
+
+                var img_refresh = document.createElement('button');
+                img_refresh.id = 'bar_img_refresh';
+                //img_refresh.textContent = 'REF';
+                img_refresh.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M576 576q0 80-56 136t-136 56-136-56-56-136 56-136 136-56 136 56 56 136zm1024 384v448h-1408v-192l320-320 160 160 512-512zm96-704h-1600q-13 0-22.5 9.5t-9.5 22.5v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5v-1216q0-13-9.5-22.5t-22.5-9.5zm160 32v1216q0 66-47 113t-113 47h-1600q-66 0-113-47t-47-113v-1216q0-66 47-113t113-47h1600q66 0 113 47t47 113z" fill="#fff"/></svg>';
+                //img_refresh.title = 'Reload images';
+                img_refresh.onclick = refresh_incomplete_imgs;
+
                 var manager = document.createElement('button');
                 manager.id = 'bar_manager';
-                manager.textContent = 'SIE';
+                //manager.textContent = 'SIE';
+                manager.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1664 1344v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45zm0-512v128q0 26-19 45t-45 19h-1408q-26 0-45-19t-19-45v-128q0-26 19-45t45-19h1408q26 0 45 19t19 45z" fill="#fff"/></svg>';
+                //manager.title = 'SI Editor';
                 manager.onclick = function () {
                     sendRequest({ manage: true, hash: location.hostname.replace(/ww[w\d]+\./i,'')});
                 };
+
                 bar.appendChild(onoff);
+                bar.appendChild(img_refresh);
+                bar.appendChild(reverse);
+                bar.appendChild(retry);
                 bar.appendChild(option);
                 bar.appendChild(manager);
                 bar.onmouseover = null;
             };
 
             /* Toggles status bar ready state. */
-            var _toggle = function() {
-                sendRequest({ pause: (status.state ? 'on' : 'off'), id: status.id });
+            var _toggle = function(event) {
+                if (!event.shiftKey) sendRequest({ paused: (status.state ? 'on' : 'off'), id: status.id });
                 dispatch_event('AutoPatchWork.toggle');
             };
 
             if (browser_type === BROWSER_OPERA) { // :before + background-image: url(animated SVG) in CSS for other browsers
                 var img = document.createElement('img');
                 img.id = 'autopatchwork_loader';
-                img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" width="60" height="32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
+                img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 32" fill="lightgray"><circle transform="translate(10 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(30 0)" cx="0" cy="16" r="0"><animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.3" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle><circle transform="translate(50 0)" cx="0" cy="16" r="0"> <animate attributeName="r" values="0; 4; 0; 0" dur="1.2s" repeatCount="indefinite" begin="0.6" keytimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline" /></circle></svg>';
                 bar.appendChild(img);
             }
 
@@ -727,8 +792,10 @@
         dispatch_event('AutoPatchWork.initialized', status);
         sendRequest({ message: 'AutoPatchWork.initialized', siteinfo: siteinfo });
 
-        if (typeof siteinfo.pause === 'undefined' && options.DEFAULT_STATE) state_on();
-        if (typeof siteinfo.pause !== 'undefined' && !siteinfo.pause) state_on();
+        if (typeof siteinfo.paused === 'undefined' && options.DEFAULT_STATE) state_on();
+        if (typeof siteinfo.paused !== 'undefined' && !siteinfo.paused) state_on();
+        if (typeof siteinfo.reversed !== 'undefined' && siteinfo.reversed) swap_directions();
+
         if (status.bar) status.bar.removeAttribute('style');
 
         remove_nodes();
@@ -883,13 +950,15 @@
          * @summary Changes direction of pagination until browser restart.
          * */
         function swap_directions(){
+            if (!(status.prev_link && status.next_link )|| !(status.prev_link_selector && status.next_link_selector))
+                return;
             var p = status.prev_link, ps = status.prev_link_selector;
             status.reversed = !status.reversed;
             status.prev_link = status.next_link;
             status.next_link = p;
             status.prev_link_selector = status.next_link_selector;
             status.next_link_selector = ps;
-            sendRequest({ reverse: (status.reversed ? 'on' : 'off'), id: status.id });
+            sendRequest({ reversed: (status.reversed ? 'on' : 'off'), id: status.id });
         }
 
         /**
@@ -897,7 +966,9 @@
          * @summary Clears timeout to termination event if no user action performed.
          * */
         function clear_error(){
+            if (!error_timeout) return;
             clearTimeout(error_timeout);
+            error_timeout = null;
             requested_urls[status.ajax.last_url]--;
             state_loading();
             dispatch_event('AutoPatchWork.request', {link: next});
@@ -1277,23 +1348,23 @@
         }
 
         /**
-         * Runs script in current context .
+         * Runs script in current context.
          * @param {string} text Text to run script from.
          * */
         function run_script(text) {
+            if (typeof text !== 'string' || text.length < 2) return;
+            text = 'if (!AutoPatchWorked.js_patched) { AutoPatchWorked.js_patched = true; ' + text + '}';
             try {
-                if (text && text.length > 1) {
-                    var script = document.createElement('script');
-                    script.textContent = text;
-                    (document.head || document.documentElement).appendChild(script);
-                    if (script.remove)
-                        script.remove();
-                    else {
-                        if (script.parentNode) script.parentNode.removeChild(script);
-                        else script.text = '';
-                    }
-                    //window.eval(text);
+                var script = document.createElement('script');
+                script.textContent = text;
+                (document.head || document.documentElement).appendChild(script);
+                if (script.remove)
+                    script.remove();
+                else {
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    else script.text = '';
                 }
+                if (!AutoPatchWorked.js_patched) window.eval(text); // Opera 36+
             } catch (bug) {
                 log(bug.message);
             }
@@ -1319,23 +1390,45 @@
                 url = location.href;
             var link = document.createElement('a');
             link.href = url;
-            var path_arr = link.pathname.split('/');
-            if (~path_arr.pop().indexOf('.'))
+            var path_arr = link.pathname.split('/'),
+                last = path_arr.pop();
+            if (~last.indexOf('.') || (link.search.length && last !== ''))
                 return link.protocol + '//' + link.host + path_arr.join('/') + '/';
             else
                 return link.protocol + '//' + link.host + (link.pathname + '/').replace(/\/+$/,'/');
         }
 
+
         /**
-         * Checks if URL is relative.
+         * Checks if URL is relative and fixes it.
          * @param {string} url Location.
          * */
-        function is_url_relative(url) {
-            if (typeof url !== 'string' || !url.length || (/^(?:[a-z]+\:)?\/\//i).test(url)) // ignoring protocol change between pages
-                return false;
-            else if (url[0] !== '/')
-                return true;
-            return false;
+        function rel_to_abs(url){
+            var start = url.charAt(0);
+            if(/^\w+:\/\//.test(url) || start === '#')
+                return url;
+            else if(url.substring(0,2) === '//') // protocol relative urls
+                return location.protocol + url;
+            else if(start === '/') // domain relative urls
+                return (location.protocol + '//' + location.host + url).replace(/([^:])\/+/g,'$1/');
+            else if(start === '?') // parameters
+                return location.protocol + '//' + location.host + location.pathname + url;
+            else if(/^\s*$/.test(url))
+                return '';
+            else
+                url = '/' + url;
+
+            url = base_url + url;
+
+            url = url.replace(/\/\.\/+/g,'/'); // ignore current dirs
+            url = url.replace(/([^:])\/+/g,'$1/'); // remove excessive slashes
+
+            var backup = url,
+                domain = (base_url.match(/https?:\/\/[^/]+/i) || [])[0] || (location.protocol + '//' + location.host);
+            while(/\/\.\.\//.test(url = url.replace(/[^\/]+\/+\.\.\//g,''))); // resolve paths
+            if (url.indexOf(domain) !== 0) url = backup; // if unresolved leave it up to server
+
+            return url;
         }
 
         // - Replace lazyloading src's to normal. Although better solution would be using per-site js patches.
@@ -1346,7 +1439,7 @@
                 if (options.TRY_CORRECT_LAZY) {
                     for (var j = 0, atts = img[i].attributes, n = atts.length, match = null; j < n; j++) {
                        if (~atts[j].localName.toLowerCase().indexOf('data-')) {
-                           match = atts[j].textContent.toLowerCase().match(/\.(?:jpe?g|a?png|gif|svg)/g);
+                           match = atts[j].textContent.toLowerCase().match(/\.(?:jpe?g|a?png|gif|svg|webp)/g);
                            if (match && match.length === 1) { // in case of image list variable we ignore it
                                img[i].setAttribute('src', atts[j].textContent);
                                break;
@@ -1357,27 +1450,24 @@
 
                 if (!options.FORCE_ABSOLUTE_IMG_SRCS) continue;
                 var src = img[i].getAttribute('src');
-                if (src && is_url_relative(src))
-                    img[i].setAttribute('src', base_url + src);
+                if (src)
+                    img[i].setAttribute('src', rel_to_abs(src));
             }
-        }/**/
+        }
 
         // - Make target attribute as specified.
-        // - Fix next page-relative link HREFs to absolute.
+        // - Fix relative link URL to absolute.
         function parse_links(node, target) {
             // we are ignoring links inside links, i.e a>a
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
             for (var lnki = 0, lnks = (node.tagName && node.tagName.toLowerCase() === 'a')?[node]:node.getElementsByTagName('a'), lnlen = lnks.length; lnki < lnlen; lnki++) {
                 var href = lnks[lnki].getAttribute('href');
-                if (typeof target !== 'undefined') {
-                    if (href && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(href) && !/^#/.test(href) && !lnks[lnki].target) {
+                if (typeof target !== 'undefined')
+                    if (href && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(href) && !/^#/.test(href) && !lnks[lnki].target)
                         lnks[lnki].setAttribute('target', options.TARGET_WINDOW_NAME);
-                    }
-                }
 
-                if (options.FORCE_ABSOLUTE_HREFS && href && href.length && is_url_relative(href)) {
-                    lnks[lnki].setAttribute('href', base_url + href);
-                }
+                if (options.FORCE_ABSOLUTE_HREFS && href && href.length)
+                    lnks[lnki].setAttribute('href', rel_to_abs(href));
             }
         }
 
@@ -1419,17 +1509,6 @@
                 base_url = get_base_url(loaded_url);
             }
 
-            var nodes = get_main_content(event.detail.htmlDoc);
-            if (!nodes || !nodes.length) {
-                if (requested_urls[loaded_url] < status.ajax.retry_max) {
-                    var url = loaded_url.replace(/[?&]retry=\d+/, '');
-                    url = url + (~url.indexOf('?') ? '&' : '?') + 'retry=' + Date.now();
-                    return dispatch_event('AutoPatchWork.request', {link: url});
-                } else {
-                    return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
-                }
-            }
-
             if (!status.service) {
                 next = get_next_link(event.detail.htmlDoc);
                 parse_links(next);
@@ -1441,11 +1520,23 @@
                 }
             }
 
-            status.page_number++;
-            document.apwpagenumber++;
+            var nodes = get_main_content(event.detail.htmlDoc);
+            if (!nodes || !nodes.length) {
+                if (requested_urls[loaded_url] < status.ajax.retry_max) {
+                    next = null;
+                    var url = loaded_url.replace(/[?&]retry=\d+/, '');
+                    url = url + (~url.indexOf('?') ? '&' : '?') + 'retry=' + Date.now();
+                    return dispatch_event('AutoPatchWork.request', {link: url});
+                } else {
+                    return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
+                }
+            }
 
             var title_node = event.detail.htmlDoc.querySelector('title'),
                 title =  title_node ? title_node.textContent.trim() : '';
+
+            status.page_number++;
+            document.apwpagenumber++;
             delete event.detail.htmlDoc;
 
             dispatch_event('AutoPatchWork.append', { nodes: nodes, title: title, url: loaded_url });
@@ -1478,7 +1569,7 @@
                 change_location = status.change_address;
 
             var nodes = event.detail.nodes || [],
-                title = event.detail.title || null,
+                title = event.detail.title || '',
                 loaded_url = event.detail.url || null;
 
             delete event.detail.nodes;
@@ -1522,7 +1613,7 @@
                     a.href = loaded_url && (loaded_url.indexOf('http') === 0 || ~loaded_url.indexOf('/') || ~loaded_url.indexOf('.'))  ? loaded_url : 'javascript:void(0)';
                     /* jshint ignore:end */
                     a.setAttribute('number', document.apwpagenumber);
-                    if (title.length) a.setAttribute('title', title);
+                    if (typeof title === 'string' && title.length) a.setAttribute('title', title);
 
                     fragment.appendChild(root);
                 }
@@ -1558,21 +1649,21 @@
 
                 content_parent.insertBefore(document.importNode(fragment, true), content_last);
 
-                for (var n = last_prev.nextSibling; n; n = n.nextSibling ) {
-                    if (n === content_last) break;
-                    if (typeof n.nodeType !== 'number' || n.nodeType !== 1) continue;
-                    dispatch_mutation_event({
-                        targetNode: n,
-                        eventName: 'AutoPatchWork.DOMNodeInserted',
-                        bubbles: true,
-                        cancelable: false,
-                        relatedNode: content_parent,
-                        prevValue: null,
-                        newValue: loaded_url,
-                        attrName: 'url',
-                        attrChange: 2 // MutationEvent.ADDITION
-                    });
-                }
+                if (status.dom_modification_events)
+                    for (var n = last_prev.nextElementSibling; n; n = n.nextElementSibling ) {
+                        if (n === content_last) break;
+                        dispatch_mutation_event({
+                            targetNode: n,
+                            eventName: 'AutoPatchWork.DOMNodeInserted',
+                            bubbles: true,
+                            cancelable: false,
+                            relatedNode: content_parent,
+                            prevValue: null,
+                            newValue: loaded_url,
+                            attrName: 'url',
+                            attrChange: 2 // MutationEvent.ADDITION
+                        });
+                    }
 
                 fragment = null;
                 nodes = null;
@@ -1581,14 +1672,16 @@
                     downloaded_pages.push(loaded_url);
                     page_titles.push(title);
                 }
-                title = null;
 
+                title = null;
                 status.ajax.load_count++;
+
                 setTimeout(function(){ dispatch_event('AutoPatchWork.pageloaded'); }, get_load_delay());
             }
 
             // We can't check for repeating nodes in the same document because they can have some function
-            // also can't check responseText (earlier) as there is a higher probability of non-paging content changes like random ad id's
+            // also can't check responseText (earlier) as there is a higher probability of non-paging content
+            // changes like random ad id's
             if (options.CRC_CHECKING && nodes[0] && nodes[0].parentNode) {
                 checksum(nodes[0].parentNode.innerHTML).then(function(content_hash){
                     if (!loaded_crcs[content_hash]) loaded_crcs[content_hash] = true;
@@ -1596,7 +1689,7 @@
                     onAfterChecked();
                 });
             } else {
-                setTimeout(onAfterChecked, 0);
+                onAfterChecked();
             }
         }
 

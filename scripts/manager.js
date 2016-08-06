@@ -68,8 +68,9 @@ var RECORDS_PER_PAGE = 100,
         entry_editor_running = false,
         stop_pager = false;
 
-    if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
-    else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+    if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
+    if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
+    else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
     else browser_type = BROWSER_OPERA;
 
     /**

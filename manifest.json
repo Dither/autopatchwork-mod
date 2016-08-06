@@ -1,34 +1,33 @@
 {
-   "manifest_version": 2,
-   "background": {
-      "page": "index.html"
-   },
-   "content_scripts": [ {
-      "js": [ "includes/autopatchwork.js" ],
-      "matches": [ "http://*/*" , "https://*/*" ],
-      "run_at": "document_start",
-      "all_frames":true
-   } ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-  "default_locale": "en_US",
-   "icons": {
+  "manifest_version": 2,
+  "name": "AutoPatchWork Mod",
+  "version": "1.9.10",
+  "description": "Addon for auto-appending following paginated pages to the current on scroll.",
+  "icons": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
       "48": "icons/icon-48.png",
       "64": "icons/icon-64.png",
       "128": "icons/icon-128.png"
-   },
-    "applications": {
-        "gecko": {
-            "id": "autopatchworkmod@mozilla.firefox"
-        }
-    },
-   "description": "Automatically loads the next page and inserts into current one.",
-   "name": "AutoPatchWorkMod",
-   "permissions": [ "unlimited_storage", "tabs", "management", "notifications" ],
-   "optional_permissions": [ "storage" ],
-   "options_ui": {
+  },
+  "background": {
+      "page": "index.html"
+  },
+  "options_ui": {
       "page": "options.html"
-   },
-   "version": "1.9.9"
+  },
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+  "permissions": ["unlimited_storage", "tabs", "notifications"],
+  "optional_permissions": ["storage"],
+  "content_scripts": [{
+      "js": ["includes/autopatchwork.js"],
+      "matches": ["http://*/*", "https://*/*"],
+      "run_at": "document_start",
+      "all_frames": true
+  }],
+  "applications": {
+      "gecko": {
+          "id": "autopatchwork-mod@mozilla.firefox"
+      }
+  }
 }

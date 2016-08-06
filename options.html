@@ -36,9 +36,8 @@
             <section id='general' class='content'>
                 <div class='btn-group main'>
                     <button id='open_siteinfo_manager' class='MSG_open_siteinfo_manager'>Editor</button>
-                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update DB</button>
-                    <button id='reload_db' class='MSG_reload_db'>Reload DB</button>
-                    <button id='cleanup_db' class='MSG_cleanup_db'>Cleanup DB</button>
+                    <button id='update_siteinfo' class='MSG_update_siteinfo'>Update</button>
+                    <button id='reload_db' class='MSG_reload_db'>Reload</button>
                 </div>
                 <div>
                     <input type='text' id='db_location'><button id='update_wedata_location'>Save</button>
@@ -61,6 +60,10 @@
                     <label for='disable_in_frames' class='MSG_noiframe'>Disable extension in frames</label>
                 </div>
                 <div>
+                    <input type='checkbox' id='cleanup_on_load'>
+                    <label for='cleanup_on_load' class='MSG_cleanup_on_load'>Cleanup database on update</label>
+                </div>
+                <div>
                     <input type='checkbox' id='target_blank'>
                     <label for='target_blank' class='MSG_open_newtab'>Open new tabs from links in added pages</label>
                 </div>
@@ -74,7 +77,7 @@
                 </div>
                 <div>
                     <input type='checkbox' id='check_crc'>
-                    <label for='check_crc' class='MSG_check_crc'>Check pages for duplicates by CRC</label>
+                    <label for='check_crc' class='MSG_check_crc'>Check pages for duplicates by content hash</label>
                 </div>
                 <div>
                     <input type='checkbox' id='change_address'>
@@ -170,10 +173,10 @@
                         Site filters by regexps, prefixes and domains.
                     </li>
                     <li>
-                        SITEINFO updater and manager.
+                        SITEINFO updater and editor.
                     </li>
                     <li>
-                        Instant search, editing and disabling of rules and internal auto-pagerizing in SITEINFO manager.
+                        Instant search, editing and disabling of rules and internal auto-pagerizing in SITEINFO editor.
                     </li>
                     <li>
                         Option to disable extension in IFRAMEs.
@@ -194,7 +197,7 @@
                         Debug output support.
                     </li>
                     <li>
-                        Status bar: loading animation, toggle auto-pagerizing (TGL), show SITEINFO manager (SIM) or options page (OPT).
+                        Status bar: loading animation, toggle auto-pagerizing, show SITEINFO editor or options page.
                     </li>
                 </ul>
                 <h4>Version 1.9.8</h4>
@@ -244,7 +247,7 @@
                         <i>forceAddressChange</i> field enables updating of both location URL and page title.
                     </li>
                     <li>
-                        <i>insertBefore</i> field can be set to empty in SITEINFO manager to override value from remote database.
+                        <i>insertBefore</i> field can be set to empty in SITEINFO editor to override value from remote database.
                     </li>
                     <li>
                         Per site <i>forceAddressChange</i> (<i>address</i> checkbox) inverts global setting.
@@ -254,7 +257,7 @@
                         <ul><li><i>removeElement[Selector]</i> - removes elements from current and added pages.</li><li> <i>jsPatch</i> - allows per site JavaScript patching.</li><li><i>cssPatch</i> - allows per site CSS patching.</li></ul>
                     </li>
                     <li>
-                        Options in SITEINFO manager to disable separators, allow scripts, load pages via IFrames and update URL/title on scroll.
+                        Options in SITEINFO editor to disable separators, allow scripts, load pages via IFrames and update URL/title on scroll.
                     </li>
                     <li>
                         Options to make link <i>href</i>s and image <i>src</i>s absolute in added pages.
@@ -266,7 +269,7 @@
                         SITEINFO database can be reloaded manually.
                     </li>
                     <li>
-                        SITEINFO database can be cleaned from all unused entries that have no successful hits until next update. 
+                        SITEINFO database can be cleaned from all unused entries that have no successful hits until next update.
                     </li>
                     <li>
                         Various bugfixes.

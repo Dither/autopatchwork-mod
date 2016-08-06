@@ -3,26 +3,17 @@
     Version: 02.04.2016
 */
 
-.autopagerize_link, .autopagerize_link:hover {
-    background: #fff none repeat scroll 0% 0% !important;
-    text-decoration: none !important;
-}
-
-.autopagerize_link:before {
-    content: "page " attr(number);
-}
-
 .autopagerize_page_separator_blocks {
+    width: 100%;
     clear: both;
     height: 30px !important;
     margin: 10px 0 10px !important;
     padding: 0 !important;
-    text-align: center !important;   
+    text-align: center !important;
     list-style: none outside none !important;
     line-height: 14px !important;
     text-decoration: none !important;
     background: transparent !important;
-
 }
 
 .autopagerize_page_separator {
@@ -52,9 +43,18 @@
     background-size: auto !important;
 }
 
+.autopagerize_link, .autopagerize_link:hover {
+    background: #fff none repeat scroll 0% 0% !important;
+    text-decoration: none !important;
+}
+
+.autopagerize_link:before {
+    content: "page " attr(number);
+}
+
 /*
     Name: AutoPatchWork statusbar style
-    Version: 02.02.2015
+    Version: 06.06.2016
 */
 
 #autopatchwork_bar {
@@ -66,26 +66,15 @@
     position: fixed !important;
     right: 0 !important;
     text-align: right;
-    width: 60px;
+    width: 47px !important;
     z-index: 10000 !important;
-}
-
-#autopatchwork_bar.autopager_off {
-    border-bottom: 2px solid rgba(255, 255, 0, 0.4) !important;
-    border-top: 2px solid rgba(255, 255, 0, 0.4) !important;
-    margin-top: 9px;
 }
 
 #autopatchwork_bar:hover {
     background-color: rgba(222,222,222,.75) !important;
     border-top-width: 0 !important;
     color: rgba(0,0,0,1) !important;
-    height: 80px !important;
-}
-
-#autopatchwork_bar.autopager_loading {
-    border-bottom: 1px solid rgba(0, 128, 255, .5) !important;
-    border-top : 1px solid rgba(0, 255, 255, .5) !important;
+    height: 165px !important;
 }
 
 #autopatchwork_loader {
@@ -94,7 +83,7 @@
     margin: 0 !important;
     position: fixed !important;
     height: 20px !important;
-    width: 60px !important;
+    width: 47px !important;
     bottom: 0 !important;
     right: 0 !important;
     background-color: transparent !important;
@@ -107,15 +96,19 @@
     margin: 0 !important;
     position: fixed !important;
     height: 20px !important;
-    width: 60px !important;
+    width: 47px !important;
     bottom: 0 !important;
     right: 0 !important;
-    border 0 !important;
+    border: 0 !important;
     background-image: url(data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA2MCAzMicgZmlsbD0nbGlnaHRncmF5Jz48Y2lyY2xlIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDEwIDApJyBjeD0nMCcgY3k9JzE2JyByPScwJz48YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSdyJyB2YWx1ZXM9JzA7IDQ7IDA7IDAnIGR1cj0nMS4ycycgcmVwZWF0Q291bnQ9J2luZGVmaW5pdGUnIGJlZ2luPScwJyBrZXl0aW1lcz0nMDswLjI7MC43OzEnIGtleVNwbGluZXM9JzAuMiAwLjIgMC40IDAuODswLjIgMC42IDAuNCAwLjg7MC4yIDAuNiAwLjQgMC44JyBjYWxjTW9kZT0nc3BsaW5lJyAvPjwvY2lyY2xlPjxjaXJjbGUgdHJhbnNmb3JtPSd0cmFuc2xhdGUoMzAgMCknIGN4PScwJyBjeT0nMTYnIHI9JzAnPjxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9J3InIHZhbHVlcz0nMDsgNDsgMDsgMCcgZHVyPScxLjJzJyByZXBlYXRDb3VudD0naW5kZWZpbml0ZScgYmVnaW49JzAuMycga2V5dGltZXM9JzA7MC4yOzAuNzsxJyBrZXlTcGxpbmVzPScwLjIgMC4yIDAuNCAwLjg7MC4yIDAuNiAwLjQgMC44OzAuMiAwLjYgMC40IDAuOCcgY2FsY01vZGU9J3NwbGluZScgLz48L2NpcmNsZT48Y2lyY2xlIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDUwIDApJyBjeD0nMCcgY3k9JzE2JyByPScwJz4gPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ncicgdmFsdWVzPScwOyA0OyAwOyAwJyBkdXI9JzEuMnMnIHJlcGVhdENvdW50PSdpbmRlZmluaXRlJyBiZWdpbj0nMC42JyBrZXl0aW1lcz0nMDswLjI7MC43OzEnIGtleVNwbGluZXM9JzAuMiAwLjIgMC40IDAuODswLjIgMC42IDAuNCAwLjg7MC4yIDAuNiAwLjQgMC44JyBjYWxjTW9kZT0nc3BsaW5lJyAvPjwvY2lyY2xlPjwvc3ZnPg==) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: 100% 100%;
-    
+}
+
+#autopatchwork_bar.autopager_loading {
+    border-bottom: 1px solid rgba(0, 128, 255, .5) !important;
+    border-top : 1px solid rgba(0, 255, 255, .5) !important;
 }
 
 #autopatchwork_bar.autopager_loading img {
@@ -126,9 +119,19 @@
     display: block;
 }
 
-#autopatchwork_bar.autopager_terminated, #autopatchwork_bar.autopager_error {
-    border-bottom: 1px solid rgba(255, 0, 0, .5) !important;
-    border-top : 4px solid rgba(255, 0, 0, .5) !important;
+#autopatchwork_bar.autopager_off {
+    border-bottom: 2px solid rgba(255, 255, 0, 0.4) !important;
+    border-top: 2px solid rgba(255, 255, 0, 0.4) !important;
+}
+
+#autopatchwork_bar.autopager_terminated {
+    border-bottom: 2px solid rgba(255, 0, 0, .5) !important;
+    border-top: 2px solid rgba(255, 0, 0, .5) !important;
+}
+
+#autopatchwork_bar.autopager_error {
+    border-bottom: 2px solid rgba(255, 99, 71, .5) !important;
+    border-top: 2px solid rgba(255, 99, 71, .5) !important;
 }
 
 #autopatchwork_bar:hover img,
@@ -143,19 +146,44 @@
 
 #autopatchwork_bar button {
     display: none;
-    position: relative;
-    top: 10px;
+    position: relative !important;
+    top: 8px;
 }
 
 #autopatchwork_bar:hover button {
-    background: #222;
-    background: -webkit-gradient(linear, left top, left bottom,from(#222),to(#666));
-    border: 1px solid #aaa;
-    color: #fff;
-    cursor: pointer;
-    display: block;
-    height: 22px;
+    background: #222222 !important;
+    border: 1px solid #AAAAAA !important;
+    color: #FFFFFF !important;
+    cursor: pointer !important;
+    display: block !important;
+    height: 25px !important;
     margin: 0 0 0 10px !important;
-    padding: 0 !important;
-    width: 40px;
+    padding: 3px !important;
+    width: 25px !important;
 }
+
+#autopatchwork_bar button:hover:after {
+  background: #555 !important;
+  padding: 4px 8px !important;
+  color: #ddd !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: -105% !important;
+  z-index: 10001 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 0 2px #555 !important;
+}
+
+#bar_onoff:hover:after { content: 'Toggle'; }
+#bar_option:hover:after { content: 'Options'; }
+#bar_reverse:hover:after { content: 'Reverse'; }
+#bar_retry:hover:after { content: 'Retry'; }
+#bar_img_refresh:hover:after { content: 'Reload images'; }
+#bar_manager:hover:after { content: 'SI Editor'; }
+
+#bar_onoff:lang(ru):hover:after { content: 'Переключить'; }
+#bar_option:lang(ru):hover:after { content: 'Настройки'; }
+#bar_reverse:lang(ru):hover:after { content: 'Направление'; }
+#bar_retry:lang(ru):hover:after { content: 'Повтор загрузки'; }
+#bar_img_refresh:lang(ru):hover:after { content: 'Освежить картинки'; }
+#bar_manager:lang(ru):hover:after { content: 'Редактор SI'; }

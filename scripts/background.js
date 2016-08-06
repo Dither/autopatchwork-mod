@@ -1,6 +1,6 @@
 if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
 var debug = false,
-    self = this, siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {},
+    siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {},
     custom_info = {
         '400':{'disabled':true,'length':1},
         '430':{'disabled':true,'length':1},
@@ -38,8 +38,9 @@ var browser_type,
     BROWSER_SAFARI = 2,
     BROWSER_OPERA = 3;
 
-if((!!window.chrome && !!window.chrome.runtime) || (typeof InstallTrigger !== 'undefined')) { browser_type = BROWSER_CHROME; if (typeof browser === 'undefined') browser = chrome; }
-else if(Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
+if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
+if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
+else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
 else browser_type = BROWSER_OPERA;
 
 /**
@@ -54,6 +55,18 @@ function log() {
         window.console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
     }
 }
+
+/* jshint ignore:start */
+/**
+* Checks variable and explictly converts string to the corresponding boolean.
+* Possible data values are: undefined, null, unknown text or a number (treated as false here except 1),
+*                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
+* @param {*} s Data to check.
+* @return {boolean} Boolean result.
+* */
+function s2b(s) { return ((typeof s !== 'undefined') && s && (s === true || s === 'true' || s === 'on' || s == 1)) ? true : false; }
+/* jshint ignore:end */
+
 
 var H = location.href.replace('index.html', '');
 
@@ -72,7 +85,8 @@ window.AutoPatchWorkBG = {
         bar_status: true,
         force_abs_hrefs: false,
         force_abs_srcs: false,
-        enable_notifications: false
+        enable_notifications: false,
+        cleanup_on_load: false
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
@@ -197,27 +211,6 @@ function updateFullDatabaseURL(url) {
     JSON_SITEINFO_DB = url;
 }
 
-function reimoveUnusedSI() {
-    try {
-        if (!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
-        var data = Store.get('siteinfo_wedata');
-        var filtered_siteinfo = data.siteinfo.filter(function(si) {
-            var id = si['wedata.net.id'];
-            if (id && (typeof site_stats[id] === 'undefined' || site_stats[id] < 1)) {
-                delete site_fail_stats[id];
-                delete site_stats[id];
-                return false;
-            }
-            return true;
-        });
-        storagebase.site_stats = JSON.stringify(site_stats);
-        storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
-        Store.set('siteinfo_wedata', {
-            siteinfo: filtered_siteinfo,
-            timestamp: (new Date).toLocaleString()
-        }, { day: 90 });
-    } catch (bug) {}
-}
 /* jshint ignore:end */
 
 function initDatabase() {
@@ -244,9 +237,10 @@ function createDatabase(info) {
 
     siteinfo = [];
     if (ENABLE_STYLISH_FIELD) allowed_fields.push('cssPatch');
+    var clean = AutoPatchWorkBG.config.cleanup_on_load;
 
     info.forEach(function(i) {
-        var d = i.data || i, r = {};
+        var d = i.data || i, r = {}, id = i['wedata.net.id'] || getWedataId(i);
         if (ENABLE_STYLISH_FIELD && d) {
             var t = null;
             if (typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) t = d['Stylish']; // Stylish CSS
@@ -261,7 +255,7 @@ function createDatabase(info) {
             if (is_default_db) d[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
             r[k] = d[k];
         });
-        r['wedata.net.id'] = i['wedata.net.id'] || getWedataId(i);
+        r['wedata.net.id'] = id;
         try { new RegExp(r.url); } catch (bug) {
         	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n';
             return;
@@ -274,6 +268,13 @@ function createDatabase(info) {
             tmp_log += '[' + r['wedata.net.id'] + '] Invalid content XPath '  + r.pageElement + ': ' + (bug.message || bug) + '\n';
             return;
         }
+
+        if (clean && id && (typeof site_stats[id] === 'undefined' || site_stats[id] < 1)) {
+            delete site_fail_stats[id];
+            delete site_stats[id];
+            return;
+        }
+
         siteinfo.push(r);
     });
     log(tmp_log);
@@ -422,7 +423,7 @@ switch(browser_type) {
         }, false);
         break;
     case BROWSER_OPERA:
-        self.opera.extension.onmessage = function(evt) {
+        window.opera.extension.onmessage = function(evt) {
             var name = evt.data.name;
             var message = evt.data.data;
             if (!evt.source && name !== 'invoke_action') return;
@@ -490,21 +491,24 @@ function handleMessage(request, sender, sendResponse) {
         return;
     }
 
-    if(request.pause) {
-        if (typeof request.id === 'number' && request.id !== -1) {
-            var silen = siteinfo.length;
-            var set_pause = function(id, val) {
-                for (var i = 0; i < silen; i++)
-                    if (siteinfo[i]['wedata.net.id']  === id) {
-                        siteinfo[i].pause = val;
-                        break;
-                    }
-            };
-            if (request.pause === 'off') {
-                set_pause(request.id, false);
-            } else if (request.pause === 'on') {
-                set_pause(request.id, true);
+    var set_mode = function(mode, id, val) {
+        for (var i = 0, silen = siteinfo.length; i < silen; i++)
+            if (siteinfo[i]['wedata.net.id']  === id) {
+                siteinfo[i][mode] = val;
+                break;
             }
+    };
+
+    if(request.paused) {
+        if (typeof request.id === 'number' && request.id !== -1) {
+            set_mode('paused', request.id, s2b(request.paused))
+        }
+        return;
+    }
+
+    if(request.reversed) {
+        if (typeof request.id === 'number' && request.id !== -1) {
+            set_mode('reversed', request.id, s2b(request.reversed))
         }
         return;
     }
