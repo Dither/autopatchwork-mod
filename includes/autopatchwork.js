@@ -3,7 +3,7 @@
 // @exclude *//localhost*
 // @exclude *//127.0.0.*
 // @exclude *//192.168.*
-// @exclude *.com/embed*
+// @exclude */embed/*
 // @run-at document-start
 // @grant none
 // ==/UserScript==
@@ -22,6 +22,7 @@
  *  AutoPatchWork.pageloaded - page loaded successfully;
  *  AutoPatchWork.error - page failed to load, (possibly) recoverable error;
  *  AutoPatchWork.terminated - stopping extension, unrecoverable error or end-condition.
+ *  AutoPatchWork.update - update footer height after some external script modified it.
  *
  * Service events:
  *  resize (internal) - on window resize
@@ -55,7 +56,7 @@
          * */
         var FastCRC32 = function FastCRC32() {
             /** @const {array} _table*/
-            this._table = [0, 1996959894, 3993919788, 2567524794, 124634137, 1886057615, 3915621685, 2657392035, 249268274, 2044508324, 3772115230, 2547177864, 162941995, 2125561021, 3887607047, 2428444049, 498536548, 1789927666, 4089016648, 2227061214, 450548861, 1843258603, 4107580753, 2211677639, 325883990, 1684777152, 4251122042, 2321926636, 335633487, 1661365465, 4195302755, 2366115317, 997073096, 1281953886, 3579855332, 2724688242, 1006888145, 1258607687, 3524101629, 2768942443, 901097722, 1119000684, 3686517206, 2898065728, 853044451, 1172266101, 3705015759, 2882616665, 651767980, 1373503546, 3369554304, 3218104598, 565507253, 1454621731, 3485111705, 3099436303, 671266974, 1594198024, 3322730930, 2970347812, 795835527, 1483230225, 3244367275, 3060149565, 1994146192, 31158534, 2563907772, 4023717930, 1907459465, 112637215, 2680153253, 3904427059, 2013776290, 251722036, 2517215374, 3775830040, 2137656763, 141376813, 2439277719, 3865271297, 1802195444, 476864866, 2238001368, 4066508878, 1812370925, 453092731, 2181625025, 4111451223, 1706088902, 314042704, 2344532202, 4240017532, 1658658271, 366619977, 2362670323, 4224994405, 1303535960, 984961486, 2747007092, 3569037538, 1256170817, 1037604311, 2765210733, 3554079995, 1131014506, 879679996, 2909243462, 3663771856, 1141124467, 855842277, 2852801631, 3708648649, 1342533948, 654459306, 3188396048, 3373015174, 1466479909, 544179635, 3110523913, 3462522015, 1591671054, 702138776, 2966460450, 3352799412, 1504918807, 783551873, 3082640443, 3233442989, 3988292384, 2596254646, 62317068, 1957810842, 3939845945, 2647816111, 81470997, 1943803523, 3814918930, 2489596804, 225274430, 2053790376, 3826175755, 2466906013, 167816743, 2097651377, 4027552580, 2265490386, 503444072, 1762050814, 4150417245, 2154129355, 426522225, 1852507879, 4275313526, 2312317920, 282753626, 1742555852, 4189708143, 2394877945, 397917763, 1622183637, 3604390888, 2714866558, 953729732, 1340076626, 3518719985, 2797360999, 1068828381, 1219638859, 3624741850, 2936675148, 906185462, 1090812512, 3747672003, 2825379669, 829329135, 1181335161, 3412177804, 3160834842, 628085408, 1382605366, 3423369109, 3138078467, 570562233, 1426400815, 3317316542, 2998733608, 733239954, 1555261956, 3268935591, 3050360625, 752459403, 1541320221, 2607071920, 3965973030, 1969922972, 40735498, 2617837225, 3943577151, 1913087877, 83908371, 2512341634, 3803740692, 2075208622, 213261112, 2463272603, 3855990285, 2094854071, 198958881, 2262029012, 4057260610, 1759359992, 534414190, 2176718541, 4139329115, 1873836001, 414664567, 2282248934, 4279200368, 1711684554, 285281116, 2405801727, 4167216745, 1634467795, 376229701, 2685067896, 3608007406, 1308918612, 956543938, 2808555105, 3495958263, 1231636301, 1047427035, 2932959818, 3654703836, 1088359270, 936918000, 2847714899, 3736837829, 1202900863, 817233897, 3183342108, 3401237130, 1404277552, 615818150, 3134207493, 3453421203, 1423857449, 601450431, 3009837614, 3294710456, 1567103746, 711928724, 3020668471, 3272380065, 1510334235, 755167117];
+            this._table = Object.freeze([0, 1996959894, 3993919788, 2567524794, 124634137, 1886057615, 3915621685, 2657392035, 249268274, 2044508324, 3772115230, 2547177864, 162941995, 2125561021, 3887607047, 2428444049, 498536548, 1789927666, 4089016648, 2227061214, 450548861, 1843258603, 4107580753, 2211677639, 325883990, 1684777152, 4251122042, 2321926636, 335633487, 1661365465, 4195302755, 2366115317, 997073096, 1281953886, 3579855332, 2724688242, 1006888145, 1258607687, 3524101629, 2768942443, 901097722, 1119000684, 3686517206, 2898065728, 853044451, 1172266101, 3705015759, 2882616665, 651767980, 1373503546, 3369554304, 3218104598, 565507253, 1454621731, 3485111705, 3099436303, 671266974, 1594198024, 3322730930, 2970347812, 795835527, 1483230225, 3244367275, 3060149565, 1994146192, 31158534, 2563907772, 4023717930, 1907459465, 112637215, 2680153253, 3904427059, 2013776290, 251722036, 2517215374, 3775830040, 2137656763, 141376813, 2439277719, 3865271297, 1802195444, 476864866, 2238001368, 4066508878, 1812370925, 453092731, 2181625025, 4111451223, 1706088902, 314042704, 2344532202, 4240017532, 1658658271, 366619977, 2362670323, 4224994405, 1303535960, 984961486, 2747007092, 3569037538, 1256170817, 1037604311, 2765210733, 3554079995, 1131014506, 879679996, 2909243462, 3663771856, 1141124467, 855842277, 2852801631, 3708648649, 1342533948, 654459306, 3188396048, 3373015174, 1466479909, 544179635, 3110523913, 3462522015, 1591671054, 702138776, 2966460450, 3352799412, 1504918807, 783551873, 3082640443, 3233442989, 3988292384, 2596254646, 62317068, 1957810842, 3939845945, 2647816111, 81470997, 1943803523, 3814918930, 2489596804, 225274430, 2053790376, 3826175755, 2466906013, 167816743, 2097651377, 4027552580, 2265490386, 503444072, 1762050814, 4150417245, 2154129355, 426522225, 1852507879, 4275313526, 2312317920, 282753626, 1742555852, 4189708143, 2394877945, 397917763, 1622183637, 3604390888, 2714866558, 953729732, 1340076626, 3518719985, 2797360999, 1068828381, 1219638859, 3624741850, 2936675148, 906185462, 1090812512, 3747672003, 2825379669, 829329135, 1181335161, 3412177804, 3160834842, 628085408, 1382605366, 3423369109, 3138078467, 570562233, 1426400815, 3317316542, 2998733608, 733239954, 1555261956, 3268935591, 3050360625, 752459403, 1541320221, 2607071920, 3965973030, 1969922972, 40735498, 2617837225, 3943577151, 1913087877, 83908371, 2512341634, 3803740692, 2075208622, 213261112, 2463272603, 3855990285, 2094854071, 198958881, 2262029012, 4057260610, 1759359992, 534414190, 2176718541, 4139329115, 1873836001, 414664567, 2282248934, 4279200368, 1711684554, 285281116, 2405801727, 4167216745, 1634467795, 376229701, 2685067896, 3608007406, 1308918612, 956543938, 2808555105, 3495958263, 1231636301, 1047427035, 2932959818, 3654703836, 1088359270, 936918000, 2847714899, 3736837829, 1202900863, 817233897, 3183342108, 3401237130, 1404277552, 615818150, 3134207493, 3453421203, 1423857449, 601450431, 3009837614, 3294710456, 1567103746, 711928724, 3020668471, 3272380065, 1510334235, 755167117]);
             /** @property {number} _crc Last computed CRC. */
             this._crc = 0;
 
@@ -66,9 +67,8 @@
             /** @property {function} crc Computes CRC. */
             crc: function (string) {
                 var crc = 0 ^ (-1);
-                for(var i=0, l=string.length; i<l; i++) {
-                  crc = (crc >>> 8) ^ this._table[(crc ^ string.charCodeAt(i)) & 0xFF];
-                }
+                for (var i=0, l=string.length; i<l; i++)
+                    crc = (crc >>> 8) ^ this._table[(crc ^ string.charCodeAt(i)) & 0xFF];
                 this._crc = crc ^ (-1);
                 return this;
             },
@@ -81,7 +81,6 @@
                 return this;
             }
         };
-
         checksum = new FastCRC32;
         checksum = checksum.crc.bind(checksum);
     }
@@ -120,7 +119,7 @@
         button_elem: null,
         button_elem_selector: null,
         change_address: false,
-        content_last: null,
+        content_after: null,
         content_parent: null,
         css_patch: null,
         js_patch: null,
@@ -444,7 +443,7 @@
         matched_siteinfo = info.siteinfo;
         var fails = [];
         var ready = matched_siteinfo.some(function (s) {
-            return new AutoPatchWork(s) || (fails.push(s), false);
+            return AutoPatchWork(s) || (fails.push(s), false);
         });
         if (ready === false) sendRequest({ failed_siteinfo: fails });
         dispatch_event('AutoPatchWork.ready');
@@ -478,7 +477,7 @@
             requested_urls = {},
             loaded_crcs = {},
             error_timeout = 0,
-            request = request_xhr;
+            request_fn = request_xhr;
 
         status.service = s2b(siteinfo.SERVICE);
         if(!status.service) {
@@ -609,14 +608,14 @@
                 }
         }
 
-        if (status.use_iframe_req) request = request_iframe;
+        if (status.use_iframe_req) request_fn = request_iframe;
+
+        var insert_before = siteinfo.insertBefore || null,
+            insert_before_selector = siteinfo.insertBeforeSelector || null;
 
         if (not_button_mode) {
             status.first_element = page_elements[0];
             status.last_element = page_elements.pop();
-
-            var insert_before = siteinfo.insertBefore || null,
-                insert_before_selector = siteinfo.insertBeforeSelector || null;
 
             if (insert_before) try {
                 document.querySelector(insert_before);
@@ -628,15 +627,15 @@
 
             if (insert_before || insert_before_selector) {
                 try {
-                    if (insert_before) status.content_last = get_node_xpath(document, insert_before);
-                    else status.content_last = get_node(document, insert_before_selector);
-                    status.content_parent = status.content_last.parentNode;
+                    if (insert_before) status.content_after = get_node_xpath(document, insert_before);
+                    else status.content_after = get_node(document, insert_before_selector);
+                    status.content_parent = status.content_after.parentNode;
                 } catch (bug) {
-                    status.content_last = status.last_element.nextSibling;
+                    status.content_after = status.last_element.nextSibling;
                     status.content_parent = status.last_element.parentNode;
                 }
             } else {
-                status.content_last = status.last_element.nextSibling; // null if there are no elements after
+                status.content_after = status.last_element.nextSibling; // null if there are no elements after
                 status.content_parent = status.last_element.parentNode;
             }
         }
@@ -659,6 +658,7 @@
         document.addEventListener('AutoPatchWork.terminated', terminated, false);
         document.addEventListener('AutoPatchWork.toggle', toggle, false);
         document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+        document.addEventListener('AutoPatchWork.update', update_remaining_height, false);
 
         if (options.BAR_STATUS) {
             var bar = document.createElement('div');
@@ -703,7 +703,7 @@
                 }
             };
 
-            // Font-Awesome Icons: https://github.com/encharm/Font-Awesome-SVG-PNG (License: SIL OFL 1.1 -> MIT)
+            // Font-Awesome SVG icons: https://github.com/encharm/Font-Awesome-SVG-PNG (License: SIL OFL 1.1 -> MIT)
             bar.onmouseover = function () {
                 var onoff = document.createElement('button');
                 onoff.id = 'bar_onoff';
@@ -757,12 +757,13 @@
                 bar.appendChild(retry);
                 bar.appendChild(option);
                 bar.appendChild(manager);
+
                 bar.onmouseover = null;
             };
 
             /* Toggles status bar ready state. */
             var _toggle = function(event) {
-                if (!event.shiftKey) sendRequest({ paused: (status.state ? 'on' : 'off'), id: status.id });
+                if (event.shiftKey) sendRequest({ paused: (status.state ? 'on' : 'off'), id: status.id });
                 dispatch_event('AutoPatchWork.toggle');
             };
 
@@ -792,8 +793,8 @@
         dispatch_event('AutoPatchWork.initialized', status);
         sendRequest({ message: 'AutoPatchWork.initialized', siteinfo: siteinfo });
 
-        if (typeof siteinfo.paused === 'undefined' && options.DEFAULT_STATE) state_on();
-        if (typeof siteinfo.paused !== 'undefined' && !siteinfo.paused) state_on();
+        if ((typeof siteinfo.paused === 'undefined' && options.DEFAULT_STATE) ||
+            (typeof siteinfo.paused !== 'undefined' && !siteinfo.paused)) state_on();
         if (typeof siteinfo.reversed !== 'undefined' && siteinfo.reversed) swap_directions();
 
         if (status.bar) status.bar.removeAttribute('style');
@@ -827,6 +828,7 @@
             document.removeEventListener('AutoPatchWork.terminated', terminated, false);
             document.removeEventListener('AutoPatchWork.toggle', toggle, false);
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+            document.removeEventListener('AutoPatchWork.update', update_remaining_height, false);
 
             delete window.AutoPatchWorked.init;
             delete window.AutoPatchWorked.siteinfo;
@@ -842,7 +844,7 @@
             status.ajax.load_count = 0;
             status.remaining_height = null;
             status.last_element = null;
-            status.content_last = null;
+            status.content_after = null;
             status.content_parent = null;
 
             new AutoPatchWork(event.detail.siteinfo || {
@@ -875,9 +877,8 @@
         /**
          * Toggles autopager state. */
         function toggle() {
-            if (status.state) {
-                state_off();
-            } else {
+            if (status.state) state_off();
+            else {
                 state_on();
                 verify_scroll();
             }
@@ -929,6 +930,7 @@
             document.removeEventListener('AutoPatchWork.terminated', terminated, false);
             document.removeEventListener('AutoPatchWork.toggle', toggle, false);
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
+            document.removeEventListener('AutoPatchWork.update', update_remaining_height, false);
 
             if (status.bar) status.bar.className = 'autopager_terminated';
 
@@ -1100,7 +1102,6 @@
             if (status.bar) status.bar.className = 'autopager_off';
         }
 
-
         /**
          * Event handler for browser location rewriting on each new page.
          * @param {string} to_url New url to set.
@@ -1126,38 +1127,10 @@
         }
 
         /**
-         * Requests next page via XMLHttpRequest method.
-         * @param {Event} event Event object.
+         * Downloads next page via XMLHttpRequest method.
+         * @param {string} url Download location.
          * */
-        function request_xhr(event) {
-            status.loading = true;
-             // in (service === true) we just use request event as corresponding scroll trigger for an external script
-            if (status.service) return;
-
-            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
-            //log('requesting ' + url);
-            // in norequest == true mode we just return empty html on each reuest, external script should fill that
-            if (event.detail && event.detail.norequest) {
-                return dispatch_event('AutoPatchWork.load', {
-                    htmlDoc: create_html('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>', url),
-                    url: url || null
-                });
-            }
-
-            if (!url || url === '') {
-                return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested'  });
-            }
-
-            // if we ever do retries should do it inside the request function
-            // otherwise can be sure that requested = loaded (or failed)
-            if (!requested_urls[url]) {
-                requested_urls[url] = 1;
-            } else if (requested_urls[url] < status.ajax.retry_max) {
-                requested_urls[url]++;
-            } else {
-                return dispatch_event('AutoPatchWork.terminated', { message: 'next page ' + url + ' already requested' });
-            }
-
+        function request_xhr(url) {
             var req = 'GET',
                 x = new XMLHttpRequest();
             x.onload = function () {
@@ -1193,42 +1166,19 @@
         }
 
         /**
-         * Requests next page via IFRAME-load method.
-         * @param {Event} event Event object.
+         * Downloads next page via IFrame-load method.
+         * @param {string} url Download location.
          * */
-        function request_iframe(event) {
-            status.loading = true;
-            if (status.service) return;
-
-            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
-
-            if (event.detail && event.detail.norequest) {
-                return dispatch_event('AutoPatchWork.load', {
-                    htmlDoc: create_html('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>', url),
-                    url: url || null
-                });
-            }
-
-            //log('requesting ' + url);
-            if (!url || url === '') {
-                return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
-            }
-
-            if (!requested_urls[url]) {
-                requested_urls[url] = 1;
-            } else { // No retries in this mode for now
-                return dispatch_event('AutoPatchWork.terminated', { message: 'next page already requested' });
-            }
-
+        function request_iframe(url) {
             var iframe = document.createElement('iframe');
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'autopatchwork-request-iframe';
             iframe.sandbox = 'allow-same-origin';
-            /* Removes intermediate IFRAME from the current page. */
-            function remove_iframe() {
+            /* Removes intermediate IFrame from the current page. */
+            var remove_iframe = function () {
                 var i = document.getElementById('autopatchwork-request-iframe');
                 if (i && i.parentNode) i.parentNode.removeChild(i);
-            }
+            };
             iframe.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed' });
                 remove_iframe();
@@ -1247,17 +1197,49 @@
         }
 
         /**
+         * Requests next page.
+         * @param {Event} event Event object.
+         * */
+        function request(event) {
+            status.loading = true;
+             // in (service === true) we just use request event as corresponding scroll trigger for an external script
+            if (status.service) return;
+
+            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
+            //log('requesting ' + url);
+            // in norequest == true mode we just return empty html on each reuest, external script should fill that
+            if (event.detail && event.detail.norequest) {
+                return dispatch_event('AutoPatchWork.load', {
+                    htmlDoc: create_html('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>', url),
+                    url: url || null
+                });
+            }
+
+            if (!url || url === '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
+
+            // if we ever do retries should do it inside the request function
+            // otherwise can be sure that requested = loaded (or failed)
+            if (!requested_urls[url]) requested_urls[url] = 1;
+            else if (requested_urls[url] < status.ajax.retry_max) requested_urls[url]++;
+            else return dispatch_event('AutoPatchWork.terminated', { message: 'next page ' + url + ' already requested' });
+
+            request_fn(url);
+        }
+
+        /**
          * Returns link node reference.
          * @param {Element} node The input node.
          * */
         function get_href(node) {
             if (!node) return null;
             if (typeof node === 'string') return node;
+            /**/
             if (typeof node.getAttribute === 'function') {
                 if (node.getAttribute('href')) return node.getAttribute('href');
                 else if (node.getAttribute('action')) return node.getAttribute('action');
                 else if (node.getAttribute('value')) return node.getAttribute('value');
             }
+            /**/
             return node.href || node.action || node.value || null;
         }
 
@@ -1317,34 +1299,40 @@
             });
         }
 
-        /* Calculates height delta between the bottom of content block and the page end. */
-        function calc_remaining_height() {
-            var rect = null, bottom = null, _point = status.content_last;
-            while (_point) {
-                if (typeof _point.getBoundingClientRect === 'function') {
-                    rect = _point.getBoundingClientRect();
+        /**
+         * Calculates height delta between the bottom of content block and the page end.
+         * @param {Element} _target First element after content block.
+         * @return {number} Height delta to bottom of the page.
+         * */
+        function calc_remaining_height(_target) {
+            var rect = null, bottom = null;
+            while (_target) {
+                if (typeof _target.getBoundingClientRect === 'function') {
+                    rect = _target.getBoundingClientRect();
                     if (rect && !(rect.top === 0 && rect.right === 0 && rect.bottom === 0 && rect.left === 0)) break;
                     else rect = null;
                 }
-                if (_point.nextSibling) _point = _point.nextSibling;
+                if (_target.nextSibling) _target = _target.nextSibling;
                 else break;
             }
             if (rect) {
-                bottom = rect.top + window.scrollY;
+                bottom = rect.top;
             } else if (status.last_element && typeof status.last_element.getBoundingClientRect === 'function') {
                 rect = status.last_element.getBoundingClientRect();
-                if (rect) bottom = rect.top + rect.height + window.scrollY;
+                if (rect) bottom = rect.bottom;
             } else if (status.content_parent && typeof status.content_parent.getBoundingClientRect === 'function') {
                 rect = status.content_parent.getBoundingClientRect();
-                if (rect) bottom = rect.top + rect.height + window.scrollY;
+                if (rect) bottom = rect.bottom;
             }
             if (!bottom) bottom = Math.round(rootNode.scrollHeight * 0.8);
+            else bottom += window.scrollY;
             return rootNode.scrollHeight - bottom + options.BASE_REMAINING_HEIGHT;
         }
 
         /* Updates height delta between the bottom of content block and the page end. */
         function update_remaining_height() {
-            status.remaining_height = calc_remaining_height();
+            status.remaining_height = calc_remaining_height(status.content_after);
+            //log(status.remaining_height);
         }
 
         /**
@@ -1405,18 +1393,12 @@
          * */
         function rel_to_abs(url){
             var start = url.charAt(0);
-            if(/^\w+:\/\//.test(url) || start === '#')
-                return url;
-            else if(url.substring(0,2) === '//') // protocol relative urls
-                return location.protocol + url;
-            else if(start === '/') // domain relative urls
-                return (location.protocol + '//' + location.host + url).replace(/([^:])\/+/g,'$1/');
-            else if(start === '?') // parameters
-                return location.protocol + '//' + location.host + location.pathname + url;
-            else if(/^\s*$/.test(url))
-                return '';
-            else
-                url = '/' + url;
+            if(/^\w+:\/\//.test(url) || start === '#') return url;
+            else if(url.substring(0,2) === '//') return location.protocol + url; // protocol relative urls
+            else if(start === '/') return (location.protocol + '//' + location.host + url).replace(/([^:])\/+/g,'$1/'); // domain relative urls
+            else if(start === '?') return location.protocol + '//' + location.host + location.pathname + url; // parameters
+            else if(/^\s*$/.test(url)) return '';
+            else url = '/' + url;
 
             url = base_url + url;
 
@@ -1561,14 +1543,16 @@
          * */
         function append(event) {
             if (!status.loading || !event.detail.nodes)
-                return dispatch_event('AutoPatchWork.error', { message: 'page content is not specified' });
+                return dispatch_event('AutoPatchWork.error', { message: 'page content not retreived' });
+            else if (!event.detail.nodes.length) {
+                return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
+            }
 
             var inserted_node,
-                content_last = status.content_last,
+                content_after = status.content_after,
                 content_parent = status.content_parent,
-                change_location = status.change_address;
-
-            var nodes = event.detail.nodes || [],
+                change_location = status.change_address,
+                nodes = event.detail.nodes,
                 title = event.detail.title || '',
                 loaded_url = event.detail.url || null;
 
@@ -1580,18 +1564,17 @@
 
                 if (!status.separator_disabled) {
                     // Checking where to add divider. In case of a table/list we'll add inside it, otherwise after.
-                    var root, node;
-                    if (/^tbody$/i.test(content_parent.localName)) {
-                        var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', content_parent, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                        var columns = 0;
-                        for (var col = 0, l = colNodes.snapshotLength; col < l; col++) {
+                    var root, node, local = content_parent.localName;
+                    if (/^tbody$/i.test(local)) {
+                        var colNodes = document.evaluate('child::tr[1]/child::*[self::td or self::th]', content_parent, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null),
+                            columns = 0;
+                        for (var col = 0, l = colNodes.snapshotLength; col < l; col++)
                             columns += (parseInt(colNodes.snapshotItem(col).getAttribute('colspan'), 10) || 1);
-                        }
                         node = document.createElement('td');
                         root = document.createElement('tr');
                         node.setAttribute('colspan', columns);
                         root.appendChild(node);
-                    } else if (/^(?:ol|ul)$/i.test(content_parent.localName)) {
+                    } else if (/^(?:ol|ul)$/i.test(local)) {
                         root = node = document.createElement('li');
                     } else {
                         root = node = document.createElement('div');
@@ -1599,28 +1582,18 @@
 
                     // Adding the page separator.
                     node.className = 'autopagerize_page_separator_blocks';
-                    if (change_location) {
-                        node.setAttribute('data-apw-offview', 'true');
-                    }
-                    //node.setAttribute('data-apw-page', document.apwpagenumber);
+                    if (change_location) node.setAttribute('data-apw-offview', 'true');
                     var h4 = node.appendChild(document.createElement('h4'));
                     h4.className = 'autopagerize_page_separator';
                     var span = h4.appendChild(document.createElement('span'));
                     span.className = 'autopagerize_page_info';
                     var a = span.appendChild(document.createElement('a'));
                     a.className = 'autopagerize_link';
-                    /* jshint ignore:start */
-                    a.href = loaded_url && (loaded_url.indexOf('http') === 0 || ~loaded_url.indexOf('/') || ~loaded_url.indexOf('.'))  ? loaded_url : 'javascript:void(0)';
-                    /* jshint ignore:end */
+                    if (loaded_url && (loaded_url.indexOf('http') === 0 || ~loaded_url.indexOf('/') || ~loaded_url.indexOf('.'))) a.href = loaded_url;
                     a.setAttribute('number', document.apwpagenumber);
                     if (typeof title === 'string' && title.length) a.setAttribute('title', title);
 
                     fragment.appendChild(root);
-                }
-
-                if (!nodes.length) {
-                    fragment = null;
-                    return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
                 }
 
                 var fix_links = options.FORCE_ABSOLUTE_HREFS || options.FORCE_TARGET_WINDOW,
@@ -1645,13 +1618,13 @@
                     }
                 }
 
-                var last_prev = (content_last && content_last.previousSibling) ? content_last.previousSibling : content_parent.lastChild;
+                var last_prev = (content_after && content_after.previousSibling) ? content_after.previousSibling : content_parent.lastChild;
 
-                content_parent.insertBefore(document.importNode(fragment, true), content_last);
+                content_parent.insertBefore(document.importNode(fragment, true), content_after);
 
                 if (status.dom_modification_events)
                     for (var n = last_prev.nextElementSibling; n; n = n.nextElementSibling ) {
-                        if (n === content_last) break;
+                        if (n === content_after) break;
                         dispatch_mutation_event({
                             targetNode: n,
                             eventName: 'AutoPatchWork.DOMNodeInserted',

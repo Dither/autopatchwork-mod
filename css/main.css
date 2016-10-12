@@ -27,6 +27,7 @@
     box-decoration-break: slice !important;
     display: block !important;
     font-size: 18px !important;
+    text-align: center !important;
     text-overflow: clip !important;
     width: 100%;
     overflow: visible !important;
