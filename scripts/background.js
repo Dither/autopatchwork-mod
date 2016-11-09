@@ -15,10 +15,10 @@ var debug = false,
         '74668':{'disabled':true,'length':1}
     }, /*{}; /* Disabling overzealous formats. Re-enable them manually on your own risk. */
     MICROFORMATs = [],
+    JSON_SITEINFO_DB_MIN = 'http://wedata.net/databases/AutoPagerize/items.json', // 'http://os0x.heteml.jp/json/wedataAutoPagerizeSITEINFO.json',
+    JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json', //'http://os0x.heteml.jp/json/wedataAutoPagerize.json',
     ENABLE_STYLISH_FIELD = false,
-    ENABLE_MICROFORMATS = false,
-    JSON_SITEINFO_DB_MIN = 'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json',
-    JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
+    ENABLE_MICROFORMATS = false;
 
 if (ENABLE_MICROFORMATS) MICROFORMATs = [{
     MICROFORMAT: true,
@@ -183,32 +183,35 @@ function applyCustomFields() {
 }
 
 /* jshint ignore:start */
-function checkExists(url) {
+function checkExists(url, callback) {
     var http = new XMLHttpRequest();
-    http.open('HEAD', url, false);
+    http.onload = function() {
+        callback(http.status < 400);
+    };
+    http.onerror = function() {
+        callback(false);
+    };
+    http.open('HEAD', url, true);
     http.send();
-    return http.status !== 404;
 }
 
 function resetDBLocation (full) {
     if (typeof full === 'undefined' || (typeof full === 'boolean' && !full)) {
         storagebase.removeItem('db_location');
-        JSON_SITEINFO_DB_MIN =  'http://ss-o.net/json/wedataAutoPagerizeSITEINFO.json';
+        JSON_SITEINFO_DB_MIN =  'http://wedata.net/databases/AutoPagerize/items.json';
     }
     if (typeof full === 'undefined' || (typeof full === 'boolean' && full)) {
         storagebase.removeItem('db_full_location');
-        JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json';
+        JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json';
     }
 }
 
 function updateMiniDatabaseURL(url) {
-    storagebase.db_location = url;
-    JSON_SITEINFO_DB_MIN = url;
+    storagebase.db_location = JSON_SITEINFO_DB_MIN = url;
 }
 
 function updateFullDatabaseURL(url) {
-    storagebase.db_full_location = url;
-    JSON_SITEINFO_DB = url;
+    storagebase.db_full_location = JSON_SITEINFO_DB = url;
 }
 
 /* jshint ignore:end */
@@ -233,7 +236,7 @@ function initDatabase() {
 function createDatabase(info) {
     var tmp_log = 'There were following errors in SITEINFO DB:\n',
         allowed_fields = ['nextLink', 'pageElement', 'url', 'insertBefore'],
-        is_default_db = !!~JSON_SITEINFO_DB_MIN.indexOf('ss-o.net');
+        is_sso_db = !!~JSON_SITEINFO_DB_MIN.indexOf('os0x.heteml.jp');
 
     siteinfo = [];
     if (ENABLE_STYLISH_FIELD) allowed_fields.push('cssPatch');
@@ -252,7 +255,7 @@ function createDatabase(info) {
         }
         allowed_fields.forEach(function(k) {
             if(!d[k]) return;
-            if (is_default_db) d[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
+            if (is_sso_db) d[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
             r[k] = d[k];
         });
         r['wedata.net.id'] = id;
@@ -474,14 +477,14 @@ switch(browser_type) {
 }
 
 function handleMessage(request, sender, sendResponse) {
-    if(request.message === 'AutoPatchWork.initialized') {
+    if (request.message === 'AutoPatchWork.initialized') {
         var id = request.siteinfo['wedata.net.id'] || 'microformats';
         site_stats[id] = ++site_stats[id] || 1;
         storagebase.site_stats = JSON.stringify(site_stats);
         return;
     }
 
-    if(request.failed_siteinfo) {
+    if (request.failed_siteinfo) {
         request.failed_siteinfo.forEach(function(s) {
             var id = s['wedata.net.id'];
             if(!id) return;
@@ -499,47 +502,47 @@ function handleMessage(request, sender, sendResponse) {
             }
     };
 
-    if(request.paused) {
+    if (request.paused) {
         if (typeof request.id === 'number' && request.id !== -1) {
             set_mode('paused', request.id, s2b(request.paused))
         }
         return;
     }
 
-    if(request.reversed) {
+    if (request.reversed) {
         if (typeof request.id === 'number' && request.id !== -1) {
             set_mode('reversed', request.id, s2b(request.reversed))
         }
         return;
     }
 
-    if(request.manage) {
+    if (request.manage) {
         if (request.hash) openOrFocusTab('siteinfo_manager.html#siteinfo_search_input='+request.hash);
         else openOrFocusTab('siteinfo_manager.html');
         return;
     }
 
-    if(request.options) {
+    if (request.options) {
         openOrFocusTab('options.html');
         return;
     }
 
-    if(!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_in_frames))
+    if (!AutoPatchWorkBG.state || (request.isFrame && AutoPatchWorkBG.config.disable_in_frames))
         return;
 
     var infos = [], url = request.url;
 
-    if(!url || AutoPatchWorkBG.blacklist_check(url) || url.index)
+    if (!url || AutoPatchWorkBG.blacklist_check(url) || url.index)
         return;
 
-    for(var i = 0, len = siteinfo.length, s; i < len; i++) {
+    for (var i = 0, len = siteinfo.length, s; i < len; i++) {
         s = siteinfo[i];
         try {
-            if(!s.disabled && (new RegExp(siteinfo[i].url)).test(url)) {
+            if (!s.disabled && (new RegExp(s.url)).test(url)) {
                 delete s.length;
                 infos.push(s);
             }
-        } catch (bug) { log((bug.message || bug) + ' ' + siteinfo[i].url); }
+        } catch (bug) { log((bug.message || bug) + ' ' + s.url); }
     }
 
     sendResponse({ siteinfo: infos, config: AutoPatchWorkBG.config, css: AutoPatchWorkBG.css });

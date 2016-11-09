@@ -21,7 +21,7 @@ if (!Object.prototype.keys) {
 }
 
 var RECORDS_PER_PAGE = 100,
-    JSON_SITEINFO_DB = 'http://ss-o.net/json/wedataAutoPagerize.json',
+    JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json',
     pageIndex = 0;
 
 (function siteinfo_manager(bgProcess) {

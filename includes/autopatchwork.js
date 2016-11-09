@@ -519,7 +519,7 @@
             status.remove_elem_selector = null;
         }
 
-        if (!status.page_elem && !status.page_elem_selector && !status.button_elem && !status.button_elem_selector && status.service) return true;
+        if (status.service && !status.page_elem && !status.page_elem_selector && !status.button_elem && !status.button_elem_selector) return true;
 
         status.next_link = siteinfo.nextLink || null;
         status.next_link_selector = siteinfo.nextLinkSelector || null;
@@ -891,6 +891,8 @@
             //remove_css('main'); /* Not removing 'user' CSS as it can affect separators and paginated pages styling.
                                   /* Commented out because this causes visual twitch in Opera 12 on remove.*/
 
+            remove_iframe();
+
             if (status.change_address) {
                 var title = page_titles.pop(),
                     url = downloaded_pages.pop();
@@ -1165,20 +1167,21 @@
             }
         }
 
+        function remove_iframe() {
+            var i = document.getElementById('autopatchwork-request-iframe');
+            if (i && i.parentNode) i.parentNode.removeChild(i);
+        };
+
         /**
          * Downloads next page via IFrame-load method.
          * @param {string} url Download location.
          * */
         function request_iframe(url) {
-            var iframe = document.createElement('iframe');
+            var iframe = document.getElementById('autopatchwork-request-iframe') || document.createElement('iframe');
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'autopatchwork-request-iframe';
-            iframe.sandbox = 'allow-same-origin';
+            iframe.sandbox = 'allow-same-origin allow-scripts';
             /* Removes intermediate IFrame from the current page. */
-            var remove_iframe = function () {
-                var i = document.getElementById('autopatchwork-request-iframe');
-                if (i && i.parentNode) i.parentNode.removeChild(i);
-            };
             iframe.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed' });
                 remove_iframe();
@@ -1188,7 +1191,7 @@
                 if (!doc) return iframe.onerror();
                 if (dump_request) console.log(doc.innerHTML);
                 dispatch_event('AutoPatchWork.load', { htmlDoc: doc, url: url });
-                remove_iframe();
+                //remove_iframe();
             };
             status.ajax.start_time = Date.now();
             status.ajax.last_url = url;
@@ -1215,7 +1218,7 @@
                 });
             }
 
-            if (!url || url === '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
+            if (!url || url == '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
 
             // if we ever do retries should do it inside the request function
             // otherwise can be sure that requested = loaded (or failed)
@@ -1340,8 +1343,8 @@
          * @param {string} text Text to run script from.
          * */
         function run_script(text) {
-            if (typeof text !== 'string' || text.length < 2) return;
-            text = 'if (!AutoPatchWorked.js_patched) { AutoPatchWorked.js_patched = true; ' + text + '}';
+            if (typeof text !== 'string' || text.length < 2 || !window.AutoPatchWorked) return;
+            text = 'if (window.AutoPatchWorked && !window.AutoPatchWorked.js_patched) { window.AutoPatchWorked.js_patched = true; ' + text + '}';
             try {
                 var script = document.createElement('script');
                 script.textContent = text;
@@ -1352,7 +1355,7 @@
                     if (script.parentNode) script.parentNode.removeChild(script);
                     else script.text = '';
                 }
-                if (!AutoPatchWorked.js_patched) window.eval(text); // Opera 36+
+                if (!window.AutoPatchWorked.js_patched) Function.apply(window.eval, [text])(); // Opera 36+
             } catch (bug) {
                 log(bug.message);
             }

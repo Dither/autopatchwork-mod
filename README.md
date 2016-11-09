@@ -4,6 +4,7 @@ AutoPatchWork Mod
 This addon automatically loads next pages in multi-paged articles and appends  
 them to the current when scrolling to the end of it.
 
+AutoPatchWork Mod is derivative of [AutoPatchWork](https://github.com/os0x/AutoPatchWork) which was inspired by [AutoPagerize](http://autopagerize.net).
 
 Screenshots
 -------
@@ -18,7 +19,5 @@ Autopager in action:
 
 License
 -------
-
-The addon is a fork of [AutoPatchWork](https://github.com/os0x/AutoPatchWork) which was derived from [AutoPagerize](http://autopagerize.net).
 
 The source code is licensed under [MIT License](https://opensource.org/licenses/MIT).

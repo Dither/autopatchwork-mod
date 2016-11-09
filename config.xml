@@ -4,9 +4,9 @@
   <description xml:lang="en">Extension for auto-appending following paginated pages to the current on scroll.</description>
   <description xml:lang="ru">Автоматически подгружает следующие странички при прокрутке.</description>
   <description xml:lang="ja">ページのしたの方にスクロールした時に、現在表示しているページに次のページを挿入します。</description>
-  <author href="https://dithersky.wordpress.com">Dither, os0x (original version)</author>
+  <author href="https://dithersky.wordpress.com">DitherSky, os0x (original version)</author>
   <icon src="icons/icon-64.png" />
-  <access origin="http://ss-o.net" subdomains="true" />
+  <access origin="http://os0x.heteml.jp" subdomains="true" />
   <access origin="http://wedata.net" subdomains="true" />
   <access origin="https://githubusercontent.com" subdomains="true" />
   <preference name="AutoPatchWorkCSS" value="" />
