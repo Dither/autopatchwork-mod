@@ -18,7 +18,7 @@
  *  AutoPatchWork.request - sending request for the next page;
  *  AutoPatchWork.load - got new page data and ready to pre-process it for content and title;
  *  AutoPatchWork.append - appending next page content to the current page;
- *  AutoPatchWork.DOMNodeInserted - firing custom DOMNodeInserted event on appending actual content nodes;
+ *  [deprecated] AutoPatchWork.DOMNodeInserted - firing custom DOMNodeInserted event on appending actual content nodes;
  *  AutoPatchWork.pageloaded - page loaded successfully;
  *  AutoPatchWork.error - page failed to load, (possibly) recoverable error;
  *  AutoPatchWork.terminated - stopping extension, unrecoverable error or end-condition.
@@ -47,7 +47,7 @@
     if (window.crypto && window.crypto.subtle && window.TextEncoder) {
         text_enc = new window.TextEncoder('utf-8');
         checksum = function (str) {
-            return window.crypto.subtle.digest('MD5', text_enc.encode(str));
+            return window.crypto.subtle.digest('SHA-1', text_enc.encode(str));
         };
     } else {
         /**
@@ -753,7 +753,8 @@
 
                 bar.appendChild(onoff);
                 bar.appendChild(img_refresh);
-                bar.appendChild(reverse);
+                if ((status.next_link || status.next_link_selector) && (status.prev_link || status.prev_link_selector))
+                    bar.appendChild(reverse);
                 bar.appendChild(retry);
                 bar.appendChild(option);
                 bar.appendChild(manager);

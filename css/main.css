@@ -69,13 +69,22 @@
     text-align: right;
     width: 47px !important;
     z-index: 10000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#autopatchwork_bar svg {
+    width: 15px !important;
+    height: 15px !important;
 }
 
 #autopatchwork_bar:hover {
     background-color: rgba(222,222,222,.75) !important;
     border-top-width: 0 !important;
     color: rgba(0,0,0,1) !important;
-    height: 165px !important;
+    height: auto !important;
+    min-height: 120px !important;
+    padding: 10px 0 !important;
 }
 
 #autopatchwork_loader {
@@ -148,7 +157,6 @@
 #autopatchwork_bar button {
     display: none;
     position: relative !important;
-    top: 8px;
 }
 
 #autopatchwork_bar:hover button {
