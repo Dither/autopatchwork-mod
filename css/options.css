@@ -16,9 +16,14 @@ doesnotexist:-o-prefocus, body {
   background: rgba(255,255,255,0.5) linear-gradient(rgba(255,255,255,0.5),rgba(212,212,212,0.5)) repeat-x;
 }
 
-/*_:-moz-tree-row(hover), html {
+_:-moz-tree-row(hover), html {
+    overflow: hidden;
 }
-*/
+
+_:-moz-tree-row(hover), body {
+    box-shadow: none !important;
+}
+
 
 html * {
     font-size: 100%;

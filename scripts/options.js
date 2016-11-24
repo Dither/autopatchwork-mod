@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded',function(){
             document.getElementById('db_location').value = bgProcess.JSON_SITEINFO_DB_MIN;
             update_wedata_location.disabled = false;
         } else if (loc !== bgProcess.JSON_SITEINFO_DB_MIN && /^https?:\/\/.+\.json.*/i.test(loc)) {
-            bgProcess.checkExists(loc, function (exists) { 
+            bgProcess.checkExists(loc, function (exists) {
                 if (exists) bgProcess.updateMiniDatabaseURL(loc);
                 update_wedata_location.disabled = false;
             });
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded',function(){
             document.getElementById('full_db_location').value = bgProcess.JSON_SITEINFO_DB;
             update_wedata_full_location.disabled = false;
         } else if (loc !== bgProcess.JSON_SITEINFO_DB && /^https?:\/\/.+\.json.*/i.test(loc)) {
-            bgProcess.checkExists(loc, function (exists) { 
+            bgProcess.checkExists(loc, function (exists) {
                 if (exists) bgProcess.updateFullDatabaseURL(loc);
                 update_wedata_full_location.disabled = false;
             });
@@ -272,6 +272,7 @@ document.addEventListener('DOMContentLoaded',function(){
         for (var item in backup)
             if (backup.hasOwnProperty(item))
                 storagebase.setItem(item, backup[item]);
+        setTimeout(bgProcess.initDatabase, 500);
     }, false);
     var reset_backup = document.getElementById('reset_backup');
     reset_backup.addEventListener('click', function() {

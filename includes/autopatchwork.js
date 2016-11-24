@@ -11,7 +11,7 @@
 /*
  * Normal AutoPatchWork event flow:
  *  AutoPatchWork.init (internal) - we are on some site, requesting SITEINFO for it;
- *  AutoPatchWork.siteinfo - received SITEINFO for the current site;
+ *  AutoPatchWork.siteinfo (service) - receive additional SITEINFO for the current site;
  *  AutoPatchWork.initialized - extension initialized;
  *  AutoPatchWork.ready - extension ready;
  *  scroll (internal) - got some page scrolling;
@@ -576,8 +576,6 @@
             next = not_button_mode ? get_next_link(document) : null,
             page_elements = not_button_mode ? get_main_content(document) : null;
 
-        if (not_button_mode) parse_links(next);
-
         if (!status.service) {
             if (status.button_elem) {
                 if (!get_node_xpath(document, status.button_elem)) { log('next page button ' + status.button_elem + ' not found'); return false; }
@@ -598,7 +596,7 @@
 
             /* External event handlers can be used to fix individual sites instead of doing it here. */
 
-            if (next && status.use_iframe_req === null)
+            if (next && status.use_iframe_req === null) {
                 if ((next.host && next.host.length && next.host !== location.host) ||
                     (next.protocol && next.protocol.length && !~next.protocol.indexOf('javascript') &&
                      next.protocol !== location.protocol)
@@ -606,7 +604,10 @@
                     log('next page has different base address: switching to IFrame requests...');
                     status.use_iframe_req = true;
                 }
+            }
         }
+
+        next = rel_to_abs(get_href(next), !options.FORCE_ABSOLUTE_HREFS);
 
         if (status.use_iframe_req) request_fn = request_iframe;
 
@@ -1209,7 +1210,7 @@
              // in (service === true) we just use request event as corresponding scroll trigger for an external script
             if (status.service) return;
 
-            var url = state.nextURL = get_href(event.detail && event.detail.link ? event.detail.link : next);
+            var url = state.nextURL = event.detail && event.detail.link ? event.detail.link : next;
             //log('requesting ' + url);
             // in norequest == true mode we just return empty html on each reuest, external script should fill that
             if (event.detail && event.detail.norequest) {
@@ -1395,7 +1396,10 @@
          * Checks if URL is relative and fixes it.
          * @param {string} url Location.
          * */
-        function rel_to_abs(url){
+        function rel_to_abs(url, ret) {
+            if (ret) return url;
+            if (!url) return '';
+
             var start = url.charAt(0);
             if(/^\w+:\/\//.test(url) || start === '#') return url;
             else if(url.substring(0,2) === '//') return location.protocol + url; // protocol relative urls
@@ -1496,8 +1500,7 @@
             }
 
             if (!status.service) {
-                next = get_next_link(event.detail.htmlDoc);
-                parse_links(next);
+                next = rel_to_abs(get_href(get_next_link(event.detail.htmlDoc)), !options.FORCE_ABSOLUTE_HREFS);
                 remove_nodes(event.detail.htmlDoc);
                 if (!status.scripts_allowed) { // filter scripts
                    for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
@@ -1653,7 +1656,10 @@
                 title = null;
                 status.ajax.load_count++;
 
-                setTimeout(function(){ dispatch_event('AutoPatchWork.pageloaded'); }, get_load_delay());
+                setTimeout(function(){
+                    dispatch_event('AutoPatchWork.pageloaded', {'content': status.page_elem || status.page_elem_selector}); },
+                    get_load_delay()
+                );
             }
 
             // We can't check for repeating nodes in the same document because they can have some function

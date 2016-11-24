@@ -1,10 +1,10 @@
  <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" version="1.9.10" id="https://dithersky.wordpress.com/2012/01/28/mod-autopatchwork/">
+<widget xmlns="http://www.w3.org/ns/widgets" version="1.10.0" id="https://dithersky.wordpress.com/2012/01/28/mod-autopatchwork/">
   <name>AutoPatchWork Mod</name>
   <description xml:lang="en">Extension for auto-appending following paginated pages to the current on scroll.</description>
   <description xml:lang="ru">Автоматически подгружает следующие странички при прокрутке.</description>
   <description xml:lang="ja">ページのしたの方にスクロールした時に、現在表示しているページに次のページを挿入します。</description>
-  <author href="https://dithersky.wordpress.com">DitherSky, os0x (original version)</author>
+  <author href="https://dithersky.wordpress.com">DitherSky</author>
   <icon src="icons/icon-64.png" />
   <access origin="http://os0x.heteml.jp" subdomains="true" />
   <access origin="http://wedata.net" subdomains="true" />

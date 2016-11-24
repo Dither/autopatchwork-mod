@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AutoPatchWork Mod",
-  "version": "1.9.10",
+  "version": "1.10.0",
   "description": "Addon for auto-appending following paginated pages to the current on scroll.",
   "developer": {
     "name": "DitherSky"
