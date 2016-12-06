@@ -476,7 +476,7 @@
             page_titles = [],
             requested_urls = {},
             loaded_crcs = {},
-            error_timeout = 0,
+            error_timeout = null,
             request_fn = request_xhr;
 
         status.service = s2b(siteinfo.SERVICE);
@@ -849,7 +849,7 @@
             status.content_after = null;
             status.content_parent = null;
 
-            new AutoPatchWork(event.detail.siteinfo || {
+            AutoPatchWork(event.detail.siteinfo || {
                 nextLink: (status.next_link || status.next_link_selector || status.next_link_mask),
                 prevLink: (status.prev_link || status.prev_link_selector || status.prev_link_mask),
                 pageElement: (status.page_elem || status.page_elem_selector),
@@ -902,6 +902,8 @@
                 if (title && title !== '') document.title = title;
                 if (url && url !== '') change_address(url);
 
+                requested_urls = {};
+                loaded_crcs = {};
                 downloaded_pages = [];
                 page_titles = [];
 
@@ -964,6 +966,10 @@
             status.next_link = p;
             status.prev_link_selector = status.next_link_selector;
             status.next_link_selector = ps;
+            requested_urls = {};
+            loaded_crcs = {};
+            downloaded_pages = [];
+            page_titles = [];
             sendRequest({ reversed: (status.reversed ? 'on' : 'off'), id: status.id });
         }
 
@@ -975,7 +981,7 @@
             if (!error_timeout) return;
             clearTimeout(error_timeout);
             error_timeout = null;
-            requested_urls[status.ajax.last_url]--;
+            requested_urls[status.ajax.last_url] = 0;
             state_loading();
             dispatch_event('AutoPatchWork.request', {link: next});
         }
@@ -989,7 +995,7 @@
             if (status.bar) status.bar.className = 'autopager_error';
             error_timeout = setTimeout(function(){
                 terminated({'detail': { message: ((event.detail && event.detail.message) ? event.detail.message : ''), type: 'error' }});
-            }, 10000);
+            }, 30000);
         }
 
         /**
@@ -1148,7 +1154,7 @@
             };
             x.onerror = function () {
                 if (requested_urls[url] >= status.ajax.retry_max || (x && x.status < 500)) {
-                    return dispatch_event('AutoPatchWork.terminated', { message: 'request failed on ' + url + ' (' + x.statusText + ')' });
+                    return dispatch_event('AutoPatchWork.error', { message: 'request failed on ' + url + ' (' + x.statusText + ')' });
                 } else if (requested_urls[url] < status.ajax.retry_max) {
                     return setTimeout(function () { request({detail:{link: url}}); }, get_retry_delay(requested_urls[url]));
                 }
@@ -1222,17 +1228,15 @@
 
             if (!url || url == '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
 
-            // if we ever do retries should do it inside the request function
-            // otherwise can be sure that requested = loaded (or failed)
             if (!requested_urls[url]) requested_urls[url] = 1;
             else if (requested_urls[url] < status.ajax.retry_max) requested_urls[url]++;
-            else return dispatch_event('AutoPatchWork.terminated', { message: 'next page ' + url + ' already requested' });
+            else return dispatch_event('AutoPatchWork.error', { message: 'next page ' + url + ' already requested' });
 
             request_fn(url);
         }
 
         /**
-         * Returns link node reference.
+         * Returns link node's reference URL.
          * @param {Element} node The input node.
          * */
         function get_href(node) {
@@ -1251,7 +1255,7 @@
 
         /**
          * Evaluates expression to find node containing next page link.
-         * @param {Element} doc Node to perform search on.
+         * @param {Element|HTMLDocument} doc Node to perform search on.
          * @return {Element} Matched node.
          * */
         function get_next_link(doc) {
@@ -1270,7 +1274,7 @@
 
         /**
          * Evaluates expression to find nodes containing main page content.
-         * @param {Element} doc Node to perform search on.
+         * @param {Element|HTMLDocument} doc Node to perform search on.
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
@@ -1421,8 +1425,8 @@
             return url;
         }
 
-        // - Replace lazyloading src's to normal. Although better solution would be using per-site js patches.
-        // - Make links to images absolute.
+        // - Replaces lazyloading src's to normal. Although better solution would be using per-site js patches.
+        // - Makes URLs to images absolute.
         function parse_images(node) {
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
             for (var i = 0, img = (node.tagName && node.tagName.toLowerCase() === 'img')?[node]:node.getElementsByTagName('img'), len = img.length; i < len; i++) {
@@ -1445,8 +1449,8 @@
             }
         }
 
-        // - Make target attribute as specified.
-        // - Fix relative link URL to absolute.
+        // - Makes target attribute as specified.
+        // - Fixes relative link URLs to absolute.
         function parse_links(node, target) {
             // we are ignoring links inside links, i.e a>a
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE

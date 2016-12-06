@@ -170,7 +170,7 @@
                         Links target rewriting option.
                     </li>
                     <li>
-                        Site filters by regexps, prefixes and domains.
+                        Site filters by RegExps, prefixes and domains.
                     </li>
                     <li>
                         SITEINFO updater and editor.
@@ -207,12 +207,12 @@
                     </li>
                     <li>
                         Following local SITEINFO fields were added:
-                        <ul><li><i>nextMask</i> - allows nuber auto-increments in next page address.</li>
+                        <ul><li><i>nextMask</i> - allows number auto-increments in next page address.</li>
                                 <li><i>pageElementSelector</i> - allows next link search by selector.</li>
                                 <li><i>nextLinkSelector</i> - allows content search by selector.</li>
                                 <li><i>forceIframe</i> - pages loaded through temporary IFrame instead of XHR.</li>
                                 <li><i>disableSeparator</i> - disables page separator between added pages.</li>
-                                <li><i>forceAddressChange</i> - dinamically updates location URL.</li>
+                                <li><i>forceAddressChange</i> - dynamically updates location URL.</li>
                                 <li><i>allowScripts</i> - allows scripts inside content block of new pages.</i>
                         </ul>
                     </li>
@@ -269,12 +269,37 @@
                         SITEINFO database can be reloaded manually.
                     </li>
                     <li>
-                        SITEINFO database can be cleaned from all unused entries that have no successful hits until next update.
-                    </li>
-                    <li>
-                        Various bugfixes.
+                        SITEINFO database can be automatically cleaned from all unused (that have no successful hits) entries on update.
                     </li>
                 </ul>
+               <h4>Version 1.10.0</h4>
+                <ul>
+                    <li>
+                        Reworked menu to be compact image list with translatable tooltips.
+                    </li>
+                    <li>
+                        With <kbd>Shift</kbd> <i>Toggle</i> button disables the extension on current site until browser restart.
+                    </li>
+                    <li>
+                        Button for refreshing incomplete (with <kbd>Shift</kbd> - all) images on a page without reloading it.
+                    </li>
+                    <li>
+                        Button for retrying last failed request attempt before termination.
+                    </li>
+                    <li>
+                        Following local SITEINFO fields were added:
+                        <ul>
+                            <li><i>prevLink, prevLinkSelector</i> - specifies previous link for switching autopaging direction.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <i>AutoPatchWork.request</i> event accepts only URL strings as <i>link</i> property.
+                    </li>
+                    <li>
+                        <i>AutoPatchWork.DOMNodeInserted</i> event is disabled on the source-code level. Significantly improves performance.
+                    </li>
+                 </ul>
+                        <br />* <i>All version updates include various minor bug-fixes between them.</i>
             <br />
             </section>
             <section id='about' class='content' style='visibility: hidden; height: 100px'>
@@ -289,13 +314,13 @@
                         Author:
                     </dt>
                     <dd>
-                        <a href='https://github.com/Dither' target='_blank'>Dither</a>
+                        <a href='https://github.com/Dither' target='_blank'>DitherSky</a>
                     </dd>
                     <dt class='MSG_thank_you'>
                         Thanks:
                     </dt>
                     <dd>
-                        <a href='http://ss-o.net/' target='_blank'>os0x</a> (Original AutoPatchWork version author.)
+                        <a href='http://os0x.heteml.jp/' target='_blank'>os0x</a> (Original AutoPatchWork version author.)
                     </dd>
                     <dd>
                         <a href='http://autopagerize.net/' target='_blank'>AutoPagerize</a>
