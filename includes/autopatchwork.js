@@ -1232,7 +1232,7 @@
         }
 
         /**
-         * Returns link node reference.
+         * Returns link node's reference URL.
          * @param {Element} node The input node.
          * */
         function get_href(node) {
@@ -1251,7 +1251,7 @@
 
         /**
          * Evaluates expression to find node containing next page link.
-         * @param {Element} doc Node to perform search on.
+         * @param {Element|HTMLDocument} doc Node to perform search on.
          * @return {Element} Matched node.
          * */
         function get_next_link(doc) {
@@ -1270,7 +1270,7 @@
 
         /**
          * Evaluates expression to find nodes containing main page content.
-         * @param {Element} doc Node to perform search on.
+         * @param {Element|HTMLDocument} doc Node to perform search on.
          * @return {NodeList} Matched nodes.
          * */
         function get_main_content(doc) {
@@ -1421,8 +1421,8 @@
             return url;
         }
 
-        // - Replace lazyloading src's to normal. Although better solution would be using per-site js patches.
-        // - Make links to images absolute.
+        // - Replaces lazyloading src's to normal. Although better solution would be using per-site js patches.
+        // - Makes URLs to images absolute.
         function parse_images(node) {
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
             for (var i = 0, img = (node.tagName && node.tagName.toLowerCase() === 'img')?[node]:node.getElementsByTagName('img'), len = img.length; i < len; i++) {
@@ -1445,8 +1445,8 @@
             }
         }
 
-        // - Make target attribute as specified.
-        // - Fix relative link URL to absolute.
+        // - Makes target attribute as specified.
+        // - Fixes relative link URLs to absolute.
         function parse_links(node, target) {
             // we are ignoring links inside links, i.e a>a
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
