@@ -4,6 +4,7 @@
 */
 
 .autopagerize_page_separator_blocks {
+    -moz-user-select: none !important;
     width: 100%;
     clear: both;
     height: 30px !important;
@@ -156,13 +157,14 @@
 
 #autopatchwork_bar button {
     display: none;
+    line-height: normal !important;
     position: relative !important;
 }
 
 #autopatchwork_bar:hover button {
-    background: #222222 !important;
-    border: 1px solid #AAAAAA !important;
-    color: #FFFFFF !important;
+    background: #222 !important;
+    border: 1px solid #aaa !important;
+    color: #fff !important;
     cursor: pointer !important;
     display: block !important;
     height: 25px !important;
@@ -172,15 +174,16 @@
 }
 
 #autopatchwork_bar button:hover:after {
-  background: #555 !important;
-  padding: 4px 8px !important;
-  color: #ddd !important;
-  position: absolute !important;
-  right: 0 !important;
-  top: -105% !important;
-  z-index: 10001 !important;
-  white-space: nowrap !important;
-  box-shadow: 0 0 2px #555 !important;
+    background: #555 !important;
+    padding: 4px 8px !important;
+    color: #ddd !important;
+    position: absolute !important;
+    line-height: normal !important;
+    right: 0 !important;
+    top: -105% !important;
+    z-index: 10001 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 0 2px #555 !important;
 }
 
 #bar_onoff:hover:after { content: 'Toggle'; }

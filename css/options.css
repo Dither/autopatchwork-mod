@@ -127,7 +127,7 @@ dt.disabled .key, li.disabled .key {
     box-shadow: #CCC 0 0 .25em;
     overflow: hidden;
     width: 717px;
-    height: 411px;
+    height: 443px;
     z-index: 5;
     margin-top: -2px;
 }
@@ -436,14 +436,15 @@ input[type="range"] {
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
 .MSG_change_address:lang(ru) {content: 'Обновлять адрес и заголовок при прокрутке'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
-.MSG_remaining_height:lang(ru) {content: 'Пикселов при прокрутке до загрузки:'}
+.MSG_remaining_height:lang(ru) {content: 'Пикселов прокрутки перед подгрузкой:'}
 .MSG_debugmode:lang(ru) {content: 'Отладочные сообщения'}
 .MSG_exclude_filter:lang(ru) {content: 'Исключение сайтов по фильтру:'}
-.MSG_wedata_location:lang(ru) {content: 'URL мини-БД SI'}
-.MSG_wedata_full_location:lang(ru) {content: 'URL БД SI'}
-.MSG_force_abs_hrefs:lang(ru) {content: 'Преобразовывать адреса ссылок в полные'}
-.MSG_force_abs_srcs:lang(ru) {content: 'Преобразовывать адреса картинок в полные'}
-.MSG_cleanup_on_load:lang(ru) {content: 'Очищать базу от неиспользуемых сайтов'}
+.MSG_wedata_location:lang(ru) {content: 'URL мини-БД'}
+.MSG_wedata_full_location:lang(ru) {content: 'URL БД'}
+.MSG_force_abs_hrefs:lang(ru) {content: 'Преобразовывать URL ссылок в полные'}
+.MSG_force_abs_srcs:lang(ru) {content: 'Преобразовывать URL картинок в полные'}
+.MSG_cleanup_on_load:lang(ru) {content: 'После обновления очищать базу от неиспользуемых сайтов'}
+.MSG_allow_ext_styles:lang(ru) {content: 'Разрешить патчи CSS из внешней базы'}
 #update_wedata_location:lang(ru), #update_wedata_full_location:lang(ru) {content: 'Сохранить'}
 /*
  * Так, к сожалению, не работает.
@@ -489,6 +490,7 @@ input[type="range"] {
 .MSG_backup_preferences:lang(ja) {content: 'バックアップデータ'}
 .MSG_siteinfo_patterns:lang(ja) {content: '個人SITEINFO-テンプレート:'}
 .MSG_check_crc:lang(ja) {content: 'ハッシュコードをチェック'}
+.MSG_allow_styles:lang(ja) {content: '外部データベースからCSSパッチを許可する'}
 /*
  * It's not working this way.
 .MSG_filter_prefix:lang(ja) {content: '接頭辞'}

@@ -109,7 +109,7 @@
         IGNORE_CORS: true,
         NOTIFICATIONS_ENABLED: false,
         TARGET_WINDOW_NAME: '_blank',
-        TRY_CORRECT_LAZY: false
+        TRY_CORRECT_LAZY: true
     };
 
     /**
@@ -1014,8 +1014,8 @@
             if(!processed) {
                 timer = setInterval(function() {
                     if (!processed) return;
+                    clearInterval(timer);
                     processed = false;
-                    clearTimeout(timer);
                     verify_scroll();
                 }, 300);
             }
@@ -1429,7 +1429,8 @@
         // - Makes URLs to images absolute.
         function parse_images(node) {
             if (!node || typeof node.nodeType !== 'number' || node.nodeType !== 1) return; // 1 -> Node.ELEMENT_NODE
-            for (var i = 0, img = (node.tagName && node.tagName.toLowerCase() === 'img')?[node]:node.getElementsByTagName('img'), len = img.length; i < len; i++) {
+            var img = (node.tagName && node.tagName.toLowerCase() === 'img') ? [node] : node.getElementsByTagName('img');
+            for (var i = 0, len = img.length; i < len; i++) {
                 if (options.TRY_CORRECT_LAZY) {
                     for (var j = 0, atts = img[i].attributes, n = atts.length, match = null; j < n; j++) {
                        if (~atts[j].localName.toLowerCase().indexOf('data-')) {
@@ -1457,8 +1458,10 @@
             for (var lnki = 0, lnks = (node.tagName && node.tagName.toLowerCase() === 'a')?[node]:node.getElementsByTagName('a'), lnlen = lnks.length; lnki < lnlen; lnki++) {
                 var href = lnks[lnki].getAttribute('href');
                 if (typeof target !== 'undefined')
-                    if (href && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(href) && !/^#/.test(href) && !lnks[lnki].target)
+                    if (href && !/^(?:javascript|mailto|data|skype)\s*:\s*/.test(href) && !/^#/.test(href) && !lnks[lnki].target) {
                         lnks[lnki].setAttribute('target', options.TARGET_WINDOW_NAME);
+                        lnks[lnki].setAttribute('rel', 'noopener noreferrer');
+                    }
 
                 if (options.FORCE_ABSOLUTE_HREFS && href && href.length)
                     lnks[lnki].setAttribute('href', rel_to_abs(href));
@@ -1617,7 +1620,7 @@
 
                     inserted_node = fragment.appendChild(document.importNode(nodes[i], true));
 
-                    if (status.scripts_allowed) run_node_scripts(inserted_node);
+                    //if (status.scripts_allowed) run_node_scripts(inserted_node);
                     if (inserted_node && (typeof inserted_node.setAttribute === 'function')) {
                         // service data for external page processing
                         inserted_node['data-apw-url'] = loaded_url;

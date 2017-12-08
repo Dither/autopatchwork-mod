@@ -1,25 +1,3 @@
-/**
- * Returns Array of first level keys of the passed Object.
- * @return {Array} Array of keys in 'this' object.
- * */
-if (!Object.prototype.keys) {
-    Object.prototype.keys = (function() {
-        'use strict';
-        var hasOwnProperty = Object.prototype.hasOwnProperty,
-            hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
-            dontEnums = ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor'],
-            dontEnumsLength = dontEnums.length;
-        return function() {
-            var obj = this;
-            if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) throw new TypeError('Object.keys called on non-object');
-            var result = [], prop, i;
-            for (prop in obj) if (hasOwnProperty.call(obj, prop)) result.push(prop);
-            if (hasDontEnumBug) for (i = 0; i < dontEnumsLength; i++) if (hasOwnProperty.call(obj, dontEnums[i])) result.push(dontEnums[i]);
-            return result;
-        };
-    }());
-}
-
 var RECORDS_PER_PAGE = 100,
     JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json',
     pageIndex = 0;
@@ -29,74 +7,6 @@ var RECORDS_PER_PAGE = 100,
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
     html.setAttribute('xml:lang', window.navigator.language);
-
-    function APWException(message) {
-        this.message = message;
-        this.name = '[AutoPatchWork]';
-    }
-
-    /**
-     * Dispatches standard event on the document.
-     * @param {String} type Event name string.
-     * @param {Array} opt Array of event's parameters.
-     * */
-    function dispatch_event(type, opt) {
-        var ev = new window.CustomEvent(type, { 'detail': opt });
-        document.dispatchEvent(ev);
-    }
-
-    /**
-     * Dispatches HTML event on specific node.
-     * @param {Node} element Node to fire event on.
-     * @param {String} event Event name string.
-     * */
-    function dispatch_html_event(element, event) {
-        var evt = document.createEvent('HTMLEvents');
-        evt.initEvent(event, true, true ); // event type,bubbling,cancelable
-        return !element.dispatchEvent(evt);
-    }
-
-    var browser_type,
-        BROWSER_CHROME = 1,
-        BROWSER_SAFARI = 2,
-        BROWSER_OPERA = 3;
-
-    var profiler = false, prof_first_run = true, debug = JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode,
-        custom_info = JSON.parse(storagebase.custom_info),
-        site_stats = JSON.parse(storagebase.site_stats),
-        site_fail_stats = JSON.parse(storagebase.site_fail_stats),
-        entry_editor_running = false,
-        stop_pager = false;
-
-    if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
-    if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
-    else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
-    else browser_type = BROWSER_OPERA;
-
-    /**
-     * Profiling function.
-     * @param {String} name Profiled function name.
-     * @param {Any} end Any variable to mark function end.
-     * @example profile('function_name'); some code; profile('function_name', 'end');
-     * */
-    function profile(name, end) {
-        if (!debug || !profiler) return;
-        if (prof_first_run) { prof_first_run = false; console.log('============================'); }
-        if (typeof end === 'undefined') {
-            console.time(name);
-        } else {
-            console.timeEnd(name);
-        }
-    }
-
-    /*function log() {
-        if (!debug) return;
-        if (browser_type === BROWSER_OPERA) {
-            window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-        } else if (window.console) {
-            console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-        }
-    }*/
 
     // Init browser-specific messaging
     switch (browser_type) {
@@ -113,8 +23,21 @@ var RECORDS_PER_PAGE = 100,
     }
 
     if (!bgProcess) {
-        throw new APWException('Can\'t fing background process!');
+        var error = 'Can\'t fing background process!';
+        alert(error);
+        throw new APWException(error);
+        return;
     }
+
+    if (typeof storagebase.AutoPatchWorkConfig !== 'undefined')
+        debug = !!JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode;
+
+    var custom_info = bgProcess.custom_info,
+        site_stats = JSON.parse(storagebase.site_stats),
+        site_fail_stats = JSON.parse(storagebase.site_fail_stats),
+        allow_ext_styles = bgProcess.AutoPatchWorkBG.config.allow_ext_styles,
+        entry_editor_running = false,
+        stop_pager = false;
 
     JSON_SITEINFO_DB = bgProcess.JSON_SITEINFO_DB || JSON_SITEINFO_DB;
     var getWedataId = bgProcess.getWedataId || // WTF???
@@ -146,6 +69,7 @@ var RECORDS_PER_PAGE = 100,
         var successful = 'number_of_successful';
         var failed = 'number_of_failed';
         var siteinfos_array = {};
+        var re_http = /^https?:\/\/[^"'`]+$/ig;
 
         local_siteinfo.forEach(function (v) {
             if(v['wedata.net.id']) siteinfos_array[v['wedata.net.id']] = v;
@@ -173,7 +97,10 @@ var RECORDS_PER_PAGE = 100,
         /* jshint ignore:end */
 
         var types = {
-            //'on/off':{number:true, key:'disabled'},
+            'number': {
+                number: true,
+                key: 'disabled'
+            },
             'name': {
                 string: true,
                 title: 'Name',
@@ -223,17 +150,7 @@ var RECORDS_PER_PAGE = 100,
                 number: true,
                 title: 'Misses',
                 key: 'number_of_failed'
-            },
-            'cssPatch': {
-                string: false,
-                title: 'Custom CSS',
-                key: 'cssPatch'
-            },
-            'jsPatch': {
-                string: false,
-                title: 'Support script',
-                key: 'jsPatch'
-            },
+            }
         };
 
         function wedata_filter(v) {
@@ -330,7 +247,11 @@ var RECORDS_PER_PAGE = 100,
         function url2anchor(url) {
             var a = document.createElement('a');
             if (typeof  url !== 'string' || url.trim() === '') return a;
-            a.textContent = url.replace(/http:\/\/wedata\.net\/(items\/|databases\/)?/, '');
+            if (!url.match(re_http)) {
+                a.href = '#';
+                return a;
+            }
+            a.textContent = url.replace(/https?:\/\/wedata\.net\/(items\/|databases\/)?/, '');
             a.href = url;
             a.target = '_blank';
             return a;
@@ -340,7 +261,7 @@ var RECORDS_PER_PAGE = 100,
             var df = document.createDocumentFragment();
             if (typeof  urls !== 'string') return df;
             urls = urls.trim();
-            if (urls !== '') urls.split(/[\s\n\r]+/).map(url2anchor).forEach(function (a, i) {
+            if (urls.length > 5) urls.split(/[\s\n\r]+/).map(url2anchor).forEach(function (a, i) {
                 if (i) df.appendChild(document.createElement('br'));
                 df.appendChild(a);
             });
@@ -403,14 +324,23 @@ var RECORDS_PER_PAGE = 100,
         function applyDBfixes(siteinfo) {
             siteinfo.forEach(function (info) {
                 var id = getWedataId(info);
-                if (0 && info.data && typeof info.data['Stylish'] === 'string' && info.data['Stylish'].replace(/\s/g,'').length > 5) { //FIXNE: raw CSS to the custom field
-                    var t = info.data['Stylish'];
-                    t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
-                    t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
-                    info.data['cssPatch'] = t;
-                }
                 info[successful] = site_stats[id] || 0;
                 info[failed] = site_fail_stats[id] || 0;
+                if (!info.data) return;
+                var t = info.data['cssPatch'] || info.data['Stylish'] || null;
+                delete info.data['cssPatch'];
+                delete info.data['jsPatch'];
+                delete info.data['Stylish'];
+                info.data['prevLink'] = info.data['prevLink'] || ''; // show the field anyway
+                info.data['insertBefore'] = info.data['insertBefore'] || ''; // show the field anyway
+                if (allow_ext_styles) {
+                    if (t && !t.match(/java/i && !t.match(/url[^\(]*\(/i)) &&
+                        t.replace(/\s/g,'').length > 5) {
+                        t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
+                        t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
+                        info.data['cssPatch'] = t;
+                    }
+                }
             });
         }
 
@@ -419,7 +349,7 @@ var RECORDS_PER_PAGE = 100,
             entry_editor_running = false;
             toggle_popup('loader', true);
             var df = document.createDocumentFragment();
-            var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
+            var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'prevLink':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
             var essential_fields = {'url':1 , 'pageElement':1,'nextLink':1};
 
             siteinfo.forEach(function (info, i) {
@@ -490,8 +420,11 @@ var RECORDS_PER_PAGE = 100,
                                 delete current_siteinfo[name];
                             }
                         }
-                        storagebase.custom_info = JSON.stringify(custom_info);
+
                         if (current_siteinfo[name]) line.setAttribute(type_full, state); else line.removeAttribute(type_full);
+
+                        bgProcess.saveCustomInfo();
+                        bgProcess.applyCustomInfo();
                     };
                 };
 
@@ -523,19 +456,19 @@ var RECORDS_PER_PAGE = 100,
                                 dd1.className = key;
                                 dl.appendChild(dd1);
                                 if (typeof data === 'object') {
+                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['removeElement'] || '') : '';
+                                    data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['jsPatch'] || '') : '';
+                                    if (!allow_ext_styles)
+                                        data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['cssPatch'] || '') : '';
+
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
-                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['removeElement'] || '' : '';
-                                    data['insertBefore'] = data['insertBefore'] || '';
-                                    data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['cssPatch'] || '' : '';
-                                    data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? custom_info[id]['jsPatch'] || '' : '';
+
                                     data.keys().forEach(function (si_key) {
                                         var inf = '', is_custom = si_key in custom_fields, is_essential = si_key in essential_fields;
                                         if (typeof custom_info[id] !== 'undefined') {
                                             inf = custom_info[id][si_key];
-                                            if (!inf && !is_custom) {
-                                                inf = data[si_key];
-                                            }
+                                            if (!inf && !is_custom) inf = data[si_key];
                                         } else if (!is_custom) {
                                             inf = data[si_key];
                                         }
@@ -559,14 +492,14 @@ var RECORDS_PER_PAGE = 100,
                                                     case 'removeElement':
                                                     case 'insertBefore':
                                                         node2.rows = 1;
-                                                    break;
+                                                        break;
                                                     case 'comment':
                                                         node2.setAttribute('readonly', '');
                                                         node2.rows = 1;
-                                                    break;
+                                                        break;
                                                     default:
                                                         node2.rows = 2;
-                                                }
+                                                } //switch
                                                 node2.value = inf || '';
                                                 if (!current_siteinfo) {
                                                     node2.setAttribute('readonly', ''); // remote DB differs from local
@@ -631,8 +564,9 @@ var RECORDS_PER_PAGE = 100,
                                                         node2.setAttribute('data-modified', 'modified');
                                                     }
 
-                                                    storagebase.custom_info = JSON.stringify(custom_info);
-                                                };
+                                                    bgProcess.saveCustomInfo(custom_info);
+                                                    bgProcess.initCustomInfo();
+                                                }; //onchange
                                                 if (!is_custom) {
                                                     if (inf !== data[si_key]) {
                                                         node2.setAttribute('data-modified', 'modified');
@@ -650,7 +584,8 @@ var RECORDS_PER_PAGE = 100,
                                     } else {
                                         if (~key.indexOf('_url') && data) {
                                             node = document.createElement('a');
-                                            node.href = data;
+                                            if (data.match(re_http))
+                                                node.href = data;
                                             node.target = '_blank';
                                         } else {
                                             node = document.createElement('span');
@@ -729,7 +664,7 @@ var RECORDS_PER_PAGE = 100,
                   try {
                       d = JSON.parse(xhr.responseText);
                   } catch (bug) {
-                      console.log('JSON.parse error: ', bug.message);
+                      log('Error parsing JSON DB: ' + bug.message);
                       return;
                   }
 
@@ -739,7 +674,7 @@ var RECORDS_PER_PAGE = 100,
 
                   callback(d);
                 } else {
-                  console.log('XMLHttpRequest error: ', xhr.statusText);
+                  log('Error requesting JSON DB: ' + xhr.statusText);
                 }
               }
             };
@@ -773,7 +708,8 @@ var RECORDS_PER_PAGE = 100,
                 siteinfo_view.style.bottom = window.innerHeight + 'px';
                 entry_editor_running = false;
             }
-            while (siteinfo_view.firstChild) siteinfo_view.removeChild(siteinfo_view.firstChild);
+            while (siteinfo_view.firstChild)
+                siteinfo_view.removeChild(siteinfo_view.firstChild);
         };
 
         profile('UpdateSiteInfo');

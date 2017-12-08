@@ -1,7 +1,25 @@
-if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
-var debug = false,
-    siteinfo = [], timestamp, site_stats = {}, site_fail_stats = {},
-    custom_info = {
+var siteinfo = [], custom_info = {}, timestamp, site_stats = {}, site_fail_stats = {},
+    H = location.href.replace('index.html', ''),
+    MICROFORMATs = [{
+        MICROFORMAT: true,
+        url: '^https?://.',
+        nextLink: '//a[@rel="next"] | //link[@rel="next"]',
+        insertBefore: '//*[contains(concat(" ",@class," "), " autopagerize_insert_before ")]',
+        pageElement: '//*[contains(concat(" ",@class," "), " autopagerize_page_element ")]'
+    }, {
+        MICROFORMAT: true,
+        url: '^https?://.',
+        nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
+        pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
+    }],
+    JSON_SITEINFO_DB_MIN = 'http://wedata.net/databases/AutoPagerize/items.json', // 'http://os0x.heteml.jp/json/wedataAutoPagerizeSITEINFO.json',
+    JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json', //'http://os0x.heteml.jp/json/wedataAutoPagerize.json',
+    DAYS_TO_KEEP_DB = 60,
+    BLOCK_GENERICS = false,
+    BLOCK_MICROFORMATS = true;
+
+if (BLOCK_GENERICS) {
+    custom_info = { /* Disabling overzealous formats. Re-enable them manually on your own risk. */
         '400':{'disabled':true,'length':1},
         '430':{'disabled':true,'length':1},
         '447':{'disabled':true,'length':1},
@@ -13,62 +31,8 @@ var debug = false,
         '55771':{'disabled':true,'length':1},
         '65332':{'disabled':true,'length':1},
         '74668':{'disabled':true,'length':1}
-    }, /*{}; /* Disabling overzealous formats. Re-enable them manually on your own risk. */
-    MICROFORMATs = [],
-    JSON_SITEINFO_DB_MIN = 'http://wedata.net/databases/AutoPagerize/items.json', // 'http://os0x.heteml.jp/json/wedataAutoPagerizeSITEINFO.json',
-    JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json', //'http://os0x.heteml.jp/json/wedataAutoPagerize.json',
-    ENABLE_STYLISH_FIELD = false,
-    ENABLE_MICROFORMATS = false;
-
-if (ENABLE_MICROFORMATS) MICROFORMATs = [{
-    MICROFORMAT: true,
-    url: '^https?://.',
-    nextLink: '//a[@rel="next"] | //link[@rel="next"]',
-    insertBefore: '//*[contains(concat(" ",@class," "), " autopagerize_insert_before ")]',
-    pageElement: '//*[contains(concat(" ",@class," "), " autopagerize_page_element ")]'
-}, {
-    MICROFORMAT: true,
-    url: '^https?://.',
-    nextLink: '//link[@rel="next"] | //a[contains(concat(" ",@rel," "), " next ")] | //a[contains(concat(" ",@class," "), " next ")]',
-    pageElement: '//*[contains(concat(" ",@class," "), " hfeed ") or contains(concat(" ",@class," "), " story ") or contains(concat(" ",@class," "), " instapaper_body ") or contains(concat(" ",@class," "), " xfolkentry ")]'
-}];
-
-var browser_type,
-    BROWSER_CHROME = 1,
-    BROWSER_SAFARI = 2,
-    BROWSER_OPERA = 3;
-
-if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
-if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
-else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
-else browser_type = BROWSER_OPERA;
-
-/**
- * Logging function.
- * @param {Array|String} arguments Data to put to debug output.
- * */
-function log() {
-    if (!debug) return;
-    if (browser_type === BROWSER_OPERA) {
-        window.opera.postError('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-    } else if (window.console) {
-        window.console.log('[AutoPatchWork] ' + Array.prototype.slice.call(arguments));
-    }
+    };
 }
-
-/* jshint ignore:start */
-/**
-* Checks variable and explictly converts string to the corresponding boolean.
-* Possible data values are: undefined, null, unknown text or a number (treated as false here except 1),
-*                           'on', 'off', '1', '0', 1, 0, 'true', 'false', true, false).
-* @param {*} s Data to check.
-* @return {boolean} Boolean result.
-* */
-function s2b(s) { return ((typeof s !== 'undefined') && s && (s === true || s === 'true' || s === 'on' || s == 1)) ? true : false; }
-/* jshint ignore:end */
-
-
-var H = location.href.replace('index.html', '');
 
 window.AutoPatchWorkBG = {
     state: true,
@@ -86,7 +50,8 @@ window.AutoPatchWorkBG = {
         force_abs_hrefs: false,
         force_abs_srcs: false,
         enable_notifications: false,
-        cleanup_on_load: false
+        cleanup_on_load: false,
+        allow_ext_styles: false
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
@@ -96,18 +61,14 @@ window.AutoPatchWorkBG = {
         initDatabase();
     },
     reset_custom_patterns: function() {
-        AutoPatchWorkBG.custom_patterns = [];
-        storagebase.AutoPatchWorkPatterns = '';
+        resetCustomPatterns();
+        initDatabase();
     },
     init_css: function(css) {
-        if (css && css.replace(/[\s\n]*/, '') !== '') {
-            AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS = css;
-        } else {
-            storagebase.AutoPatchWorkCSS = AutoPatchWorkBG.css = getCSS();
-        }
+        initCSS();
     },
     update: function() {
-        storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+        saveConfig();
     },
     disabled_sites: [],
     blacklist_check: function(url) {
@@ -124,18 +85,17 @@ window.AutoPatchWorkBG = {
     },
     add_disabled_site: function(site) {
         AutoPatchWorkBG.disabled_sites.push(site);
-        storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+        saveDisabledSites();
     },
     save_disabled_site: function() {
-        storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+        saveDisabledSites();
     },
     delete_disabled_site: function(site) {
         var site_s = JSON.stringify(site);
-        for(var i = 0; i < AutoPatchWorkBG.disabled_sites.length; i++) {
-            var str = JSON.stringify(AutoPatchWorkBG.disabled_sites[i]);
-            if(str === site_s) {
+        for(var i = 0, len = AutoPatchWorkBG.disabled_sites.length; i < len; i++) {
+            if(JSON.stringify(AutoPatchWorkBG.disabled_sites[i]) === site_s) {
                 AutoPatchWorkBG.disabled_sites.splice(i, 1);
-                storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+                saveDisabledSites();
                 break;
             }
         }
@@ -153,24 +113,35 @@ if(browser_type === BROWSER_SAFARI) {
             AutoPatchWorkBG.disabled_sites = urls.map(function(url) {
                 return { type: 'prefix', matcher: url };
             });
-            AutoPatchWorkBG.save_disabled_site();
+            saveDisabledSites();
         }
     }, false);
 }
 
-function getCSS() {
-    var url = './css/main.css';
+function initCSS(css) {
+    if (css && css.replace(/[\s\n]*/, '') !== '') {
+        AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS = css;
+    } else {
+        getCSS(function(css) {storagebase.AutoPatchWorkCSS = AutoPatchWorkBG.css = css;});
+    }
+}
+
+function getCSS(callback) {
+    var css = './css/main.css';
+    var cssurl = URL ? (new URL(css)) : css;
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, false);
+    xhr.open('GET', cssurl, false);
     xhr.send(null);
-    return xhr.responseText;
+    xhr.onload = function () {
+        callback(xhr.responseText);
+    };
 }
 
 function getWedataId(inf) {
     return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '') : '0', 10);
 }
 
-function applyCustomFields() {
+function applyCustomInfo() {
     siteinfo.forEach(function(i) {
         var id = i['wedata.net.id'];
         if (!id) return;
@@ -180,6 +151,45 @@ function applyCustomFields() {
             if(typeof ci[k] === 'string' ? ci[k].trim() !== '' : !!ci[k]) i[k] = ci[k]; else delete i[k]; // deletes `insertBefore` in case we null it
         });
     });
+}
+
+function initCustomPatterns() {
+    if (storagebase.AutoPatchWorkPatterns)
+        AutoPatchWorkBG.custom_patterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+    applyCustomPatterns();
+}
+
+function resetCustomPatterns() {
+    AutoPatchWorkBG.custom_patterns = [];
+    storagebase.AutoPatchWorkPatterns = '';
+}
+
+function saveDisabledSites() {
+    storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
+}
+
+function saveConfig() {
+    storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+}
+
+function applyCustomPatterns() {
+    siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
+}
+
+function applyMicroformats() {
+    if(!BLOCK_MICROFORMATS)
+        siteinfo.push.apply(siteinfo, MICROFORMATs);
+}
+
+function saveCustomInfo(new_custom_info) {
+    if (typeof new_custom_info !== 'undefined') custom_info = new_custom_info;
+    storagebase.custom_info = JSON.stringify(custom_info);
+}
+
+function initCustomInfo() {
+    if (storagebase.custom_info)
+        custom_info = JSON.parse(storagebase.custom_info);
+    applyCustomInfo();
 }
 
 /* jshint ignore:start */
@@ -195,7 +205,12 @@ function checkExists(url, callback) {
     http.send();
 }
 
-function resetDBLocation (full) {
+function initDBLocation() {
+    if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
+    if (storagebase.db_full_location) JSON_SITEINFO_DB = storagebase.db_full_location;
+}
+
+function resetDBLocation(full) {
     if (typeof full === 'undefined' || (typeof full === 'boolean' && !full)) {
         storagebase.removeItem('db_location');
         JSON_SITEINFO_DB_MIN =  'http://wedata.net/databases/AutoPagerize/items.json';
@@ -217,39 +232,54 @@ function updateFullDatabaseURL(url) {
 /* jshint ignore:end */
 
 function initDatabase() {
-    if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
-    if (storagebase.db_full_location) JSON_SITEINFO_DB = storagebase.db_full_location;
-    if (storagebase.custom_info) custom_info = JSON.parse(storagebase.custom_info);
-    if (storagebase.AutoPatchWorkPatterns) AutoPatchWorkBG.custom_patterns = JSON.parse(storagebase.AutoPatchWorkPatterns);
+    initDBLocation();
     try {
-        if(!Store.has('siteinfo_wedata')) throw 'SITEINFO DB expired';
+        if (!Store.has('siteinfo_wedata')) {
+            log('SITEINFO DB expired');
+            throw new APWException('SITEINFO DB expired');
+        }
         var data = Store.get('siteinfo_wedata');
-        siteinfo = data.siteinfo;
+        if (!data || !data.siteinfo) {
+            log('No SITEINFO DB present');
+        }
+        siteinfo = data.siteinfo || [];
         timestamp = new Date(data.timestamp);
-        applyCustomFields();
-        siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
+        initCustomInfo();
+        initCustomPatterns();
+        applyMicroformats();
     } catch (bug) {
         downloadDatabase();
     }
 }
 
 function createDatabase(info) {
-    var tmp_log = 'There were following errors in SITEINFO DB:\n',
-        allowed_fields = ['nextLink', 'pageElement', 'url', 'insertBefore'],
+    var tmp_log = 'There were errors in SITEINFO DB:\n',
+        allowed_fields = [
+            'nextLink',
+            'nextLinkSelector',
+            'prevLink',
+            'prevLinkSelector',
+            'forceIframe',
+            'disableSeparator',
+            'pageElement',
+            'pageElementSelector',
+            'url',
+            'insertBefore'
+        ],
         is_sso_db = !!~JSON_SITEINFO_DB_MIN.indexOf('os0x.heteml.jp');
 
     siteinfo = [];
-    if (ENABLE_STYLISH_FIELD) allowed_fields.push('cssPatch');
+    if (AutoPatchWorkBG.config.allow_ext_styles) allowed_fields.push('cssPatch');
     var clean = AutoPatchWorkBG.config.cleanup_on_load;
 
     info.forEach(function(i) {
         var d = i.data || i, r = {}, id = i['wedata.net.id'] || getWedataId(i);
-        if (ENABLE_STYLISH_FIELD && d) {
+        if (AutoPatchWorkBG.config.allow_ext_styles && d) {
             var t = null;
             if (typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) t = d['Stylish']; // Stylish CSS
             else if (typeof d['cssPatch'] === 'string' && d['cssPatch'].replace(/\s/g,'').length > 5) t = d['cssPatch']; // Plain CSS
             delete d['cssPatch'];
-            if (t && !t.match(/\burl[^\(\{]*\(/ig)) {
+            if (t && !t.match(/\burl[^\(\{]*\(/i) && !t.match(/\bjavascript\b/i)) {
                 d['cssPatch'] = (t.match(/@-moz-document[^{]+{\s*([^@\}]+)\s*}/) || [])[1] || t; // Stylish CSS -> Plain CSS
             }
         }
@@ -280,43 +310,39 @@ function createDatabase(info) {
 
         siteinfo.push(r);
     });
+
     log(tmp_log);
+
     siteinfo.sort(function(a, b) { return (b.url.length - a.url.length); });
-    siteinfo.push.apply(siteinfo, MICROFORMATs);
 
     timestamp = new Date;
-    Store.set('siteinfo_wedata', {
+    Store.set(
+        'siteinfo_wedata', {
             siteinfo: siteinfo,
             timestamp: timestamp.toLocaleString()
-        },{ day: 60 });
-    applyCustomFields();
-    siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
+        },{ day: DAYS_TO_KEEP_DB }
+    );
+
+    initCustomInfo();
+    initCustomPatterns();
+    applyMicroformats();
 }
 
-function downloadDatabase(callback, error_back) {
+function downloadDatabase(callback, errorback) {
     var xhr = new XMLHttpRequest();
     siteinfo = [];
     xhr.onload = function() {
-        var info;
         try {
-            info = JSON.parse(xhr.responseText);
+            var info = JSON.parse(xhr.responseText);
             createDatabase(info);
-            if (typeof callback === 'function') {
-                callback();
-            }
+            if (typeof callback === 'function') callback();
         } catch (bug) {
-            if (typeof error_back === 'function') {
-                error_back(bug);
-                return;
-            } else {
-                throw bug;
-            }
+            if (typeof errorback === 'function') return errorback(bug);
+            else throw new APWException(bug);
         }
     };
     xhr.onerror = function(err) {
-        if( typeof error_back === 'function') {
-            error_back(err);
-        }
+        if (typeof errorback === 'function') errorback(err);
     };
     try {
        xhr.open('GET', JSON_SITEINFO_DB_MIN, true);
@@ -326,48 +352,58 @@ function downloadDatabase(callback, error_back) {
    }
 }
 
-function resetSettings() {
-    if (typeof storagebase === 'undefined') {
-        return setTimeout(function() { resetSettings(); }, 200);
-    }
-    resetDBLocation();
-    storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
-    storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
+function saveStats() {
     storagebase.site_stats = JSON.stringify(site_stats);
     storagebase.site_fail_stats = JSON.stringify(site_fail_stats);
-    storagebase.custom_info = JSON.stringify(custom_info);
-    AutoPatchWorkBG.init_css();
-    AutoPatchWorkBG.reset_custom_patterns();
 }
 
-if (!storagebase.AutoPatchWorkConfig) resetSettings();
-
-if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
-if(storagebase.AutoPatchWorkConfig) {
-    AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
-    debug = AutoPatchWorkBG.config.debug_mode;
-}
-if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
-if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
-if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
-
-var version = '', manifest;
-function getManifest(callback) {
-    var url = './manifest.json';
-    var xhr = new XMLHttpRequest();
-    xhr.onload = function() {
-        callback(JSON.parse(xhr.responseText));
-    };
-    xhr.open('GET', url += ((/\?/).test(url) ? '&' : '?') + Date.now(), true);
-    xhr.send(null);
+function resetSettings() {
+    resetDBLocation();
+    resetCustomPatterns();
+    saveCustomInfo();
+    saveConfig();
+    saveDisabledSites();
+    saveStats();
+    initCSS();
 }
 
-getManifest(function(_manifest) { manifest = _manifest; version = _manifest.version; });
+/*window.addEventListener('storage', function(e) {
+    if (e.key === 'custom_info' && e.oldValue !== e.newValue) applyCustomFields();
+});*/
 
-initDatabase();
+function runExtension() {
+    if (typeof storagebase === 'undefined') {
+        return setTimeout(function() { runExtension(); }, 200); // wait for storage to load
+    }
 
-window.onload = function() {
-    if (1 || browser_type !== BROWSER_CHROME) return;
+    if(!storagebase.AutoPatchWorkConfig) resetSettings();
+
+    if(storagebase.disabled_sites) AutoPatchWorkBG.disabled_sites = JSON.parse(storagebase.disabled_sites);
+    if(storagebase.AutoPatchWorkConfig) {
+        AutoPatchWorkBG.config = JSON.parse(storagebase.AutoPatchWorkConfig);
+        debug = !!AutoPatchWorkBG.config.debug_mode;
+        if(storagebase.site_stats) site_stats = JSON.parse(storagebase.site_stats);
+        if(storagebase.site_fail_stats) site_fail_stats = JSON.parse(storagebase.site_fail_stats);
+        if(storagebase.AutoPatchWorkCSS) AutoPatchWorkBG.css = storagebase.AutoPatchWorkCSS;
+    }
+
+    var version = '', manifest;
+    function getManifest(callback) {
+        var url = './manifest.json';
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+            callback(JSON.parse(xhr.responseText));
+        };
+        xhr.open('GET', url += ((/\?/).test(url) ? '&' : '?') + Date.now(), true);
+        xhr.send(null);
+    }
+    getManifest(function(_manifest) { manifest = _manifest; version = _manifest.version; });
+
+    initDatabase();
+}
+
+/*window.onload = function() {
+    if (browser_type !== BROWSER_CHROME) return;
     var CHROME_GESTURES = 'jpkfjicglakibpenojifdiepckckakgk';
     var CHROME_KEYCONFIG = 'okneonigbfnolfkmfgjmaeniipdjkgkl';
     var action = {
@@ -376,7 +412,7 @@ window.onload = function() {
     };
     browser.runtime.sendMessage(CHROME_GESTURES, action);
     browser.runtime.sendMessage(CHROME_KEYCONFIG, action);
-};
+};*/
 
 /* jshint ignore:start */
 var toggleCode = '(' + (function() {
@@ -582,3 +618,5 @@ function openOrFocusTab(uri) {
             break;
     }
 }
+
+runExtension();

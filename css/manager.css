@@ -14,6 +14,7 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
     top: 0px;
     background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#fff));
     background: -o-linear-gradient(top left, #eee, #fff);
+    background: linear-gradient(top left, #eee, #fff);
     max-width: 1230px;
     width: 1230px;
     min-height: 77px;
@@ -47,7 +48,9 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 
 #siteinfo_table {
     box-shadow: 0 0 10px #98b0c9;
-    background: rgba(255, 255, 255, 0.5);
+    background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#fff));
+    background: -o-linear-gradient(top left, #eee, #fff);
+    background: linear-gradient(top left, #eee, #fff);
     width: 1230px;
     max-width: 1230px;
     overflow: hidden;
@@ -61,7 +64,7 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 }
 
 #siteinfo_table td {
-    border: 1px solid #996633;
+    border: 1px solid #bbb;
 }
 
 #siteinfo_view {
@@ -70,18 +73,18 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
     bottom: 2000px;
     left: 0px;
     right: 0px;
-    background: rgba(255, 255, 255, 0.8);
-    -moz-transition: all 1s ease-in-out;
-    -webkit-transition: all 1s ease-in-out;
-    -o-transition: all 1s ease-in-out;
-    transition: all 1s ease-in-out;
+    background: rgba(200, 200, 200, 0.7);
+    -moz-transition: all 0.5s ease-in-out;
+    -webkit-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
 }
 
 #siteinfo_view > dl {
-    border: 2px solid gray;
-    border-radius: 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
     padding: 10px;
-    margin: 5px auto;
+    margin: 0 auto;
     width: 95%;
     background: #fff;
     position: relative;
@@ -110,15 +113,16 @@ body,ul,ol,dl,li,dd,dt,p,div,h1,h2,h3,h4,h5,h6 {
 
 #siteinfo_view dl > dd > dl > dd {
     width: 80%;
-    background: #ffffff;
+    background: #fff;
     vertical-align: top;
 }
 
 #siteinfo_view textarea {
+    border: 1px solid #bbb;
     width: 100%;
     font-family: "Calibri", "Tahoma", "Verdana", "Arial", "Helvetica", "geneva", sans-serif !important;
     min-height: 2em;
-    background: #eee;
+    background: #F7F7F7;
     resize: vertical;
 }
 
@@ -192,10 +196,8 @@ td.database_resource_url {
 }
 
 td.name button {
-    background: #eee;
-    background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#fff));
-    background: -o-linear-gradient(top left, #eee, #fff);
-    border: 1px solid #aaa;
+    background: transparent;
+    border: 0;
     cursor: pointer;
     width: 100%;
     height: 120%;
@@ -255,10 +257,8 @@ th[colspan="6"]+th {
 }
 
 #siteinfo_head th button {
-    background: #333;
-    background: -webkit-gradient(linear, left top, left bottom, from(#333), to(#888));
-    background: -o-linear-gradient(top left, #333, #888);
-    border: 1px solid #888;
+    background: #555;
+    border-left: 1px solid #888;
     cursor: pointer;
     color: #fff;
     width: 100%;
@@ -276,17 +276,13 @@ th[colspan="6"]+th {
 }
 
 #siteinfo_head th button.c-down {
-    background: #ddd;
-    background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ccc));
-    background: -o-linear-gradient(top left, #fff, #ccc);
-    color: #222;
+    background: #777;
+    color: #fff;
 }
 
 #siteinfo_head th button.c-up {
-    background: #ddd;
-    background: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#fff));
-    background: -o-linear-gradient(top left, #ccc, #fff);
-    color: #222;
+    background: #777;
+    color: #fff;
 }
 
 #loader {

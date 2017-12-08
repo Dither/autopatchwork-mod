@@ -1,5 +1,5 @@
  <?xml version="1.0" encoding="utf-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" version="1.10.0" id="https://dithersky.wordpress.com/2012/01/28/mod-autopatchwork/">
+<widget xmlns="http://www.w3.org/ns/widgets" version="1.10.1" id="https://dithersky.wordpress.com/2012/01/28/mod-autopatchwork/">
   <name>AutoPatchWork Mod</name>
   <description xml:lang="en">Auto-appends following paginated pages to the current on scroll.</description>
   <description xml:lang="ru">Автоматически подгружает следующие странички при прокрутке.</description>
