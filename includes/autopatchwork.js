@@ -81,16 +81,9 @@
                 return this;
             }
         };
-        checksum = new FastCRC32;
+        checksum = new FastCRC32();
         checksum = checksum.crc.bind(checksum);
     }
-
-    /**
-     * @const
-     */
-    var BROWSER_CHROME = 1,
-        BROWSER_SAFARI = 2,
-        BROWSER_OPERA = 3;
 
     /**
      * @struct
@@ -100,8 +93,9 @@
         BAR_STATUS: true,
         BASE_INTERPAGE_DELAY: 500,
         BASE_REMAINING_HEIGHT: 800,
+        TERMINATION_DELAY: 45000,
         CHANGE_ADDRESS: false,
-        CRC_CHECKING: false,
+        HASH_CHECKING: false,
         DEFAULT_STATE: true,
         FORCE_ABSOLUTE_HREFS: true,
         FORCE_ABSOLUTE_IMG_SRCS: false,
@@ -149,6 +143,7 @@
          * @struct
          */
         ajax: {
+            last_height: 0,
             load_delay: 500,
             load_count: 0,
             start_time: Date.now(),
@@ -159,8 +154,15 @@
         }
     };
 
+    /**
+     * @const
+     */
+    var BROWSER_CHROME = 1,
+        BROWSER_SAFARI = 2,
+        BROWSER_OPERA = 3;
+
     if (typeof browser === 'undefined' && typeof chrome !== 'undefined') browser = chrome;
-    if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME
+    if ((!!window.browser && !!window.browser.runtime) || (typeof InstallTrigger !== 'undefined')) browser_type = BROWSER_CHROME;
     else if (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0) browser_type = BROWSER_SAFARI;
     else browser_type = BROWSER_OPERA;
 
@@ -325,7 +327,11 @@
         return;
     }
 
-    var sendRequest;
+    var sendRequest,
+        getRandomName = function (name) {
+            return (name || '') + (Date.now() + Math.random().toString(36));
+        };
+
     switch (browser_type) {
         case BROWSER_CHROME:
             sendRequest = function (data, callback) {
@@ -340,21 +346,21 @@
                     if (evt.name in eventData) eventData[evt.name](evt.message);
                 }, false);
                 return function (data, callback, name) {
-                    name = (name || '') + (Date.now() + Math.random().toString(36));
+                    name = getRandomName(name);
                     if (callback) eventData[name] = callback;
                     safari.self.tab.dispatchMessage(name, data);
                 };
             })();
             break;
         case BROWSER_OPERA:
+            if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
             sendRequest = (function () {
-                if (!Object.keys) Object.keys = function (k) { var r = []; for (var i in k) if (k.hasOwnProperty(i)) r.push(i); return r; };
                 var eventData = {};
                 opera.extension.onmessage = function (evt) {
                     if (evt.data.name in eventData) eventData[evt.data.name](evt.data.data);
                 };
                 return function (data, callback, name) {
-                    name = (name || '') + (Date.now() + Math.random().toString(36));
+                    name = getRandomName(name);
                     if (callback) eventData[name] = callback;
                     opera.extension.postMessage({ name: name, data: data });
                 };
@@ -406,14 +412,15 @@
 
     // Begin listening for init messages and request configuration if got one
     document.addEventListener('AutoPatchWork.init', init, false);
+
     // Begin listening and processing SITEINFO messages; send reset event if got one while active
     document.addEventListener('AutoPatchWork.siteinfo', siteinfo, false);
 
     /**
-     * APW configuration sync with the background process handler
+     * APW configuration sync with the background process
      * */
     function init() {
-        sendRequest({ url: location.href, isFrame: window.top !== window.self }, begin_init, 'AutoPatchWorkInit' );
+        sendRequest({ url: location.href, isFrame: (window.top !== window.self) }, begin_init, 'AutoPatchWorkInit' );
     }
 
     dispatch_event('AutoPatchWork.init');
@@ -430,13 +437,14 @@
             options.FORCE_ABSOLUTE_HREFS =  info.config.force_abs_hrefs;
             options.FORCE_ABSOLUTE_IMG_SRCS =  info.config.force_abs_srcs;
             options.NOTIFICATIONS_ENABLED = info.config.enable_notifications;
-            options.CRC_CHECKING =  info.config.check_crc;
+            options.HASH_CHECKING =  info.config.check_hash;
             options.BASE_REMAINING_HEIGHT = info.config.remaining_height;
             options.DEFAULT_STATE = info.config.auto_start;
             options.FORCE_TARGET_WINDOW = info.config.target_blank;
             options.CHANGE_ADDRESS = info.config.change_address;
             options.BAR_STATUS = info.config.bar_status;
             options.APW_CSS = info.css;
+            options.TRY_CORRECT_LAZY = info.config.try_correct_lazy;
             debug = info.config.debug_mode;
         }
         if (!info.siteinfo || !info.siteinfo.length) return dispatch_event('AutoPatchWork.ready');
@@ -475,7 +483,7 @@
             downloaded_pages = [],
             page_titles = [],
             requested_urls = {},
-            loaded_crcs = {},
+            loaded_hashes = {},
             error_timeout = null,
             request_fn = request_xhr;
 
@@ -551,18 +559,17 @@
             }
         }
 
+        // example => nextMask: 'https://example.com/page?page=|1|&sort=date'
+        // where 1 is step and position of the page number in URL
         status.next_link_mask = siteinfo.nextMask || null;
+        status.page_number = 1;
         if (status.next_link_mask) {
             var arr = status.next_link_mask.split('|'),
-                matches = /\d{1,}/.exec(location.href.replace(arr[0],'').replace(arr[2],'')),
-                pagen = parseInt(arr[1], 10);
-            if (isNaN(pagen) || !matches) {
-                status.page_number = 1;
-            } else {
+                matches = /\d{1,}/.exec(location.href.replace(arr[0] || '','').replace(arr[2] || '','')),
+                pagen = arr[1] ? parseInt(arr[1], 10) : 1;
+            if (matches) {
                 status.page_number = parseInt(matches[0], 10) / pagen;
             }
-        } else {
-            status.page_number = 1;
         }
 
         status.id = parseInt(siteinfo['wedata.net.id'], 10) || -1;
@@ -575,6 +582,8 @@
         var not_button_mode = (!status.button_elem && !status.button_elem_selector),
             next = not_button_mode ? get_next_link(document) : null,
             page_elements = not_button_mode ? get_main_content(document) : null;
+
+        if (status.next_link_mask) status.page_number++;
 
         if (!status.service) {
             if (status.button_elem) {
@@ -643,7 +652,7 @@
 
         requested_urls[location.href] = 1;
         document.apwpagenumber = 1;
-        if (!status.remaining_height) update_remaining_height();
+        if (!status.remaining_height) get_remaining_height();
 
         add_css(options.APW_CSS, 'main');
         add_css(status.css_patch, 'user');
@@ -659,7 +668,7 @@
         document.addEventListener('AutoPatchWork.terminated', terminated, false);
         document.addEventListener('AutoPatchWork.toggle', toggle, false);
         document.addEventListener('AutoPatchWork.pageloaded', pageloaded, false);
-        document.addEventListener('AutoPatchWork.update', update_remaining_height, false);
+        document.addEventListener('AutoPatchWork.update', get_remaining_height, false);
 
         if (options.BAR_STATUS) {
             var bar = document.createElement('div');
@@ -731,6 +740,7 @@
 
                 var retry = document.createElement('button');
                 retry.id = 'bar_retry';
+                if (!error_timeout) retry.setAttribute('style', 'display:none!important');
                 //retry.textContent = 'RTR';
                 retry.innerHTML = '<svg viewBox="0 0 1792 1792"><path d="M1639 1056q0 5-1 7-64 268-268 434.5t-478 166.5q-146 0-282.5-55t-243.5-157l-129 129q-19 19-45 19t-45-19-19-45v-448q0-26 19-45t45-19h448q26 0 45 19t19 45-19 45l-137 137q71 66 161 102t187 36q134 0 250-65t186-179q11-17 53-117 8-23 30-23h192q13 0 22.5 9.5t9.5 22.5zm25-800v448q0 26-19 45t-45 19h-448q-26 0-45-19t-19-45 19-45l138-138q-148-137-349-137-134 0-250 65t-186 179q-11 17-53 117-8 23-30 23h-199q-13 0-22.5-9.5t-9.5-22.5v-7q65-268 270-434.5t480-166.5q146 0 284 55.5t245 156.5l130-129q19-19 45-19t45 19 19 45z" fill="#fff"/></svg>';
                 //retry.title = 'Retry';
@@ -830,7 +840,7 @@
             document.removeEventListener('AutoPatchWork.terminated', terminated, false);
             document.removeEventListener('AutoPatchWork.toggle', toggle, false);
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
-            document.removeEventListener('AutoPatchWork.update', update_remaining_height, false);
+            document.removeEventListener('AutoPatchWork.update', get_remaining_height, false);
 
             delete window.AutoPatchWorked.init;
             delete window.AutoPatchWorked.siteinfo;
@@ -892,7 +902,6 @@
         function cleanup() {
             //remove_css('main'); /* Not removing 'user' CSS as it can affect separators and paginated pages styling.
                                   /* Commented out because this causes visual twitch in Opera 12 on remove.*/
-
             remove_iframe();
 
             if (status.change_address) {
@@ -903,7 +912,7 @@
                 if (url && url !== '') change_address(url);
 
                 requested_urls = {};
-                loaded_crcs = {};
+                loaded_hashes = {};
                 downloaded_pages = [];
                 page_titles = [];
 
@@ -936,7 +945,7 @@
             document.removeEventListener('AutoPatchWork.terminated', terminated, false);
             document.removeEventListener('AutoPatchWork.toggle', toggle, false);
             document.removeEventListener('AutoPatchWork.pageloaded', pageloaded, false);
-            document.removeEventListener('AutoPatchWork.update', update_remaining_height, false);
+            document.removeEventListener('AutoPatchWork.update', get_remaining_height, false);
 
             if (status.bar) status.bar.className = 'autopager_terminated';
 
@@ -960,16 +969,21 @@
         function swap_directions(){
             if (!(status.prev_link && status.next_link )|| !(status.prev_link_selector && status.next_link_selector))
                 return;
-            var p = status.prev_link, ps = status.prev_link_selector;
+
+            var p = status.prev_link,
+                ps = status.prev_link_selector;
+
             status.reversed = !status.reversed;
             status.prev_link = status.next_link;
             status.next_link = p;
             status.prev_link_selector = status.next_link_selector;
             status.next_link_selector = ps;
+
             requested_urls = {};
-            loaded_crcs = {};
+            loaded_hashes = {};
             downloaded_pages = [];
             page_titles = [];
+
             sendRequest({ reversed: (status.reversed ? 'on' : 'off'), id: status.id });
         }
 
@@ -978,11 +992,17 @@
          * @summary Clears timeout to termination event if no user action performed.
          * */
         function clear_error(){
-            if (!error_timeout) return;
+            if (status.loading) return;
+
             clearTimeout(error_timeout);
             error_timeout = null;
-            requested_urls[status.ajax.last_url] = 0;
-            state_loading();
+            delete requested_urls[status.ajax.last_url];
+
+            if (status.bar) {
+                var retry = status.bar.querySelector('#bar_retry');
+                if (retry) retry.setAttribute('style', 'display:none!important');
+            }
+
             dispatch_event('AutoPatchWork.request', {link: next});
         }
 
@@ -992,10 +1012,15 @@
          * @param {Event} event Event data.
          * */
         function error(event) {
-            if (status.bar) status.bar.className = 'autopager_error';
+            if (status.bar) {
+                status.bar.className = 'autopager_error';
+                var retry = status.bar.querySelector('#bar_retry');
+                if (retry) retry.removeAttribute('style');
+            }
+            status.loading = false;
             error_timeout = setTimeout(function(){
                 terminated({'detail': { message: ((event.detail && event.detail.message) ? event.detail.message : ''), type: 'error' }});
-            }, 30000);
+            }, options.TERMINATION_DELAY);
         }
 
         /**
@@ -1004,6 +1029,18 @@
          * */
         function get_viewport_height() {
             return Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+        }
+
+        /**
+         * Gets height of the current document.
+         * @return {Number} Height of viewport
+         * */
+        function get_document_height() {
+            var body = document.body,
+                html = document.documentElement;
+
+            return Math.max(body.scrollHeight, body.offsetHeight,
+                                html.clientHeight, html.scrollHeight, html.offsetHeight);
         }
 
         /**
@@ -1081,7 +1118,6 @@
             }
 
             if ((rootNode.scrollHeight - window.innerHeight - window.scrollY) < status.remaining_height) {
-                state_loading();
                 dispatch_event('AutoPatchWork.request', {link: next});
             }
         }
@@ -1178,7 +1214,7 @@
         function remove_iframe() {
             var i = document.getElementById('autopatchwork-request-iframe');
             if (i && i.parentNode) i.parentNode.removeChild(i);
-        };
+        }
 
         /**
          * Downloads next page via IFrame-load method.
@@ -1188,7 +1224,7 @@
             var iframe = document.getElementById('autopatchwork-request-iframe') || document.createElement('iframe');
             iframe.setAttribute('style', 'display: none !important;'); //failsafe
             iframe.id = iframe.name = 'autopatchwork-request-iframe';
-            iframe.sandbox = 'allow-same-origin allow-scripts';
+            iframe.sandbox = 'allow-same-origin' + (status.scripts_allowed ? ' allow-scripts' : '');
             /* Removes intermediate IFrame from the current page. */
             iframe.onerror = function () {
                 dispatch_event('AutoPatchWork.error', { message: 'IFRAME request failed' });
@@ -1212,7 +1248,8 @@
          * @param {Event} event Event object.
          * */
         function request(event) {
-            status.loading = true;
+            state_loading();
+
              // in (service === true) we just use request event as corresponding scroll trigger for an external script
             if (status.service) return;
 
@@ -1226,7 +1263,7 @@
                 });
             }
 
-            if (!url || url == '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
+            if (!url || url === '') return dispatch_event('AutoPatchWork.terminated', { message: 'empty link requested' });
 
             if (!requested_urls[url]) requested_urls[url] = 1;
             else if (requested_urls[url] < status.ajax.retry_max) requested_urls[url]++;
@@ -1339,7 +1376,7 @@
         }
 
         /* Updates height delta between the bottom of content block and the page end. */
-        function update_remaining_height() {
+        function get_remaining_height() {
             status.remaining_height = calc_remaining_height(status.content_after);
             //log(status.remaining_height);
         }
@@ -1497,28 +1534,33 @@
          * @param {Event} event Event data.
          * */
         function load(event) {
-            if (!event.detail || !event.detail.htmlDoc)
-                return dispatch_event('AutoPatchWork.error', { message: 'no response from server' });
+            var loaded_url = '';
 
-            var loaded_url = null;
+            if (!event.detail)
+                return dispatch_event('AutoPatchWork.terminated', { message: 'incorrect call of load method'});
+
             if (typeof event.detail.url === 'string' && event.detail.url.length) {
                 loaded_url = event.detail.url;
                 base_url = get_base_url(loaded_url);
             }
 
+            if (!event.detail.htmlDoc)
+                return dispatch_event('AutoPatchWork.error', { message: 'no response from server ' + loaded_url});
+
             if (!status.service) {
                 next = rel_to_abs(get_href(get_next_link(event.detail.htmlDoc)), !options.FORCE_ABSOLUTE_HREFS);
                 remove_nodes(event.detail.htmlDoc);
-                if (!status.scripts_allowed) { // filter scripts
-                   for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
-                       if (st[i].parentNode)
-                           st[i].parentNode.removeChild(st[i]);
-                }
+                //if (!status.scripts_allowed) {
+                // filter scripts (they won't run like this anyway due to different scopes)
+                for (var i = 0, st = event.detail.htmlDoc.querySelectorAll('script'), len = st.length; i < len; i++)
+                   if (st[i].parentNode)
+                       st[i].parentNode.removeChild(st[i]);
+                //}
             }
 
             var nodes = get_main_content(event.detail.htmlDoc);
             if (!nodes || !nodes.length) {
-                if (requested_urls[loaded_url] < status.ajax.retry_max) {
+                if (!!loaded_url && requested_urls[loaded_url] < status.ajax.retry_max) {
                     next = null;
                     var url = loaded_url.replace(/[?&]retry=\d+/, '');
                     url = url + (~url.indexOf('?') ? '&' : '?') + 'retry=' + Date.now();
@@ -1548,6 +1590,7 @@
                 //log('Next delay will be: ' + status.ajax.load_delay + '; real delay: ' + current_delay);
             }
 
+            //log(get_document_height() - status.ajax.last_height);
             return status.ajax.load_delay;
         }
 
@@ -1632,6 +1675,7 @@
                     }
                 }
 
+                //var nimages = fragment.getElementsByTagName('img').length;
                 var last_prev = (content_after && content_after.previousSibling) ? content_after.previousSibling : content_parent.lastChild;
 
                 content_parent.insertBefore(document.importNode(fragment, true), content_after);
@@ -1664,17 +1708,17 @@
                 status.ajax.load_count++;
 
                 setTimeout(function(){
-                    dispatch_event('AutoPatchWork.pageloaded', {'content': status.page_elem || status.page_elem_selector}); },
+                    dispatch_event('AutoPatchWork.pageloaded', {'content': status.page_elem || status.page_elem_selector || null}); },
                     get_load_delay()
                 );
-            }
+            };
 
             // We can't check for repeating nodes in the same document because they can have some function
             // also can't check responseText (earlier) as there is a higher probability of non-paging content
             // changes like random ad id's
-            if (options.CRC_CHECKING && nodes[0] && nodes[0].parentNode) {
+            if (options.HASH_CHECKING && nodes[0] && nodes[0].parentNode) {
                 checksum(nodes[0].parentNode.innerHTML).then(function(content_hash){
-                    if (!loaded_crcs[content_hash]) loaded_crcs[content_hash] = true;
+                    if (!loaded_hashes[content_hash]) loaded_hashes[content_hash] = true;
                     else return dispatch_event('AutoPatchWork.terminated', { message: 'next page has same hash' });
                     onAfterChecked();
                 });
@@ -1685,6 +1729,7 @@
 
         /* Sets status bar to ready state and checks for scrolling. */
         function pageloaded() {
+            status.ajax.last_height = get_document_height();
             state_loaded();
             verify_scroll();
         }

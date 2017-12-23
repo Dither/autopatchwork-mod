@@ -127,7 +127,7 @@ dt.disabled .key, li.disabled .key {
     box-shadow: #CCC 0 0 .25em;
     overflow: hidden;
     width: 717px;
-    height: 443px;
+    height: 495px;
     z-index: 5;
     margin-top: -2px;
 }
@@ -432,7 +432,7 @@ input[type="range"] {
 .MSG_open_siteinfo_manager:lang(ru) {content: 'Редактор'}
 .MSG_auto_start:lang(ru) {content: 'Автозапуск расширения'}
 .MSG_open_newtab:lang(ru) {content: 'Исправлять аттрибут target у ссылок на _blank'}
-.MSG_check_crc:lang(ru) {content: 'Проверять страницы на повторы используя хеш-код'}
+.MSG_check_hash:lang(ru) {content: 'Проверять страницы на повторы используя хеш-код'}
 .MSG_noiframe:lang(ru) {content: 'Отключать расширение в фреймах'}
 .MSG_change_address:lang(ru) {content: 'Обновлять адрес и заголовок при прокрутке'}
 .MSG_bottom_bar:lang(ru) {content: 'Включить статусбар'}
@@ -445,6 +445,7 @@ input[type="range"] {
 .MSG_force_abs_srcs:lang(ru) {content: 'Преобразовывать URL картинок в полные'}
 .MSG_cleanup_on_load:lang(ru) {content: 'После обновления очищать базу от неиспользуемых сайтов'}
 .MSG_allow_ext_styles:lang(ru) {content: 'Разрешить патчи CSS из внешней базы'}
+.MSG_try_correct_lazy:lang(ru) {content: 'Пытаться восстановить кртинки с «ленивой» загрузкой'}
 #update_wedata_location:lang(ru), #update_wedata_full_location:lang(ru) {content: 'Сохранить'}
 /*
  * Так, к сожалению, не работает.
@@ -489,8 +490,10 @@ input[type="range"] {
 .MSG_force_abs_srcs:lang(ja) {content: '完全なアドレスに写真を変換します'}
 .MSG_backup_preferences:lang(ja) {content: 'バックアップデータ'}
 .MSG_siteinfo_patterns:lang(ja) {content: '個人SITEINFO-テンプレート:'}
-.MSG_check_crc:lang(ja) {content: 'ハッシュコードをチェック'}
-.MSG_allow_styles:lang(ja) {content: '外部データベースからCSSパッチを許可する'}
+.MSG_check_hash:lang(ja) {content: 'ハッシュコードをチェック'}
+.MSG_allow_ext_styles:lang(ja) {content: '外部データベースからCSSパッチを許可する'}
+.MSG_try_correct_lazy:lang(ja) {content: '遅延読み込みイメージの修正を試みる'}
+.MSG_cleanup_on_load:lang(ja) {content: '更新時のデータベースのクリーンアップ'}
 /*
  * It's not working this way.
 .MSG_filter_prefix:lang(ja) {content: '接頭辞'}

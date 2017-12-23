@@ -77,8 +77,8 @@
                     <label for='force_abs_srcs' class='MSG_force_abs_srcs'>Force absolute URLs for images in added pages</label>
                 </div>
                 <div>
-                    <input type='checkbox' id='check_crc'>
-                    <label for='check_crc' class='MSG_check_crc'>Check pages for duplicates by content hash</label>
+                    <input type='checkbox' id='check_hash'>
+                    <label for='check_hash' class='MSG_check_hash'>Check pages for duplicates by content hash</label>
                 </div>
                 <div>
                     <input type='checkbox' id='change_address'>
@@ -89,8 +89,12 @@
                     <label for='allow_ext_styles' class='MSG_allow_ext_styles'>Allow CSS patches from external database</label>
                 </div>
                 <div>
-                    <span class='mins'>0</span>
-                    <input type='range' id='remaining_height' max='4000' min='0' step='10'>
+                    <input type='checkbox' id='try_correct_lazy'>
+                    <label for='try_correct_lazy' class='MSG_try_correct_lazy'>Attemt to fix lazy-loaded images</label>
+                </div>
+                <div>
+                    <span class='mins'>400</span>
+                    <input type='range' id='remaining_height' max='4000' min='400' step='100'>
                     <span class='maxs'>4000</span>
                 </div>
                 <div class='outputs'>

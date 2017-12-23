@@ -45,13 +45,14 @@ window.AutoPatchWorkBG = {
         disable_in_frames: true,
         change_address: false,
         debug_mode: false,
-        check_crc: false,
+        check_hash: false,
         bar_status: true,
         force_abs_hrefs: false,
         force_abs_srcs: false,
         enable_notifications: false,
         cleanup_on_load: false,
-        allow_ext_styles: false
+        allow_ext_styles: false,
+        try_correct_lazy: true
     },
     save_custom_patterns: function(patterns) {
         storagebase.AutoPatchWorkPatterns = patterns;
@@ -65,7 +66,7 @@ window.AutoPatchWorkBG = {
         initDatabase();
     },
     init_css: function(css) {
-        initCSS();
+        initCSS(css);
     },
     update: function() {
         saveConfig();
@@ -127,10 +128,9 @@ function initCSS(css) {
 }
 
 function getCSS(callback) {
-    var css = './css/main.css';
-    var cssurl = URL ? (new URL(css)) : css;
+    var css = 'css/main.css';
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', cssurl, false);
+    xhr.open('GET', css, true);
     xhr.send(null);
     xhr.onload = function () {
         callback(xhr.responseText);
@@ -204,6 +204,7 @@ function checkExists(url, callback) {
     http.open('HEAD', url, true);
     http.send();
 }
+/* jshint ignore:end */
 
 function initDBLocation() {
     if (storagebase.db_location) JSON_SITEINFO_DB_MIN = storagebase.db_location;
@@ -228,8 +229,6 @@ function updateMiniDatabaseURL(url) {
 function updateFullDatabaseURL(url) {
     storagebase.db_full_location = JSON_SITEINFO_DB = url;
 }
-
-/* jshint ignore:end */
 
 function initDatabase() {
     initDBLocation();
@@ -389,7 +388,7 @@ function runExtension() {
 
     var version = '', manifest;
     function getManifest(callback) {
-        var url = './manifest.json';
+        var url = 'manifest.json';
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             callback(JSON.parse(xhr.responseText));
@@ -540,14 +539,14 @@ function handleMessage(request, sender, sendResponse) {
 
     if (request.paused) {
         if (typeof request.id === 'number' && request.id !== -1) {
-            set_mode('paused', request.id, s2b(request.paused))
+            set_mode('paused', request.id, s2b(request.paused));
         }
         return;
     }
 
     if (request.reversed) {
         if (typeof request.id === 'number' && request.id !== -1) {
-            set_mode('reversed', request.id, s2b(request.reversed))
+            set_mode('reversed', request.id, s2b(request.reversed));
         }
         return;
     }

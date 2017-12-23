@@ -222,10 +222,12 @@ document.addEventListener('DOMContentLoaded',function(){
     }, false);
     var reset_css = document.getElementById('reset_css');
     reset_css.addEventListener('click', function() {
+        reset_css.disabled = true;
         AutoPatchWork.init_css();
         setTimeout(function() {
-            css_text.value = AutoPatchWork.css = storagebase.AutoPatchWorkCSS;
-        }, 0);
+            css_text.value = AutoPatchWork.css;
+            reset_css.disabled = false;
+        }, 200);
     }, false);
 
     // Custom SITEINFO patterns tab
@@ -243,10 +245,12 @@ document.addEventListener('DOMContentLoaded',function(){
     }, false);
     var reset_custom_patterns = document.getElementById('reset_custom_patterns');
     reset_custom_patterns.addEventListener('click', function() {
+        reset_custom_patterns.disabled = true;
         AutoPatchWork.reset_custom_patterns();
         setTimeout(function() {
             custom_patterns.value = storagebase.AutoPatchWorkPatterns;
-        }, 0);
+            reset_custom_patterns.disabled = false;
+        }, 200);
     }, false);
 
     // Backup tab
@@ -257,33 +261,40 @@ document.addEventListener('DOMContentLoaded',function(){
     };
     var save_backup = document.getElementById('save_backup');
     save_backup.addEventListener('click', function() {
+        save_backup.disabled = true;
         var backup = JSON.parse(backup_field.value);
         storagebase.clear();
         for (var item in backup)
             if (backup.hasOwnProperty(item))
                 storagebase.setItem(item, backup[item]);
-        setTimeout(bgProcess.initDatabase, 500);
+        setTimeout(function() {
+            bgProcess.initDatabase();
+            save_backup.disabled = false;
+        }, 500);
     }, false);
     var reset_backup = document.getElementById('reset_backup');
     reset_backup.addEventListener('click', function() {
+        reset_backup.disabled = true;
         storagebase.clear();
         //init here; callback on completion
         setTimeout(function() {
             backup_field.value = JSON.stringify(storagebase);
+            reset_backup.disabled = false;
         }, 1000);
     }, false);
 
     // Blacklists
-    var filter_list = document.getElementById('filter_list');
-    var filter_text = document.getElementById('filter_text');
-    var filter_type = document.getElementById('filter_type');
-    var add_filter = document.getElementById('add_filter');
+    var filter_list = document.getElementById('filter_list'),
+        filter_text = document.getElementById('filter_text'),
+        filter_type = document.getElementById('filter_type'),
+        add_filter = document.getElementById('add_filter');
 
     AutoPatchWork.disabled_sites.forEach(create_filter);
 
     function create_filter(site) {
-        var li = document.createElement('li');
-        var types = filter_type.cloneNode(true);
+        var li = document.createElement('li'),
+            types = filter_type.cloneNode(true);
+
         types.id = '';
         li.appendChild(types);
         types.value = site.type;
@@ -336,17 +347,21 @@ document.addEventListener('DOMContentLoaded',function(){
         AutoPatchWork.add_disabled_site(site);
         filter_text.value = '';
     }, false);
-    var sections = find('section.content');
-    var inner_container = document.getElementById('inner-container');
-    var container = document.getElementById('base');
+
+    var sections = find('section.content'),
+        inner_container = document.getElementById('inner-container'),
+        container = document.getElementById('base');
+
     inner_container.style.width = sections.length * (WIDTH + 20) + 'px';
     container.style.height = 'auto'; //HEIGHT + 'px';
     sections.forEach(function(section) {
         section.style.visibility = 'hidden';
         section.style.height = '100px';
     });
-    var btns = find('#menu-tabs>li>a');
-    var default_title = document.title;
+
+    var btns = find('#menu-tabs>li>a'),
+        default_title = document.title;
+
     btns.forEach(function(btn, i, btns) {
         btn.addEventListener('click', function(evt) {
             evt.preventDefault();
@@ -376,6 +391,7 @@ document.addEventListener('DOMContentLoaded',function(){
             });
         }, false);
     });
+
     if(location.hash) {
         sections.some(function(section, i) {
             if('#' + section.id === location.hash) {

@@ -2,12 +2,13 @@ var RECORDS_PER_PAGE = 100,
     JSON_SITEINFO_DB = 'http://wedata.net/databases/AutoPagerize/items.json',
     pageIndex = 0;
 
-(function siteinfo_manager(bgProcess) {
-
+(function(){
     var html = document.querySelector('html');
     html.setAttribute('lang', window.navigator.language);
     html.setAttribute('xml:lang', window.navigator.language);
+}());
 
+(function siteinfo_manager(bgProcess) {
     // Init browser-specific messaging
     switch (browser_type) {
         case BROWSER_SAFARI:
@@ -33,14 +34,13 @@ var RECORDS_PER_PAGE = 100,
         debug = !!JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode;
 
     var custom_info = bgProcess.custom_info,
-        site_stats = JSON.parse(storagebase.site_stats),
-        site_fail_stats = JSON.parse(storagebase.site_fail_stats),
+        site_stats = bgProcess.site_stats,
+        site_fail_stats = bgProcess.site_fail_stats,
         allow_ext_styles = bgProcess.AutoPatchWorkBG.config.allow_ext_styles,
-        entry_editor_running = false,
-        stop_pager = false;
+        entry_editor_running = false;
 
     JSON_SITEINFO_DB = bgProcess.JSON_SITEINFO_DB || JSON_SITEINFO_DB;
-    var getWedataId = bgProcess.getWedataId || // WTF???
+    var getWedataId = bgProcess.getWedataId ||
                         function getWedataId(inf) {
                             return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
                         };
@@ -51,25 +51,22 @@ var RECORDS_PER_PAGE = 100,
         window.addEventListener('AutoPatchWork.request', function(e) {
             profile('AutoPatchWork.request');
             if (e.stopPropagation) e.stopPropagation(); else e.cancelBubble = true;
-            if (stop_pager) return;
             var infos = filtered_info.length ? filtered_info : siteinfo_data;
-            if (!infos) return;
-            if (infos.length > RECORDS_PER_PAGE * (pageIndex + 1) && pageIndex < Math.ceil(infos.length/RECORDS_PER_PAGE)) {
+            if (!!infos && infos.length > RECORDS_PER_PAGE * (pageIndex + 1) && pageIndex < Math.ceil(infos.length/RECORDS_PER_PAGE)) {
                 pageIndex++;
-                dispatch_event('AutoPatchWork.state',{state:'on'});
-                new SiteInfoView(infos.slice(RECORDS_PER_PAGE * pageIndex, RECORDS_PER_PAGE * (pageIndex + 1)), RECORDS_PER_PAGE * pageIndex);
+                SiteInfoView(infos.slice(RECORDS_PER_PAGE * pageIndex, RECORDS_PER_PAGE * (pageIndex + 1)), RECORDS_PER_PAGE * pageIndex);
             } else {
-                dispatch_event('AutoPatchWork.state',{state:'off'});
+                dispatch_event('AutoPatchWork.state', {state:'off'});
             }
             dispatch_event('AutoPatchWork.pageloaded');
             profile('AutoPatchWork.request', 'end');
         }, true);
 
-        var local_siteinfo = bgProcess.siteinfo;
-        var successful = 'number_of_successful';
-        var failed = 'number_of_failed';
-        var siteinfos_array = {};
-        var re_http = /^https?:\/\/[^"'`]+$/ig;
+        var local_siteinfo = bgProcess.siteinfo,
+            successful = 'number_of_successful',
+            failed = 'number_of_failed',
+            siteinfos_array = {},
+            re_http = /^https?:\/\/[^"'`]+$/ig;
 
         local_siteinfo.forEach(function (v) {
             if(v['wedata.net.id']) siteinfos_array[v['wedata.net.id']] = v;
@@ -89,11 +86,11 @@ var RECORDS_PER_PAGE = 100,
         siteinfo_search_input.value = ~window.location.hash.indexOf('=') ? window.location.hash.substr(1).split('=')[1] || '' : '';
 
         /* jshint ignore:start */
-        var siteinfo_table = document.getElementById('siteinfo_table');
-        var siteinfo_nav = document.getElementById('siteinfo_nav');
-        var siteinfo_view = document.getElementById('siteinfo_view');
-        var siteinfo_head = document.getElementById('siteinfo_head');
-        var siteinfo_body = siteinfo_table.querySelector('tbody');
+        var siteinfo_table = document.getElementById('siteinfo_table'),
+            siteinfo_nav = document.getElementById('siteinfo_nav'),
+            siteinfo_view = document.getElementById('siteinfo_view'),
+            siteinfo_head = document.getElementById('siteinfo_head'),
+            siteinfo_body = siteinfo_table.querySelector('tbody');
         /* jshint ignore:end */
 
         var types = {
@@ -172,8 +169,7 @@ var RECORDS_PER_PAGE = 100,
                 if (sorted && e.target !== sorted) {
                     sorted.className = '';
                 }
-                new SiteInfoView(infos.slice(0, RECORDS_PER_PAGE));
-                new SiteInfoNavi(infos);
+                InitSiteInfoView(infos);
                 sorted = e.target;
             }
         };
@@ -190,7 +186,6 @@ var RECORDS_PER_PAGE = 100,
         function process_search_input() {
             if (!siteinfo_data || !siteinfo_data.length) return;
             profile('process_search_input');
-            stop_pager = true;
             var fullword = siteinfo_search_input.value,
                 fullwords = [];
             if (fullword.trim() !== '') {
@@ -204,9 +199,7 @@ var RECORDS_PER_PAGE = 100,
                 });
             } else {
                 filtered_info = [];
-                new SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
-                new SiteInfoNavi(siteinfo_data);
-                stop_pager = false;
+                InitSiteInfoView(siteinfo_data);
                 return;
             }
             filtered_info = siteinfo_data.filter(function (sinfo) {
@@ -232,16 +225,15 @@ var RECORDS_PER_PAGE = 100,
                 })) return true;
                 return false;
             });
-            new SiteInfoView(filtered_info.slice(0, RECORDS_PER_PAGE));
-            new SiteInfoNavi(filtered_info);
-            stop_pager = false;
+
+            InitSiteInfoView(filtered_info);
             profile('process_search_input', 'end');
         }
+
         var timer = null;
         siteinfo_search_input.addEventListener('input', function() {
             clearTimeout(timer);
             timer = setTimeout(process_search_input, 400);
-            dispatch_event('AutoPatchWork.request');
         }, false);
 
         function url2anchor(url) {
@@ -321,7 +313,7 @@ var RECORDS_PER_PAGE = 100,
             return btn;
         }*/
 
-        function applyDBfixes(siteinfo) {
+        function apply_fixes(siteinfo) {
             siteinfo.forEach(function (info) {
                 var id = getWedataId(info);
                 info[successful] = site_stats[id] || 0;
@@ -329,10 +321,17 @@ var RECORDS_PER_PAGE = 100,
                 if (!info.data) return;
                 var t = info.data['cssPatch'] || info.data['Stylish'] || null;
                 delete info.data['cssPatch'];
-                delete info.data['jsPatch'];
                 delete info.data['Stylish'];
-                info.data['prevLink'] = info.data['prevLink'] || ''; // show the field anyway
-                info.data['insertBefore'] = info.data['insertBefore'] || ''; // show the field anyway
+                //don't need those from an external db
+                delete info.data['jsPatch'];
+                delete info.data['SERVICE'];
+                delete info.data['domEvents'];
+                delete info.data['buttonElement'];
+                delete info.data['buttonElementSelector'];
+                delete info.data['removeElement'];
+                delete info.data['removeElementSelector'];
+                info.data['prevLink'] = info.data['prevLink'] || ''; // show the field if absent
+                info.data['insertBefore'] = info.data['insertBefore'] || ''; // show the field if absent
                 if (allow_ext_styles) {
                     if (t && !t.match(/java/i && !t.match(/url[^\(]*\(/i)) &&
                         t.replace(/\s/g,'').length > 5) {
@@ -344,6 +343,17 @@ var RECORDS_PER_PAGE = 100,
             });
         }
 
+
+        function InitSiteInfoView(inf) {
+            SiteInfoView(inf.slice(0, RECORDS_PER_PAGE));
+            SiteInfoNavi(inf);
+            if (inf.length > RECORDS_PER_PAGE) {
+                dispatch_event('AutoPatchWork.state', {state: 'on'});
+            } else {
+                dispatch_event('AutoPatchWork.state', {state: 'off'});
+            }
+        }
+
         function SiteInfoView(siteinfo, append) {
             profile('SiteInfoView');
             entry_editor_running = false;
@@ -353,15 +363,15 @@ var RECORDS_PER_PAGE = 100,
             var essential_fields = {'url':1 , 'pageElement':1,'nextLink':1};
 
             siteinfo.forEach(function (info, i) {
-                var id = getWedataId(info);
-                var current_siteinfo = siteinfos_array[id];
+                var id = getWedataId(info),
+                    current_siteinfo = siteinfos_array[id];
 
-                var line = template_element.cloneNode(true);
-                var disabled_btn = line.querySelector('input.onoff');
-                var scripts_enabled_btn = line.querySelector('input.scripts_enable');
-                var force_iframe_btn = line.querySelector('input.force_iframe');
-                var disable_separator_btn = line.querySelector('input.disable_separator');
-                var addr_change_btn = line.querySelector('input.address_change');
+                var line = template_element.cloneNode(true),
+                    disabled_btn = line.querySelector('input.onoff'),
+                    scripts_enabled_btn = line.querySelector('input.scripts_enable'),
+                    force_iframe_btn = line.querySelector('input.force_iframe'),
+                    disable_separator_btn = line.querySelector('input.disable_separator'),
+                    addr_change_btn = line.querySelector('input.address_change');
 
                 if (custom_info && custom_info[id]) {
                     var ci = custom_info[id];
@@ -634,7 +644,7 @@ var RECORDS_PER_PAGE = 100,
                 a.id = 'a' + i;
                 nav.appendChild(a);
                 a.addEventListener('click', function (e) {
-                    new SiteInfoView(siteinfo.slice(RECORDS_PER_PAGE * i, RECORDS_PER_PAGE * (i + 1)));
+                    SiteInfoView(siteinfo.slice(RECORDS_PER_PAGE * i, RECORDS_PER_PAGE * (i + 1)));
                     pageIndex = i;
                     window.scrollTo(0, 0);
                     e.preventDefault();
@@ -713,20 +723,16 @@ var RECORDS_PER_PAGE = 100,
         };
 
         profile('UpdateSiteInfo');
-        stop_pager = true;
         if (sessionStorage.siteinfo_wedata) {
             siteinfo_data = JSON.parse(sessionStorage.siteinfo_wedata);
-            applyDBfixes(siteinfo_data);
+            apply_fixes(siteinfo_data);
             sort_by(siteinfo_data, { number: true, key: failed });
-            if (siteinfo_search_input.value === '') {
-                new SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
-                new SiteInfoNavi(siteinfo_data);
-                stop_pager = false;
+            if (siteinfo_search_input.value == '') {
+                InitSiteInfoView(siteinfo_data);
             } else {
                 dispatch_html_event(siteinfo_search_input, 'input');
             }
             window.onresize();
-            dispatch_event('AutoPatchWork.state', {state:'off'});
             dispatch_event('AutoPatchWork.siteinfo', {
                 siteinfo: {
                     url: '.',
@@ -737,20 +743,17 @@ var RECORDS_PER_PAGE = 100,
             });/**/
             profile('UpdateSiteInfo', 'end');
         } else {
-            new UpdateSiteInfo(function (siteinfo) {
+            UpdateSiteInfo(function (siteinfo) {
                 siteinfo_data = siteinfo;
                 sessionStorage.siteinfo_wedata = JSON.stringify(siteinfo);
-                applyDBfixes(siteinfo_data);
+                apply_fixes(siteinfo_data);
                 sort_by(siteinfo_data, { number: true, key: failed });
-                if (document.getElementById('siteinfo_search_input').value === '') {
-                    new SiteInfoView(siteinfo_data.slice(0, RECORDS_PER_PAGE));
-                    new SiteInfoNavi(siteinfo);
-                    stop_pager = false;
+                if (document.getElementById('siteinfo_search_input').value == '') {
+                    InitSiteInfoView(siteinfo_data);
                 } else {
                     dispatch_html_event(document.getElementById('siteinfo_search_input'), 'input');
                 }
                 window.onresize();
-                dispatch_event('AutoPatchWork.state', {state:'off'});
                 dispatch_event('AutoPatchWork.siteinfo', {
                     siteinfo: {
                         url: '.',
