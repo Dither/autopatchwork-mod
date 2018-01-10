@@ -992,11 +992,12 @@
          * @summary Clears timeout to termination event if no user action performed.
          * */
         function clear_error(){
-            if (status.loading) return;
-
             clearTimeout(error_timeout);
             error_timeout = null;
             delete requested_urls[status.ajax.last_url];
+
+            status.state = true;
+            status.loading = false;
 
             if (status.bar) {
                 var retry = status.bar.querySelector('#bar_retry');
@@ -1017,7 +1018,9 @@
                 var retry = status.bar.querySelector('#bar_retry');
                 if (retry) retry.removeAttribute('style');
             }
-            status.loading = false;
+
+            status.state = false;
+
             error_timeout = setTimeout(function(){
                 terminated({'detail': { message: ((event.detail && event.detail.message) ? event.detail.message : ''), type: 'error' }});
             }, options.TERMINATION_DELAY);
@@ -1106,10 +1109,10 @@
                 }
                 if (elem) { // && (status.busy_string ? !~elem.innerHTML.indexOf(status.busy_string) : true)) {
                     if ((rootNode.scrollHeight - window.innerHeight - window.scrollY) < status.remaining_height) {
-                        status.loading = true;
+                        state_loading();
                         elem.click();
                         // should timeout be a variable depending on page loading speed or as SITEINFO field?
-                        setTimeout( function() { status.loading = false; dispatch_event('AutoPatchWork.pageloaded'); }, 2000 ); //parseInt((status.busy_time || 2000), 10);
+                        setTimeout( function() { dispatch_event('AutoPatchWork.pageloaded'); }, 2000 ); //parseInt((status.busy_time || 2000), 10);
                     }
                 } else {
                     dispatch_event('AutoPatchWork.terminated', { message: 'can\'t find next page button' });
@@ -1248,6 +1251,7 @@
          * @param {Event} event Event object.
          * */
         function request(event) {
+            if (status.loading || !status.state) return;
             state_loading();
 
              // in (service === true) we just use request event as corresponding scroll trigger for an external script
@@ -1601,7 +1605,8 @@
         function append(event) {
             if (!status.loading || !event.detail.nodes)
                 return dispatch_event('AutoPatchWork.error', { message: 'page content not retreived' });
-            else if (!event.detail.nodes.length) {
+
+            if (!event.detail.nodes.length) {
                 return dispatch_event('AutoPatchWork.error', { message: 'page content ' + (status.page_elem || status.page_elem_selector)  + ' not found' });
             }
 

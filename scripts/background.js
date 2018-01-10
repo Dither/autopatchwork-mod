@@ -73,14 +73,14 @@ window.AutoPatchWorkBG = {
     },
     disabled_sites: [],
     blacklist_check: function(url) {
-        if(url.indexOf('http') !== 0)
+        if (url.indexOf('http') !== 0)
             return true;
         return AutoPatchWorkBG.disabled_sites.some(function(site) {
-            if(site.type === 'regexp')
+            if (site.type === 'regexp')
                 return new RegExp(site.matcher).test(url);
-            else if(site.type === 'prefix')
+            else if (site.type === 'prefix')
                 return url.indexOf(site.matcher) === 0;
-            else if(site.type === 'domain')
+            else if (site.type === 'domain')
                 return new RegExp('^https?://' + site.matcher + '/').test(url);
         });
     },
@@ -93,8 +93,8 @@ window.AutoPatchWorkBG = {
     },
     delete_disabled_site: function(site) {
         var site_s = JSON.stringify(site);
-        for(var i = 0, len = AutoPatchWorkBG.disabled_sites.length; i < len; i++) {
-            if(JSON.stringify(AutoPatchWorkBG.disabled_sites[i]) === site_s) {
+        for (var i = 0, len = AutoPatchWorkBG.disabled_sites.length; i < len; i++) {
+            if (JSON.stringify(AutoPatchWorkBG.disabled_sites[i]) === site_s) {
                 AutoPatchWorkBG.disabled_sites.splice(i, 1);
                 saveDisabledSites();
                 break;
@@ -107,13 +107,11 @@ window.AutoPatchWorkBG = {
 
 if(browser_type === BROWSER_SAFARI) {
     safari.extension.settings.addEventListener('change', function(evt) {
-        if(evt.key in AutoPatchWorkBG.config) {
+        if (evt.key in AutoPatchWorkBG.config) {
             AutoPatchWorkBG.config[evt.key] = evt.newValue;
-        } else if(evt.key === 'excludes') {
+        } else if (evt.key === 'excludes') {
             var urls = evt.newValue.trim().split(' ');
-            AutoPatchWorkBG.disabled_sites = urls.map(function(url) {
-                return { type: 'prefix', matcher: url };
-            });
+            AutoPatchWorkBG.disabled_sites = urls.map(function(url) { return { type: 'prefix', matcher: url }; });
             saveDisabledSites();
         }
     }, false);
@@ -137,20 +135,8 @@ function getCSS(callback) {
     };
 }
 
-function getWedataId(inf) {
-    return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '') : '0', 10);
-}
-
-function applyCustomInfo() {
-    siteinfo.forEach(function(i) {
-        var id = i['wedata.net.id'];
-        if (!id) return;
-        var ci = custom_info[id];
-        if (!ci) return;
-        Object.keys(ci).forEach(function(k) {
-            if(typeof ci[k] === 'string' ? ci[k].trim() !== '' : !!ci[k]) i[k] = ci[k]; else delete i[k]; // deletes `insertBefore` in case we null it
-        });
-    });
+function getWedataId(wditem) {
+    return parseInt(wditem.resource_url ? wditem.resource_url.replace('http://wedata.net/items/', '') : '0', 10) || 0;
 }
 
 function initCustomPatterns() {
@@ -164,6 +150,10 @@ function resetCustomPatterns() {
     storagebase.AutoPatchWorkPatterns = '';
 }
 
+function applyCustomPatterns() {
+    siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
+}
+
 function saveDisabledSites() {
     storagebase.disabled_sites = JSON.stringify(AutoPatchWorkBG.disabled_sites);
 }
@@ -172,13 +162,60 @@ function saveConfig() {
     storagebase.AutoPatchWorkConfig = JSON.stringify(AutoPatchWorkBG.config);
 }
 
-function applyCustomPatterns() {
-    siteinfo.unshift.apply(siteinfo, AutoPatchWorkBG.custom_patterns);
-}
-
 function applyMicroformats() {
     if(!BLOCK_MICROFORMATS)
         siteinfo.push.apply(siteinfo, MICROFORMATs);
+}
+
+function applyCustomInfo() {
+    siteinfo.forEach(function(i) {
+        var id = i['wedata.net.id'];
+        if (!id) return;
+        var ci = getCustomInfo(id);
+        if (!ci) return;
+        Object.keys(ci).forEach(function(k) {
+            if(typeof ci[k] === 'string' ? ci[k].trim() !== '' : !!ci[k]) i[k] = ci[k]; else delete i[k]; // deletes `insertBefore` in case we null it
+        });
+    });
+}
+
+function getCustomInfo(id) {
+    return custom_info[id];
+}
+
+function removeCustomInfo(id, name) {
+    if (typeof custom_info[id] === 'undefined') return;
+    //log('removed custom info ('+id+') ['+name+']');
+    if (--custom_info[id].length < 1) {
+        delete custom_info[id];
+    } else {
+        if (typeof custom_info[id][name] === 'undefined') return;
+        delete custom_info[id][name];
+    }
+}
+
+function setCustomInfo(id, name, value, default_value) {
+    if (typeof custom_info[id] === 'undefined') {
+        if (typeof default_value !== 'undefined' && default_value === value)
+            return;
+        //log('created custom info ('+id+')['+name+'] = '+value);
+        custom_info[id] = {};
+        custom_info[id][name] = value;
+        custom_info[id].length = 1;
+    } else {
+        if (typeof default_value !== 'undefined' && default_value === value) {
+            removeCustomInfo(id, name);
+            return;
+        }
+        if (typeof custom_info[id][name] === 'undefined') {
+            //log('created custom info ('+id+')['+name+'] = '+value);
+            custom_info[id][name] = value;
+            custom_info[id].length++;
+        } else {
+            //log('set custom info ('+id+')['+name+'] = '+value);
+            custom_info[id][name] = value;
+        }
+    }
 }
 
 function saveCustomInfo(new_custom_info) {
@@ -238,9 +275,7 @@ function initDatabase() {
             throw new APWException('SITEINFO DB expired');
         }
         var data = Store.get('siteinfo_wedata');
-        if (!data || !data.siteinfo) {
-            log('No SITEINFO DB present');
-        }
+        if (!data || !data.siteinfo) log('No SITEINFO DB present');
         siteinfo = data.siteinfo || [];
         timestamp = new Date(data.timestamp);
         initCustomInfo();
@@ -258,12 +293,15 @@ function createDatabase(info) {
             'nextLinkSelector',
             'prevLink',
             'prevLinkSelector',
-            'forceIframe',
-            'disableSeparator',
             'pageElement',
             'pageElementSelector',
             'url',
             'insertBefore'
+        ],
+        allowed_bool_fields = [
+            'forceIframe',
+            'allowScripts', //this ony influences iframe loading method now
+            'disableSeparator'
         ],
         is_sso_db = !!~JSON_SITEINFO_DB_MIN.indexOf('os0x.heteml.jp');
 
@@ -272,7 +310,7 @@ function createDatabase(info) {
     var clean = AutoPatchWorkBG.config.cleanup_on_load;
 
     info.forEach(function(i) {
-        var d = i.data || i, r = {}, id = i['wedata.net.id'] || getWedataId(i);
+        var d = i.data || i, r = {}, id = parseInt(i['wedata.net.id'], 10) || getWedataId(i);
         if (AutoPatchWorkBG.config.allow_ext_styles && d) {
             var t = null;
             if (typeof d['Stylish'] === 'string' && d['Stylish'].replace(/\s/g,'').length > 5) t = d['Stylish']; // Stylish CSS
@@ -283,10 +321,14 @@ function createDatabase(info) {
             }
         }
         allowed_fields.forEach(function(k) {
-            if(!d[k]) return;
+            if(!d[k] || !d.hasOwnProperty(k)) return;
             if (is_sso_db) d[k] = d[k].replace(/\s*\b(rn)+$/g,''); //server bug?
             r[k] = d[k];
         });
+        /*allowed_bool_fields.forEach(function(k) {
+            if (info.data.hasOwnProperty(k) && typeof custom_info[id][k] === 'undefined') //don't overwrite existing preset
+                setCustomInfo(id, k, s2b(d[k]), false);
+        });*/
         r['wedata.net.id'] = id;
         try { new RegExp(r.url); } catch (bug) {
         	tmp_log += '[' + r['wedata.net.id'] + '] Invalid url RegExp ' + r.url + ': ' +  (bug.message || bug) + '\n';
@@ -511,6 +553,16 @@ switch(browser_type) {
         };
 }
 
+function setMode(id, mode, val) {
+    for (var i = 0, silen = siteinfo.length; i < silen; i++)
+        if (siteinfo[i]['wedata.net.id'] && siteinfo[i]['wedata.net.id']  === id) {
+            //TODO: should this persist between sessions?
+            //setCustomInfo(id, mode, val, false);
+            siteinfo[i][mode] = val;
+            break;
+        }
+}
+
 function handleMessage(request, sender, sendResponse) {
     if (request.message === 'AutoPatchWork.initialized') {
         var id = request.siteinfo['wedata.net.id'] || 'microformats';
@@ -529,25 +581,15 @@ function handleMessage(request, sender, sendResponse) {
         return;
     }
 
-    var set_mode = function(mode, id, val) {
-        for (var i = 0, silen = siteinfo.length; i < silen; i++)
-            if (siteinfo[i]['wedata.net.id']  === id) {
-                siteinfo[i][mode] = val;
-                break;
-            }
-    };
-
     if (request.paused) {
-        if (typeof request.id === 'number' && request.id !== -1) {
-            set_mode('paused', request.id, s2b(request.paused));
-        }
+        if (typeof request.id === 'number' && request.id !== -1)
+            setMode(request.id, 'paused', s2b(request.paused));
         return;
     }
 
     if (request.reversed) {
-        if (typeof request.id === 'number' && request.id !== -1) {
-            set_mode('reversed', request.id, s2b(request.reversed));
-        }
+        if (typeof request.id === 'number' && request.id !== -1)
+            setMode(request.id, 'reversed', s2b(request.reversed));
         return;
     }
 
@@ -586,7 +628,7 @@ function handleMessage(request, sender, sendResponse) {
 function openOrFocusTab(uri) {
     switch (browser_type) {
         case BROWSER_CHROME:
-            browser.windows.getAll({ populate: true}, function(windows) {
+            browser.windows.getAll({ populate: true }, function(windows) {
                 if (!windows.some(function(w) {
                     if (w.type === 'normal') {
                         return w.tabs.some(function(t) {

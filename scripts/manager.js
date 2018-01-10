@@ -33,51 +33,49 @@ var RECORDS_PER_PAGE = 100,
     if (typeof storagebase.AutoPatchWorkConfig !== 'undefined')
         debug = !!JSON.parse(storagebase.AutoPatchWorkConfig).debug_mode;
 
-    var custom_info = bgProcess.custom_info,
-        site_stats = bgProcess.site_stats,
+    JSON_SITEINFO_DB = bgProcess.JSON_SITEINFO_DB || JSON_SITEINFO_DB;
+
+    var site_stats = bgProcess.site_stats,
         site_fail_stats = bgProcess.site_fail_stats,
         allow_ext_styles = bgProcess.AutoPatchWorkBG.config.allow_ext_styles,
-        entry_editor_running = false;
-
-    JSON_SITEINFO_DB = bgProcess.JSON_SITEINFO_DB || JSON_SITEINFO_DB;
-    var getWedataId = bgProcess.getWedataId ||
-                        function getWedataId(inf) {
-                            return parseInt(inf.resource_url ? inf.resource_url.replace('http://wedata.net/items/', '0') : '', 10);
+        entry_editor_running = false,
+        getWedataId = bgProcess.getWedataId || function getWedataId(wditem) {
+                            return parseInt(wditem.resource_url ? wditem.resource_url.replace('http://wedata.net/items/', '0') : '', 10) || 0;
                         };
 
     document.addEventListener('DOMContentLoaded', function () {
+        var successful = 'number_of_successful',
+            failed = 'number_of_failed',
+            siteinfos_array = {},
+            wedata_array, filtered_wedata_array = [],
+            re_http = /^https?:\/\/[^"'`]+$/ig,
+            except_info = {
+                'database_resource_url': true,
+                'resource_url': true
+            };
+
         document.getElementById('loader').style.display = 'none';
 
         window.addEventListener('AutoPatchWork.request', function(e) {
             profile('AutoPatchWork.request');
             if (e.stopPropagation) e.stopPropagation(); else e.cancelBubble = true;
-            var infos = filtered_info.length ? filtered_info : siteinfo_data;
+
+            var infos = filtered_wedata_array.length ? filtered_wedata_array : wedata_array;
             if (!!infos && infos.length > RECORDS_PER_PAGE * (pageIndex + 1) && pageIndex < Math.ceil(infos.length/RECORDS_PER_PAGE)) {
                 pageIndex++;
                 SiteInfoView(infos.slice(RECORDS_PER_PAGE * pageIndex, RECORDS_PER_PAGE * (pageIndex + 1)), RECORDS_PER_PAGE * pageIndex);
             } else {
                 dispatch_event('AutoPatchWork.state', {state:'off'});
             }
+
             dispatch_event('AutoPatchWork.pageloaded');
             profile('AutoPatchWork.request', 'end');
         }, true);
 
-        var local_siteinfo = bgProcess.siteinfo,
-            successful = 'number_of_successful',
-            failed = 'number_of_failed',
-            siteinfos_array = {},
-            re_http = /^https?:\/\/[^"'`]+$/ig;
-
-        local_siteinfo.forEach(function (v) {
-            if(v['wedata.net.id']) siteinfos_array[v['wedata.net.id']] = v;
+        bgProcess.siteinfo.forEach(function (v) {
+            var id = parseInt(v['wedata.net.id'], 10) || 0;
+            if (id) siteinfos_array[id] = v;
         });
-
-        var siteinfo_data, filtered_info = [];
-
-        var except_info = {
-            'database_resource_url': true,
-            'resource_url': true
-        };
 
         var template_element = document.getElementById('tmpl_siteinfo_body').firstChild;
         while (template_element && (template_element.nodeType !== 1)) template_element = template_element.nextSibling;
@@ -93,6 +91,38 @@ var RECORDS_PER_PAGE = 100,
             siteinfo_body = siteinfo_table.querySelector('tbody');
         /* jshint ignore:end */
 
+        var allowed_fields = {
+            'nextLink':1,
+            'nextLinkSelector':1,
+            'prevLink':1,
+            'prevLinkSelector':1,
+            'pageElement':1,
+            'pageElementSelector':1,
+            'url':1,
+            'insertBefore':1,
+            'comment':1,
+            'exampleUrl':1
+        };
+
+        var custom_ext_fields = {
+            'forceIframe':1,
+            'allowScripts':1,
+            'prevLink':1,
+            'prevLinkSelector':1,
+            'disableSeparator':1
+        };
+
+        var custom_fields = {
+            'disabled': 1,
+            'length': 1,
+            'jsPatch': 1,
+            'cssPatch': 1,
+            'removeElement': 1,
+            'forceAddressChange': 1
+        };
+
+        var essential_fields = {'url':1 , 'pageElement':1,'nextLink':1};
+
         var types = {
             'number': {
                 number: true,
@@ -100,7 +130,7 @@ var RECORDS_PER_PAGE = 100,
             },
             'name': {
                 string: true,
-                title: 'Name',
+                title: 'Item name',
                 key: 'name'
             },
             'data': {
@@ -158,7 +188,7 @@ var RECORDS_PER_PAGE = 100,
         siteinfo_head.onclick = function (e) {
             var key = e.target.id;
             if (types[key]) {
-                var infos = filtered_info.length ? filtered_info : siteinfo_data;
+                var infos = filtered_wedata_array.length ? filtered_wedata_array : wedata_array;
                 sort_by(infos, types[key]);
                 if (e.target.className === 'c-down') {
                     e.target.className = 'c-up';
@@ -184,8 +214,9 @@ var RECORDS_PER_PAGE = 100,
         };
 
         function process_search_input() {
-            if (!siteinfo_data || !siteinfo_data.length) return;
+            if (!wedata_array || !wedata_array.length) return;
             profile('process_search_input');
+
             var fullword = siteinfo_search_input.value,
                 fullwords = [];
             if (fullword.trim() !== '') {
@@ -198,35 +229,38 @@ var RECORDS_PER_PAGE = 100,
                     return w;
                 });
             } else {
-                filtered_info = [];
-                InitSiteInfoView(siteinfo_data);
+                filtered_wedata_array = [];
+                InitSiteInfoView(wedata_array);
                 return;
             }
-            filtered_info = siteinfo_data.filter(function (sinfo) {
+
+            filtered_wedata_array = wedata_array.filter(function (sinfo) {
                 var ret = [];
                 for (var k in sinfo) {
                     if (sinfo.hasOwnProperty(k)) {
                         if (except_info[k]) continue;
-                        var info = sinfo[k];
-                        if (typeof info === 'object') {
-                            for (var k2 in info) {
-                                if (info.hasOwnProperty(k2)) {
-                                    ret.push(info[k2]);
+                        var wedata_item = sinfo[k];
+                        if (typeof wedata_item === 'object') {
+                            for (var k2 in wedata_item) {
+                                if (wedata_item.hasOwnProperty(k2)) {
+                                    ret.push(wedata_item[k2]);
                                 }
                             }
                         } else {
-                            ret.push(info);
+                            ret.push(wedata_item);
                         }
                     }
                 }
+
                 var dat = ret.join('\n');
                 if (fullwords.map(function (k) {return new RegExp(k.replace(/\W/g, '\\$&'), 'im');}).every(function (r) {
-                    return r.test(dat);
-                })) return true;
+                        return r.test(dat);
+                    })) return true;
+
                 return false;
             });
 
-            InitSiteInfoView(filtered_info);
+            InitSiteInfoView(filtered_wedata_array);
             profile('process_search_input', 'end');
         }
 
@@ -297,73 +331,56 @@ var RECORDS_PER_PAGE = 100,
 
         }
 
-        /*function btn(opt, listener) {
-            var btn = document.createElement('input');
-            btn.id = opt.id;
-            btn.type = opt.type;
-            if (opt.hasOwnProperty('value')) btn.value = opt.value;
-            opt.parent.appendChild(btn);
-            if (opt.text) {
-                var label = document.createElement('label');
-                label.htmlFor = opt.id;
-                label.textContent = opt.text;
-                opt.parent.appendChild(label);
-            }
-            btn.onclick = listener;
-            return btn;
-        }*/
+        function apply_fixes(wedata_arr) {
+            //var logtext = '';
+            wedata_arr.forEach(function (wedata_item) {
+                var id = getWedataId(wedata_item);
+                wedata_item[successful] = site_stats[id] || 0;
+                wedata_item[failed] = site_fail_stats[id] || 0;
+                if (!wedata_item.data) return;
+                var t = wedata_item.data['cssPatch'] || wedata_item.data['Stylish'] || null;
 
-        function apply_fixes(siteinfo) {
-            siteinfo.forEach(function (info) {
-                var id = getWedataId(info);
-                info[successful] = site_stats[id] || 0;
-                info[failed] = site_fail_stats[id] || 0;
-                if (!info.data) return;
-                var t = info.data['cssPatch'] || info.data['Stylish'] || null;
-                delete info.data['cssPatch'];
-                delete info.data['Stylish'];
-                //don't need those from an external db
-                delete info.data['jsPatch'];
-                delete info.data['SERVICE'];
-                delete info.data['domEvents'];
-                delete info.data['buttonElement'];
-                delete info.data['buttonElementSelector'];
-                delete info.data['removeElement'];
-                delete info.data['removeElementSelector'];
-                info.data['prevLink'] = info.data['prevLink'] || ''; // show the field if absent
-                info.data['insertBefore'] = info.data['insertBefore'] || ''; // show the field if absent
+                //clean-up unknown fields
+                for (var k in wedata_item.data) {
+                    if (wedata_item.data.hasOwnProperty(k) && !(k in allowed_fields)) {
+                        //logtext += 'removed field from wedata[' + id +']: ' + k + '\n';
+                        delete wedata_item.data[k];
+                    }
+                }
+
+                wedata_item.data['prevLink'] = wedata_item.data['prevLink'] || ''; // show the field if absent
+                wedata_item.data['insertBefore'] = wedata_item.data['insertBefore'] || ''; // show the field if absent
                 if (allow_ext_styles) {
                     if (t && !t.match(/java/i && !t.match(/url[^\(]*\(/i)) &&
                         t.replace(/\s/g,'').length > 5) {
                         t = t.replace(/url[^\(]*\([^\)]+\)/ig,'');
                         t = t.match(/@-moz-document[^{]+{\s*([^@]+)\s*}/)[1] || t;
-                        info.data['cssPatch'] = t;
+                        wedata_item.data['cssPatch'] = t;
                     }
                 }
             });
+            //log(logtext);
         }
 
 
-        function InitSiteInfoView(inf) {
-            SiteInfoView(inf.slice(0, RECORDS_PER_PAGE));
-            SiteInfoNavi(inf);
-            if (inf.length > RECORDS_PER_PAGE) {
+        function InitSiteInfoView(wedata_arr) {
+            SiteInfoView(wedata_arr.slice(0, RECORDS_PER_PAGE));
+            SiteInfoNavi(wedata_arr);
+            if (wedata_arr.length > RECORDS_PER_PAGE) {
                 dispatch_event('AutoPatchWork.state', {state: 'on'});
             } else {
                 dispatch_event('AutoPatchWork.state', {state: 'off'});
             }
         }
 
-        function SiteInfoView(siteinfo, append) {
+        function SiteInfoView(wedata_arr, append) {
             profile('SiteInfoView');
             entry_editor_running = false;
             toggle_popup('loader', true);
             var df = document.createDocumentFragment();
-            var custom_fields = {'disabled':1,'length':1,'jsPatch':1,'cssPatch':1,'prevLink':1,'removeElement':1,'allowScripts':1,'forceIframe':1,'disableSeparator':1,'forceAddressChange':1};
-            var essential_fields = {'url':1 , 'pageElement':1,'nextLink':1};
 
-            siteinfo.forEach(function (info, i) {
-                var id = getWedataId(info),
+            wedata_arr.forEach(function (wedata_item, i) {
+                var id = getWedataId(wedata_item),
                     current_siteinfo = siteinfos_array[id];
 
                 var line = template_element.cloneNode(true),
@@ -373,22 +390,20 @@ var RECORDS_PER_PAGE = 100,
                     disable_separator_btn = line.querySelector('input.disable_separator'),
                     addr_change_btn = line.querySelector('input.address_change');
 
-                if (custom_info && custom_info[id]) {
-                    var ci = custom_info[id];
+                var ci = bgProcess.getCustomInfo(id);
+                if (ci) {
                     if (ci.keys().some(function (k) {
-                            if (k in custom_fields) {
-                                return false;
-                            }
-                            return ci[k] !== info.data[k];
-                        })){
+                            if (k in custom_fields || k in custom_ext_fields) return false;
+                            return ci[k] !== wedata_item.data[k];
+                        })) {
                             line.setAttribute('data-modified', 'modified');
                         }
 
-                    disabled_btn.checked = ci.disabled || false;
-                    scripts_enabled_btn.checked = ci.allowScripts || false;
-                    force_iframe_btn.checked = ci.forceIframe || false;
-                    disable_separator_btn.checked = ci.disableSeparator || false;
-                    addr_change_btn.checked = ci.forceAddressChange || false;
+                    disabled_btn.checked = typeof ci.disabled !== 'undefined' ? ci.disabled : false;
+                    scripts_enabled_btn.checked = typeof ci.allowScripts !== 'undefined' ? ci.allowScripts : false;
+                    force_iframe_btn.checked = typeof ci.forceIframe !== 'undefined' ? ci.forceIframe : false;
+                    disable_separator_btn.checked = typeof ci.disableSeparator !== 'undefined' ? ci.disableSeparator : false;
+                    addr_change_btn.checked = typeof ci.forceAddressChange !== 'undefined' ? ci.forceAddressChange : false;
 
                     if (ci.disabled) line.setAttribute('data-disabled', 'disabled' ); else line.removeAttribute('data-disabled');
                     if (ci.allowScripts) line.setAttribute('data-scripts', 'enabled' ); else line.removeAttribute('data-scripts');
@@ -400,89 +415,74 @@ var RECORDS_PER_PAGE = 100,
                     if (ci.jsPatch) line.setAttribute('data-jspatch', 'enabled' ); else line.removeAttribute('data-jspatch');
                 }
 
-                var cb_handler = function(name, type, state, value){
-                    var val, type_full = 'data-' + type;
-                    if (typeof value === 'string') {
-                        if (value.replace(/[\s\r\n]/g,'').length) {
-                            val = value;
-                        } else
-                            return;
-                    } else {
-                        val = true;
-                    }
-                    return function() { // memory-friendly version
-                        if (typeof custom_info[id] === 'undefined') {
-                            custom_info[id] = {};
-                            custom_info[id][name] = val;
-                            custom_info[id].length = 1;
-                            current_siteinfo[name] = val;
-                        } else {
-                            if (typeof custom_info[id][name] === 'undefined') {
-                                custom_info[id][name] = val;
-                                custom_info[id].length++;
-                                current_siteinfo[name] = val;
-                            } else {
-                                if (--custom_info[id].length < 1) {
-                                    delete custom_info[id];
-                                } else {
-                                    delete custom_info[id][name];
-                                }
-                                delete current_siteinfo[name];
-                            }
-                        }
-
-                        if (current_siteinfo[name]) line.setAttribute(type_full, state); else line.removeAttribute(type_full);
-
+                var cb_handler = function(name, type, state, default_value){
+                    var def_val = false, type_full = 'data-' + type;
+                    if (typeof default_value !== 'undefined')
+                        def_val = s2b(default_value);
+                    return function() {
+                        var val = this.checked;
+                        if (val) line.setAttribute(type_full, state); else line.removeAttribute(type_full);
+                        current_siteinfo[name] = val;
+                        bgProcess.setCustomInfo(id, name, val, def_val);
                         bgProcess.saveCustomInfo();
                         bgProcess.applyCustomInfo();
                     };
                 };
 
                 disabled_btn.onchange = cb_handler('disabled', 'disabled', 'disabled');
-                scripts_enabled_btn.onchange = cb_handler('allowScripts', 'scripts', 'enabled');
-                force_iframe_btn.onchange = cb_handler('forceIframe', 'iframe', 'enabled');
-                disable_separator_btn.onchange = cb_handler('disableSeparator', 'separator', 'disabled');
+                scripts_enabled_btn.onchange = cb_handler('allowScripts', 'scripts', 'enabled'/*, wedata_item.data['allowScripts']*/);
+                force_iframe_btn.onchange = cb_handler('forceIframe', 'iframe', 'enabled'/*, wedata_item.data['forceIframe']*/);
+                disable_separator_btn.onchange = cb_handler('disableSeparator', 'separator', 'disabled'/*, wedata_item.data['disableSeparator']*/);
                 addr_change_btn.onchange = cb_handler('forceAddressChange', 'addrchange', 'enabled');
 
                 df.appendChild(line);
                 line.querySelector('td.index').textContent = 1 + i + (append || 0);
-                info.keys().forEach(function (title, i, info_keys) {
-                    var data = info[title];
-                    var td = line.querySelector('td.' + title);
+                wedata_item.keys().forEach(function (wedata_key, i, wedata_item_keys) {
+                    var data = wedata_item[wedata_key];
+                    var td = line.querySelector('td.' + wedata_key);
                     if (!td) return;
-                    if (title === 'name') {
+                    if (wedata_key === 'name') {
                         var name_btn = td.firstChild;
                         name_btn.onclick = function () {
                             if (entry_editor_running) return;
                             entry_editor_running = true;
                             var dl = document.createElement('dl');
-                            info_keys.forEach(function (key) {
-                                var data = info[key];
+                            wedata_item_keys.forEach(function (item_key) {
+                                var data = wedata_item[item_key];
+                                if ((item_key === 'data' && typeof data !== 'object') ||
+                                    (item_key !== 'data' && typeof data === 'object'))
+                                        return;
                                 var dt1 = document.createElement('dt');
-                                dt1.className = key;
-                                dt1.textContent = types[key].title;
+                                dt1.className = item_key;
+                                dt1.textContent = types[item_key].title;
                                 dl.appendChild(dt1);
                                 var dd1 = document.createElement('dd');
-                                dd1.className = key;
+                                dd1.className = item_key;
                                 dl.appendChild(dd1);
-                                if (typeof data === 'object') {
-                                    data['removeElement'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['removeElement'] || '') : '';
-                                    data['jsPatch'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['jsPatch'] || '') : '';
+                                if (item_key === 'data') {
+                                    data['removeElement'] = typeof ci !== 'undefined' ? (ci['removeElement'] || '') : '';
+                                    data['jsPatch'] = typeof ci !== 'undefined' ? (ci['jsPatch'] || '') : '';
                                     if (!allow_ext_styles)
-                                        data['cssPatch'] = typeof custom_info[id] !== 'undefined' ? (custom_info[id]['cssPatch'] || '') : '';
+                                        data['cssPatch'] = typeof ci !== 'undefined' ? (ci['cssPatch'] || '') : '';
 
                                     var dl2 = document.createElement('dl');
                                     dd1.appendChild(dl2);
 
                                     data.keys().forEach(function (si_key) {
-                                        var inf = '', is_custom = si_key in custom_fields, is_essential = si_key in essential_fields;
-                                        if (typeof custom_info[id] !== 'undefined') {
-                                            inf = custom_info[id][si_key];
-                                            if (!inf && !is_custom) inf = data[si_key];
+                                        var content = '',
+                                            def_val = wedata_item.data[si_key],
+                                            is_custom = si_key in custom_fields || si_key in custom_ext_fields,
+                                            is_essential = si_key in essential_fields;
+
+                                        ci = bgProcess.getCustomInfo(id);
+                                        if (ci) {
+                                            content = ci[si_key];
+                                            if (!content && !is_custom) content = data[si_key];
                                         } else if (!is_custom) {
-                                            inf = data[si_key];
+                                            content = data[si_key];
                                         }
-                                        if (inf || is_custom || si_key === 'insertBefore') {
+
+                                        if (content || is_custom || si_key === 'insertBefore') {
                                             var dt2 = document.createElement('dt');
                                             var dd2 = document.createElement('dd');
                                             dl2.appendChild(dt2);
@@ -490,7 +490,7 @@ var RECORDS_PER_PAGE = 100,
                                             dt2.textContent = si_key;
                                             var node2;
                                             if (text_to_html[si_key]) {
-                                                node2 = text_to_html[si_key](inf);
+                                                node2 = text_to_html[si_key](content);
                                             } else {
                                                 node2 = document.createElement('textarea');
                                                 switch (si_key) {
@@ -510,75 +510,60 @@ var RECORDS_PER_PAGE = 100,
                                                     default:
                                                         node2.rows = 2;
                                                 } //switch
-                                                node2.value = inf || '';
-                                                if (!current_siteinfo) {
-                                                    node2.setAttribute('readonly', ''); // remote DB differs from local
-                                                }
+                                                node2.value = content || '';
+                                                if (!current_siteinfo) node2.setAttribute('readonly', ''); // no corresponding item in local DB
                                                 node2.onchange = function() {
                                                     //log(current_siteinfo,current_siteinfo[si_key], node2.value);
-                                                    var nval = node2.value.trim(),
-                                                        is_not_empty = nval.length;
+                                                    var val = node2.value.trim(),
+                                                        is_not_empty = !!val.length;
 
-                                                    if (typeof custom_info[id] === 'undefined') {
-                                                        custom_info[id] = {};
-                                                        custom_info[id].length = 0;
-                                                    }
-                                                    if (nval === info.data[si_key]) { // remote SI equals local SI
+                                                    if (val === def_val) { // remote SI equals local SI
                                                         // only way to remove `insertBefore` from storagebase is to set it equal to remote SI's
-                                                        if (--custom_info[id].length < 1) {
-                                                            delete custom_info[id];
-                                                        } else {
-                                                            delete custom_info[id][si_key];
-                                                        }
-                                                        current_siteinfo[si_key] = nval;
+                                                        bgProcess.removeCustomInfo(id, si_key);
+                                                        current_siteinfo[si_key] = def_val;
                                                     } else { // remote SI differs from local SI
                                                         if (is_not_empty || si_key === 'insertBefore') {
                                                             // we save empty `insertBefore` value for when we want to override wedata's one
-                                                            if (typeof custom_info[id][si_key] === 'undefined') {
-                                                                custom_info[id].length++;
-                                                            }
-                                                            custom_info[id][si_key] = nval; // set siteinfo field in custom_info
-                                                            current_siteinfo[si_key] = nval; // set runtime siteinfo field
+                                                            bgProcess.setCustomInfo(id, si_key, val);
+                                                            current_siteinfo[si_key] = val; // set runtime siteinfo field
                                                         } else {
-                                                            if (--custom_info[id].length < 1) {
-                                                                delete custom_info[id];
-                                                            } else {
-                                                                delete custom_info[id][si_key];
-                                                            }
-                                                            if (!is_essential) {
-                                                                delete current_siteinfo[si_key];
-                                                            } else {
-                                                                current_siteinfo[si_key] = info.data[si_key];
+                                                            bgProcess.removeCustomInfo(id, si_key);
+                                                            if (!is_essential) delete current_siteinfo[si_key];
+                                                            else {
+                                                                node2.value = val = def_val;
+                                                                current_siteinfo[si_key] = def_val;
                                                             }
                                                         }
                                                     }
 
+                                                    bgProcess.saveCustomInfo();
+                                                    bgProcess.initCustomInfo();
+
                                                     // highlight changed lines
-                                                    var ci = custom_info[id];
+                                                    ci = bgProcess.getCustomInfo(id);
                                                     if (ci) {
-                                                        if (ci.keys().some(function (k) { if (k in custom_fields) return false; if (ci[k] === '') return false; return (ci[k] !== info.data[k]); })) {
+                                                        if (ci.keys().some(function (k) { if (k in custom_fields || k in custom_ext_fields) return false; if (ci[k] === '') return false; return (ci[k] !== wedata_item.data[k]); }))
                                                             line.setAttribute('data-modified', 'modified');
-                                                        } else {
+                                                        else
                                                             line.removeAttribute('data-modified');
-                                                        }
 
                                                         if (ci.removeElement) line.setAttribute('data-remove', 'enabled' ); else line.removeAttribute('data-remove');
                                                         if (ci.cssPatch) line.setAttribute('data-csspatch', 'enabled' ); else line.removeAttribute('data-csspatch');
                                                         if (ci.jsPatch) line.setAttribute('data-jspatch', 'enabled' ); else line.removeAttribute('data-jspatch');
                                                     } else {
+                                                        line.removeAttribute('data-remove');
+                                                        line.removeAttribute('data-csspatch');
+                                                        line.removeAttribute('data-jspatch');
                                                         line.removeAttribute('data-modified');
-                                                        node2.removeAttribute('data-modified', 'modified');
+                                                        node2.removeAttribute('data-modified');
                                                     }
 
-                                                    if (nval !== info.data[si_key]) {
-                                                        node2.setAttribute('data-modified', 'modified');
-                                                    }
-
-                                                    bgProcess.saveCustomInfo(custom_info);
-                                                    bgProcess.initCustomInfo();
+                                                    if (val !== def_val) node2.setAttribute('data-modified', 'modified');
+                                                    else node2.removeAttribute('data-modified');
                                                 }; //onchange
+
                                                 if (!is_custom) {
-                                                    if (inf !== data[si_key]) {
+                                                    if (content !== data[si_key]) {
                                                         node2.setAttribute('data-modified', 'modified');
                                                         line.setAttribute('data-modified', 'modified');
                                                     }
@@ -589,10 +574,10 @@ var RECORDS_PER_PAGE = 100,
                                     });
                                 } else {
                                     var node;
-                                    if (text_to_html[title]) {
-                                        node = text_to_html[title](data);
+                                    if (text_to_html[item_key]) {
+                                        node = text_to_html[item_key](data);
                                     } else {
-                                        if (~key.indexOf('_url') && data) {
+                                        if (~item_key.indexOf('_url') && data) {
                                             node = document.createElement('a');
                                             if (data.match(re_http))
                                                 node.href = data;
@@ -612,8 +597,8 @@ var RECORDS_PER_PAGE = 100,
                                 (window.innerHeight - siteinfo_view.firstElementChild.offsetHeight) / 2 + 'px';
                         };
                         name_btn.textContent = data;
-                    } else if (text_to_html[title]) {
-                        td.appendChild(text_to_html[title](data));
+                    } else if (text_to_html[wedata_key]) {
+                        td.appendChild(text_to_html[wedata_key](data));
                     } else {
                         td.textContent = data;
                     }
@@ -631,20 +616,20 @@ var RECORDS_PER_PAGE = 100,
         }
 
         /* jshint ignore:start */
-        function SiteInfoNavi(siteinfo) {
+        function SiteInfoNavi(wedata_arr) {
             profile('SiteInfoNavi');
             var nav = siteinfo_nav;
             pageIndex = 0;
             while (nav.firstChild) nav.removeChild(nav.firstChild);
 
-            for (var i = 0, len = siteinfo.length / RECORDS_PER_PAGE; i < len; i++)(function (i) {
+            for (var i = 0, len = wedata_arr.length / RECORDS_PER_PAGE; i < len; i++)(function (i) {
                 var a = document.createElement('a');
                 a.textContent = i + 1;
                 a.href = '#a' + i;
                 a.id = 'a' + i;
                 nav.appendChild(a);
                 a.addEventListener('click', function (e) {
-                    SiteInfoView(siteinfo.slice(RECORDS_PER_PAGE * i, RECORDS_PER_PAGE * (i + 1)));
+                    SiteInfoView(wedata_arr.slice(RECORDS_PER_PAGE * i, RECORDS_PER_PAGE * (i + 1)));
                     pageIndex = i;
                     window.scrollTo(0, 0);
                     e.preventDefault();
@@ -668,25 +653,29 @@ var RECORDS_PER_PAGE = 100,
             progress.style.width = '0%';
 
             xhr.onreadystatechange = function () {
-              if (xhr.readyState === 4 /*XMLHttpRequest.DONE*/) {
-                if (xhr.status === 200) {
-                  var d;
-                  try {
-                      d = JSON.parse(xhr.responseText);
-                  } catch (bug) {
-                      log('Error parsing JSON DB: ' + bug.message);
-                      return;
-                  }
+                if (xhr.readyState === 4 /*XMLHttpRequest.DONE*/) {
+                    if (xhr.status === 200) {
+                        var d;
+                        try {
+                            d = JSON.parse(xhr.responseText);
+                        } catch (bug) {
+                            progress.style.width = '100%';
+                            progress_percent.textContent = 'JSON Error!';
+                            log('Error parsing JSON DB: ' + bug.message);
+                            return;
+                        }
 
-                  progress.style.width = '100%';
-                  progress_percent.textContent = 'Done!';
-                  setTimeout(function(){ progressbar.style.display = 'none'; }, 600);
+                        progress.style.width = '100%';
+                        progress_percent.textContent = 'Done!';
+                        setTimeout(function(){ progressbar.style.display = 'none'; }, 600);
 
-                  callback(d);
-                } else {
-                  log('Error requesting JSON DB: ' + xhr.statusText);
+                        callback(d);
+                    } else {
+                        progress.style.width = '100%';
+                        progress_percent.textContent = 'HTTP Error!';
+                        log('Error requesting JSON DB: ' + xhr.statusText);
+                    }
                 }
-              }
             };
 
             xhr.onprogress = function(evt) {
@@ -724,11 +713,11 @@ var RECORDS_PER_PAGE = 100,
 
         profile('UpdateSiteInfo');
         if (sessionStorage.siteinfo_wedata) {
-            siteinfo_data = JSON.parse(sessionStorage.siteinfo_wedata);
-            apply_fixes(siteinfo_data);
-            sort_by(siteinfo_data, { number: true, key: failed });
+            wedata_array = JSON.parse(sessionStorage.siteinfo_wedata);
+            apply_fixes(wedata_array);
+            sort_by(wedata_array, { number: true, key: failed });
             if (siteinfo_search_input.value == '') {
-                InitSiteInfoView(siteinfo_data);
+                InitSiteInfoView(wedata_array);
             } else {
                 dispatch_html_event(siteinfo_search_input, 'input');
             }
@@ -743,13 +732,13 @@ var RECORDS_PER_PAGE = 100,
             });/**/
             profile('UpdateSiteInfo', 'end');
         } else {
-            UpdateSiteInfo(function (siteinfo) {
-                siteinfo_data = siteinfo;
-                sessionStorage.siteinfo_wedata = JSON.stringify(siteinfo);
-                apply_fixes(siteinfo_data);
-                sort_by(siteinfo_data, { number: true, key: failed });
+            UpdateSiteInfo(function (dl_array) {
+                wedata_array = dl_array;
+                sessionStorage.siteinfo_wedata = JSON.stringify(dl_array);
+                apply_fixes(wedata_array);
+                sort_by(wedata_array, { number: true, key: failed });
                 if (document.getElementById('siteinfo_search_input').value == '') {
-                    InitSiteInfoView(siteinfo_data);
+                    InitSiteInfoView(wedata_array);
                 } else {
                     dispatch_html_event(document.getElementById('siteinfo_search_input'), 'input');
                 }
