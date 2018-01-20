@@ -956,7 +956,7 @@
                 type: (event.detail && event.detail.type) ? event.detail.type : 'terminated'
             });
             ///////////////////
-            if (event.detail && event.detail.message) log(event.detail.message);
+            if (event.detail && event.detail.message && (event.detail.type !== 'error')) log(event.detail.message);
             setTimeout(cleanup, 5000);
 
         }
@@ -1020,6 +1020,8 @@
             }
 
             status.state = false;
+            
+            if (event.detail && event.detail.message) log(event.detail.message);
 
             error_timeout = setTimeout(function(){
                 terminated({'detail': { message: ((event.detail && event.detail.message) ? event.detail.message : ''), type: 'error' }});
@@ -1182,14 +1184,19 @@
         function request_xhr(url) {
             var req = 'GET',
                 x = new XMLHttpRequest();
+            //if (options.IGNORE_CORS) x.withCredentials = true;
             x.onload = function () {
-                if (dump_request) console.log(x.responseText);
-                if (options.IGNORE_CORS || !x.getResponseHeader('Access-Control-Allow-Origin'))
+                var h = x.getResponseHeader('Access-Control-Allow-Origin') || '';
+                if (dump_request) log('{'+ url +'}:\nCORS:' + h + '\nHTML:\n' + x.responseText);
+                if (options.IGNORE_CORS || h) {
+                    if (!options.IGNORE_CORS && (!~url.indexOf(h) && h.trim() !== '*') ) return;
                     dispatch_event('AutoPatchWork.load', {
                         htmlDoc: create_html(x.responseText, url),
                         url: url
                     });
-                else dispatch_event('AutoPatchWork.terminated', { message: 'request failed on ' + url + ' because of CORS access'});
+                    return;
+                }
+                dispatch_event('AutoPatchWork.terminated', { message: 'request failed on ' + url + ' because of CORS access restrictions'});
             };
             x.onerror = function () {
                 if (requested_urls[url] >= status.ajax.retry_max || (x && x.status < 500)) {
@@ -1424,16 +1431,10 @@
          * @param {string} url Location.
          * */
         function get_base_url(url) {
-            if (typeof url !== 'string' || !url.length)
-                url = location.href;
+            if (typeof url !== 'string' || !url.length) url = location.href;
             var link = document.createElement('a');
             link.href = url;
-            var path_arr = link.pathname.split('/'),
-                last = path_arr.pop();
-            if (~last.indexOf('.') || (link.search.length && last !== ''))
-                return link.protocol + '//' + link.host + path_arr.join('/') + '/';
-            else
-                return link.protocol + '//' + link.host + (link.pathname + '/').replace(/\/+$/,'/');
+            return link.protocol + '//' + link.host + link.pathname;
         }
 
 
@@ -1446,14 +1447,18 @@
             if (!url) return '';
 
             var start = url.charAt(0);
-            if(/^\w+:\/\//.test(url) || start === '#') return url;
-            else if(url.substring(0,2) === '//') return location.protocol + url; // protocol relative urls
-            else if(start === '/') return (location.protocol + '//' + location.host + url).replace(/([^:])\/+/g,'$1/'); // domain relative urls
-            else if(start === '?') return location.protocol + '//' + location.host + location.pathname + url; // parameters
-            else if(/^\s*$/.test(url)) return '';
-            else url = '/' + url;
+            if (/^\w+:\/\/./.test(url) || start === '#') return url;
+            else if (url.substring(0,2) === '//') return location.protocol + url; // protocol relative urls
+            else if (start === '/') return (location.protocol + '//' + location.host + url).replace(/([^:])\/+/g,'$1/'); // domain relative urls
+            else if (start === '?') return (location.protocol + '//' + location.host + location.pathname + url); // parameters
+            else if (/^\s*$/.test(url)) return '';
 
-            url = base_url + url;
+            if (base_url.charAt(base_url.length - 1) !== '/' && (url.indexOf('?') > 0 || url.indexOf('#') > 0)) {
+                // case of ambiguous href="show.php?id=item", href="search?q=line" or href="index#id" kind of links
+                url = base_url.substr(0, base_url.lastIndexOf('/') + 1) + url;
+            } else {
+                url = base_url + '/' + url;
+            }
 
             url = url.replace(/\/\.\/+/g,'/'); // ignore current dirs
             url = url.replace(/([^:])\/+/g,'$1/'); // remove excessive slashes
